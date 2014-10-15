@@ -3,12 +3,14 @@
 \alias{combine_gui}
 \title{Combine two datasets}
 \usage{
-combine_gui(env = parent.frame(), debug = FALSE)
+combine_gui(env = parent.frame(), debug = FALSE, parent = NULL)
 }
 \arguments{
 \item{env}{environment in wich to search for data frames.}
 
 \item{debug}{logical indicating printing debug information.}
+
+\item{parent}{widget to get focus when finished.}
 }
 \value{
 TRUE

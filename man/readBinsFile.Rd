@@ -20,4 +20,5 @@ data.frame containing the columns 'Panel', 'Marker', 'Allele', 'Size',
 \details{
 Reads useful information from 'Bins' files and save it as a data.frame.
 }
+\keyword{internal}
 

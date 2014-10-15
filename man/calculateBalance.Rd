@@ -4,7 +4,7 @@
 \title{Calculate balance}
 \usage{
 calculateBalance(data, ref, lb = "prop", perDye = TRUE, hb = 1,
-  ignoreCase = TRUE, debug = FALSE)
+  ignoreCase = TRUE, word = FALSE, debug = FALSE)
 }
 \arguments{
 \item{data}{a data frame containing at least
@@ -22,6 +22,8 @@ FALSE locus balance is calculated globally across all dyes.}
 \item{hb}{numerical, definition of heterozygous balance. hb=1; HMW/LMW, hb=2; Max1(Ph)/Max2(Ph).}
 
 \item{ignoreCase}{logical indicating if sample matching should ignore case.}
+
+\item{word}{logical indicating if word boundaries should be added before sample matching.}
 
 \item{debug}{logical indicating printing debug information.}
 }

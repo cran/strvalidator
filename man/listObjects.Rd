@@ -19,14 +19,16 @@ character vector with the object names.
 \code{listObjects} returns a list of objects.
 }
 \details{
-Helper function to retrieve a list of objects from a workspace.
+Internal helper function to retrieve a list of objects from a workspace.
 Take an environment as argument and optionally an object class.
 Returns a list of objects of the specified class in the environment.
 }
 \examples{
+\dontrun{
 # List data frames in the workspace.
 listObjects(objClass="data.frame")
 # List functions in the workspace.
 listObjects(objClass="function")
+}
 }
 

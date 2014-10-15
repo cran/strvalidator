@@ -38,6 +38,7 @@ profile for the minor component, number of drop-ins.
 The observed and expected number of free alleles for the minor component
 (used to calculate the profile percentage) is also given.
 
+NB! All sample names must be unique within and between each reference dataset.
 NB! Samples in ref1 and ref2 must be in 'sync'. The first sample in
 ref1 is combined with the first sample in ref2 to make a mixture sample.
 For example: ref1 "A" and ref2 "B" match mixture samples "A_B_1", "A_B_2"

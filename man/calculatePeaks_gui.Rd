@@ -3,7 +3,8 @@
 \alias{calculatePeaks_gui}
 \title{Calculate peaks}
 \usage{
-calculatePeaks_gui(env = parent.frame(), savegui = NULL, debug = FALSE)
+calculatePeaks_gui(env = parent.frame(), savegui = NULL, debug = FALSE,
+  parent = NULL)
 }
 \arguments{
 \item{env}{environment in wich to search for data frames.}
@@ -11,6 +12,8 @@ calculatePeaks_gui(env = parent.frame(), savegui = NULL, debug = FALSE)
 \item{savegui}{logical indicating if GUI settings should be saved in the environment.}
 
 \item{debug}{logical indicating printing debug information.}
+
+\item{parent}{widget to get focus when finished.}
 }
 \value{
 TRUE

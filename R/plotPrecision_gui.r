@@ -3,7 +3,9 @@
 # TODO: ...
 
 ################################################################################
-# CHANGE LOG
+# CHANGE LOG (last 20 changes)
+# 11.10.2014: Added 'focus', added 'parent' parameter.
+# 12.09.2014: Filter rows with Allele=NA (Fixes issue #6).
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 08.05.2014: Implemented 'checkDataset'.
 # 23.02.2014: Fixed column check for plots.
@@ -27,17 +29,21 @@
 #' @param env environment in wich to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
+#' @param parent widget to get focus when finished.
+#' 
+# @importFrom gridExtra arrangeGrob
+# @importFrom grid unit textGrob grid.newpage grid.draw
+# @importFrom gtable gtable_add_grob gtable
+#' 
+#' @export
 #' 
 #' @return TRUE
 #' 
 #' @seealso \url{http://docs.ggplot2.org/current/} for details on plot settings.
 #' 
 
-plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE){
+plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NULL){
   
-  # Load gridExtra as a temporary solution to TODO in NAMESPACE.
-  loadPackage(packages=c("gridExtra"))
-
   # Global variables.
   .gData <- NULL
   .gDataName <- NULL
@@ -50,9 +56,17 @@ plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE){
   # Main window.
   w <- gwindow(title="Plot precision", visible=FALSE)
   
-  # Handler for saving GUI state.
+  # Runs when window is closed.
   addHandlerDestroy(w, handler = function (h, ...) {
+    
+    # Save GUI state.
     .saveSettings()
+    
+    # Focus on parent window.
+    if(!is.null(parent)){
+      focus(parent)
+    }
+    
   })
   
   # Vertical main group.
@@ -626,6 +640,14 @@ plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE){
       val_data[[what.mean]] <- NA
       val_data[[what]] <- as.numeric(val_data[[what]])
       
+      # Remove NA's
+      if(any(is.na(val_data$Allele))){
+        tmp1 <- nrow(val_data)
+        val_data <- val_data[!is.na(val_data$Allele), ]
+        tmp2 <- nrow(val_data)
+        message(paste(tmp1-tmp2, "NA rows removed!"))
+      }
+      
       # Get all markers.
       marker <- unique(val_data$Marker)
       
@@ -907,7 +929,7 @@ plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE){
         # Note: width(1.5 for y-title, and the rest for plots + margin)
         #       height(1.5 for plot title, equal for each plot, and 1.5 for x-title)
         g <- gtable::gtable(widths=grid::unit.c(grid::unit(1.5, "lines"),
-                                                grid::unit(1, "null"),unit(1.5, "lines")),
+                                                grid::unit(1, "null"),grid::unit(1.5, "lines")),
                             heights = grid::unit(c(1.5,rep(1,noDyes),1.5),
                                                  c("line", rep("null", noDyes), "line")))
         # Add titles.
@@ -1221,6 +1243,7 @@ plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE){
   
   # Show GUI.
   visible(w) <- TRUE
+  focus(w)
   
 }
 

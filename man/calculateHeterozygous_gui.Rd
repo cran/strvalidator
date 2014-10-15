@@ -3,12 +3,15 @@
 \alias{calculateHeterozygous_gui}
 \title{Calculate Heterozygous}
 \usage{
-calculateHeterozygous_gui(env = parent.frame(), debug = FALSE)
+calculateHeterozygous_gui(env = parent.frame(), debug = FALSE,
+  parent = NULL)
 }
 \arguments{
 \item{env}{environment in wich to search for data frames and save result.}
 
 \item{debug}{logical indicating printing debug information.}
+
+\item{parent}{widget to get focus when finished.}
 }
 \value{
 TRUE

@@ -3,7 +3,8 @@
 \alias{calculateBalance_gui}
 \title{Calculate Balance}
 \usage{
-calculateBalance_gui(env = parent.frame(), savegui = NULL, debug = FALSE)
+calculateBalance_gui(env = parent.frame(), savegui = NULL, debug = FALSE,
+  parent = NULL)
 }
 \arguments{
 \item{env}{environment in wich to search for data frames and save result.}
@@ -11,6 +12,8 @@ calculateBalance_gui(env = parent.frame(), savegui = NULL, debug = FALSE)
 \item{savegui}{logical indicating if GUI settings should be saved in the environment.}
 
 \item{debug}{logical indicating printing debug information.}
+
+\item{parent}{widget to get focus when finished.}
 }
 \value{
 TRUE

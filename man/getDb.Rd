@@ -6,12 +6,15 @@
 getDb(dbNameOrIndex = NULL, debug = FALSE)
 }
 \arguments{
-\item{dbNameOrIndex}{string or integer specifying the database.}
+\item{dbNameOrIndex}{string or integer specifying the database.
+If NULL a vector of available databases is returned.}
 
 \item{debug}{logical indicating printing debug information.}
 }
 \value{
 data.frame with allele frequency database information.
+If no matching database or database index is found NA is returned.
+If the database was not found NULL is returned.
 }
 \description{
 \code{getDb} gives access to allele frequency databases.
@@ -20,8 +23,6 @@ data.frame with allele frequency database information.
 The function provides access to allele frequency databases stored in
 the file database.txt in the package directory.
 It returns the specified allele frequency database.
-If no matching database or database index is found NA is returned.
-If NULL a vector of available databases is returned.
 }
 \examples{
 # Show available allele frequency databases.

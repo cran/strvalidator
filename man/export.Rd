@@ -25,7 +25,7 @@ If not equal number of names as objects, first name will be used to construct na
 Default is 'auto' for automatic .txt or .png based on object class.
 If .RData all objects will be exported as .RData files.}
 
-\item{delim}{string specifying the delimeter used as separator.}
+\item{delim}{string specifying the delimiter used as separator.}
 
 \item{width}{integer specifying the width of the image.}
 

@@ -3,7 +3,8 @@
 \alias{import_gui}
 \title{Import from text file}
 \usage{
-import_gui(env = parent.frame(), savegui = NULL, debug = FALSE)
+import_gui(env = parent.frame(), savegui = NULL, debug = FALSE,
+  parent = NULL)
 }
 \arguments{
 \item{env}{environment into which the object will be saved.
@@ -12,6 +13,8 @@ Default is the current environment.}
 \item{savegui}{logical indicating if GUI settings should be saved in the environment.}
 
 \item{debug}{logical indicating printing debug information.}
+
+\item{parent}{widget to get focus when finished.}
 }
 \value{
 TRUE

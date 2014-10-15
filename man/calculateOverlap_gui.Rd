@@ -3,7 +3,8 @@
 \alias{calculateOverlap_gui}
 \title{Bins Overlap}
 \usage{
-calculateOverlap_gui(env = parent.frame(), savegui = NULL, debug = TRUE)
+calculateOverlap_gui(env = parent.frame(), savegui = NULL, debug = TRUE,
+  parent = NULL)
 }
 \arguments{
 \item{env}{environment in wich to search for data frames and save result.}
@@ -11,6 +12,8 @@ calculateOverlap_gui(env = parent.frame(), savegui = NULL, debug = TRUE)
 \item{savegui}{logical indicating if GUI settings should be saved in the environment.}
 
 \item{debug}{logical indicating printing debug information.}
+
+\item{parent}{widget to get focus when finished.}
 }
 \value{
 TRUE

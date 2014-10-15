@@ -27,7 +27,7 @@ checkDataset(name, reqcol = NULL, slim = FALSE, slimcol = NULL,
 \item{debug}{logical indicating printing debug information.}
 }
 \description{
-\code{checkDataset} is a function to check a data.frame before analysis.
+\code{checkDataset} is an internal function to check a data.frame before analysis.
 }
 \details{
 Check that the object exist, there are rows, the required columns exist,

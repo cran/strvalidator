@@ -3,7 +3,8 @@
 \alias{makeKit_gui}
 \title{Make kit}
 \usage{
-makeKit_gui(env = parent.frame(), savegui = NULL, debug = FALSE)
+makeKit_gui(env = parent.frame(), savegui = NULL, debug = FALSE,
+  parent = NULL)
 }
 \arguments{
 \item{env}{environment in wich to search for data frames.}
@@ -12,6 +13,8 @@ makeKit_gui(env = parent.frame(), savegui = NULL, debug = FALSE)
 [Not currently used]}
 
 \item{debug}{logical indicating printing debug information.}
+
+\item{parent}{widget to get focus when finished.}
 }
 \value{
 TRUE

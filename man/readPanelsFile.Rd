@@ -20,4 +20,5 @@ data.frame containing the columns 'Panel', 'Marker', 'Color',
 \details{
 Reads useful information from Panels files and save it as a data.frame.
 }
+\keyword{internal}
 

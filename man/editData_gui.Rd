@@ -4,7 +4,7 @@
 \title{Edit or view data frames}
 \usage{
 editData_gui(env = parent.frame(), data = NULL, name = NULL,
-  edit = TRUE, debug = FALSE)
+  edit = TRUE, debug = FALSE, parent = NULL)
 }
 \arguments{
 \item{env}{environment in wich to search for data frames.}
@@ -16,6 +16,8 @@ editData_gui(env = parent.frame(), data = NULL, name = NULL,
 \item{edit}{logical TRUE for enable edit .}
 
 \item{debug}{logical indicating printing debug information.}
+
+\item{parent}{widget to get focus when finished.}
 }
 \value{
 TRUE

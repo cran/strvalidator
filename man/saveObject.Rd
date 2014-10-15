@@ -35,4 +35,5 @@ should be overwritten. The function can also be used to re-name if 'name'
 is not provided (NULL). The 'suggest' provides a suggested name for the
 object to re-name.
 }
+\keyword{internal}
 
