@@ -5,6 +5,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 29.08.2015: Added importFrom.
 # 14.12.2014: Updated to handle gender -> sex.marker option in getKit.
 # 08.12.2014: First version.
 
@@ -23,9 +24,12 @@
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
 #' 
+#' @return TRUE
+#' 
 #' @export
 #' 
-#' @return TRUE
+#' @importFrom utils help str
+#' @importFrom stats as.formula
 #' 
 #' @seealso \url{http://docs.ggplot2.org/current/} for details on plot settings.
 
@@ -90,7 +94,7 @@ plotPullup_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent
   
   dataset_drp <- gdroplist(items=c("<Select dataset>",
                                    listObjects(env=env,
-                                               objClass="data.frame")), 
+                                               obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
                            container = f0) 

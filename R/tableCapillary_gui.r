@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 29.08.2015: Added importFrom.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 10.08.2014: Added scope=RUN.
 # 28.06.2014: Added help button and moved save gui checkbox.
@@ -25,9 +26,11 @@
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
 #' 
+#' @return TRUE
+#' 
 #' @export
 #' 
-#' @return TRUE
+#' @importFrom utils help
 #' 
 #' @seealso \code{\link{tableCapillary}}
 
@@ -93,7 +96,7 @@ tableCapillary_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pa
   
   f0g0[1,2] <- f0g0_dataset_drp <- gdroplist(items=c("<Select dataset>",
                                                      listObjects(env=env,
-                                                                 objClass="data.frame")),
+                                                                 obj.class="data.frame")),
                                              selected = 1,
                                              editable = FALSE,
                                              container = f0g0)

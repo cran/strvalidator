@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 28.08.2015: Added importFrom
 # 27.11.2014: Fixed bug (GitHub issue #7) introduced in strvalidator version 1.3.1.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
@@ -29,6 +30,8 @@
 #' @return TRUE
 #' 
 #' @export
+#' 
+#' @importFrom utils help str head
 #' 
 #' @seealso \code{\link{addSize}}
 
@@ -96,7 +99,7 @@ addSize_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   f0g1[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
                                                  listObjects(env=env,
-                                                             objClass="data.frame")),
+                                                             obj.class="data.frame")),
                                          selected = 1,
                                          editable = FALSE,
                                          container = f0g1)

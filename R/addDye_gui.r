@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 28.08.2015: Added importFrom
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 11.05.2014: Implemented new option 'Ignore case' and save user settings functions.
@@ -39,6 +40,8 @@
 #' @return TRUE
 #' 
 #' @export
+#' 
+#' @importFrom utils head help
 #' 
 #' @seealso \code{\link{addColor}}
 
@@ -105,7 +108,7 @@ addDye_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
   
   f0g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
                                                  listObjects(env=env,
-                                                             objClass="data.frame")),
+                                                             obj.class="data.frame")),
                                          selected = 1,
                                          editable = FALSE,
                                          container = f0g0)

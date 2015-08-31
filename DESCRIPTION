@@ -1,15 +1,15 @@
 Package: strvalidator
 Type: Package
 Title: Process Control and Internal Validation of Forensic STR Kits
-Version: 1.5.0
-Date: 2015-06-09
+Version: 1.5.2
+Date: 2015-08-31
 Author: Oskar Hansson
 Maintainer: Oskar Hansson <oskar.hansson@fhi.no>
 URL: https://sites.google.com/site/forensicapps/strvalidator
 BugReports: https://github.com/OskarHansson/strvalidator/issues
 Depends: gridExtra
 Imports: ggplot2, gWidgets, grid, gtable, plyr, scales, gWidgetsRGtk2,
-        RGtk2, data.table
+        RGtk2, data.table, grDevices, graphics, stats, utils
 Suggests: ResourceSelection, testthat
 Description: An open source platform for validation and process control.
     Tools to analyse data from internal validation of forensic short tandem
@@ -21,7 +21,7 @@ Description: An open source platform for validation and process control.
     More information about each function can be found in the
     respective help documentation.
 License: GPL-2
-Packaged: 2015-06-09 13:03:08 UTC; nioh
 NeedsCompilation: no
+Packaged: 2015-08-31 15:12:12 UTC; NIOH
 Repository: CRAN
-Date/Publication: 2015-06-09 17:02:48
+Date/Publication: 2015-08-31 19:27:53

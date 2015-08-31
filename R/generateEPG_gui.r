@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 29.08.2015: Added importFrom.
 # 09.01.2015: Enable 'generate' after selection of new sample.
 # 09.12.2014: First version.
 
@@ -25,6 +26,8 @@
 #' @return TRUE
 #' 
 #' @export
+#' 
+#' @importFrom utils help
 #' 
 #' @seealso \code{\link{generateEPG}}
 
@@ -92,7 +95,7 @@ generateEPG_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
   
   g0[1,1] <- glabel(text="Select dataset:", container=g0)
   
-  dfs <- c("<Select a dataset>", listObjects(env=env, objClass="data.frame"))
+  dfs <- c("<Select a dataset>", listObjects(env=env, obj.class="data.frame"))
 
   g0[1,2] <- g0_data_drp <- gdroplist(items=dfs, 
                                       selected = 1,

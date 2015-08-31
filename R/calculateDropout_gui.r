@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 28.08.2015: Added importFrom
 # 05.05.2015: Changed parameter 'ignoreCase' to 'ignore.case' for 'checkSubset' function.
 # 13.12.2014: Added kit dropdown and kit attribute to result.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
@@ -37,6 +38,9 @@
 #' @return TRUE
 #' 
 #' @export
+#' 
+#' @importFrom utils help head
+#' @importFrom graphics title
 #' 
 #' @seealso \code{\link{calculateDropout}}, \code{\link{checkSubset}}
 
@@ -105,7 +109,7 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
 
   g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
                                    listObjects(env=env,
-                                               objClass="data.frame")), 
+                                               obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
                            container = g0)
@@ -154,7 +158,7 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[2,2] <- refset_drp <- gdroplist(items=c("<Select dataset>",
                                    listObjects(env=env,
-                                               objClass="data.frame")), 
+                                               obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
                            container = g0) 

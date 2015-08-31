@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 29.08.2015: Added importFrom.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 12.09.2014: Filter rows with Allele=NA (Fixes issue #6).
 # 28.06.2014: Added help button and moved save gui checkbox.
@@ -31,13 +32,16 @@
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
 #' 
-# @importFrom gridExtra arrangeGrob
-# @importFrom grid unit textGrob grid.newpage grid.draw
-# @importFrom gtable gtable_add_grob gtable
+#' @return TRUE
 #' 
 #' @export
 #' 
-#' @return TRUE
+# @importFrom gridExtra arrangeGrob
+#' @importFrom grid unit textGrob grid.newpage grid.draw
+# @importFrom gtable gtable_add_grob gtable
+#' @importFrom utils help str head
+#' @importFrom grDevices palette
+#' @importFrom stats as.formula
 #' 
 #' @seealso \url{http://docs.ggplot2.org/current/} for details on plot settings.
 #' 
@@ -103,7 +107,7 @@ plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
   
   dataset_drp <- gdroplist(items=c("<Select dataset>",
                                    listObjects(env=env,
-                                               objClass="data.frame")), 
+                                               obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
                            container = f0) 

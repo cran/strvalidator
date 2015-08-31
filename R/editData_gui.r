@@ -7,6 +7,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 28.08.2015: Added importFrom.
 # 01.06.2015: Fixed bug column names not saved. Introduced 02.01.2015 with attributes.
 # 11.05.2015: Accepts (the first) column name containing the string 'Sample'
 # as alternative to colum name 'Sample.Name'. 'Sample' is case in-sensitive.
@@ -40,6 +41,8 @@
 #' @param parent widget to get focus when finished.
 #' 
 #' @export
+#' 
+#' @importFrom utils help write.table
 #' 
 #' @return TRUE
 #' 
@@ -112,7 +115,7 @@ editData_gui <- function(env=parent.frame(), data=NULL, name=NULL, edit=TRUE,
   
   g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select data frame>",
                                               listObjects(env=env,
-                                                          objClass="data.frame")), 
+                                                          obj.class="data.frame")), 
                                       selected = 1,
                                       editable = FALSE,
                                       container = g0)

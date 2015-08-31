@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 29.08.2015: Added importFrom.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 20.11.2013: Specified package for function 'gtable' -> 'gWidgets::gtable'
@@ -27,6 +28,8 @@
 #' @param parent widget to get focus when finished.
 #' 
 #' @return TRUE
+#' 
+#' @importFrom utils help
 #' 
 #' @seealso \code{\link{export}}
 
@@ -86,8 +89,8 @@ export_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
                container = gv) 
   
   # Create list of objects.
-  itemList <- listObjects(env=env, objClass="data.frame")
-  itemList <- c(itemList, listObjects(env=env, objClass="ggplot"))
+  itemList <- listObjects(env=env, obj.class="data.frame")
+  itemList <- c(itemList, listObjects(env=env, obj.class="ggplot"))
   
   f0_object_tbl <- gWidgets::gtable(items=itemList, multiple = TRUE,
                           expand=TRUE, container = f0)

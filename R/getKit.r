@@ -1,10 +1,11 @@
 ################################################################################
 # TODO LIST
 # TODO: Return multiple kits by specifying a vector? Not priority since easy to loop.
-# TODO: Change parameter names to format: lower.case
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 29.08.2015: Added importFrom.
+# 28.06.2015: Changed parameter names to format: lower.case
 # 14.12.2014: what='Gender' changed to 'Sex.Marker' now return vector.
 # 26.09.2014: Fixed error if kit=NULL and what!=NA.
 # 26.08.2014: what=Offset/Repeat, now returns identical data frames.
@@ -39,19 +40,21 @@
 #' @param kit string or integer to specify the kit.
 #' @param what string to specify which information to return. Default is 'NA' which return all info.
 #' Not case sensitive.
-#' @param showMessages logical, default TRUE for printing messages to the R promt.
-#' @param .kitInfo data frame, run function on a data frame instead of the kits.txt file.
+#' @param show.messages logical, default TRUE for printing messages to the R promt.
+#' @param .kit.info data frame, run function on a data frame instead of the kits.txt file.
 #' @param debug logical indicating printing debug information.
+#' 
+#' @return data.frame with kit information.
 #' 
 #' @export
 #' 
-#' @return data.frame with kit information.
+#' @importFrom utils read.delim
 #' 
 #' @examples
 #' # Show all information stored for kit with short name 'ESX17'.
 #' getKit("ESX17")
 
-getKit<-function(kit=NULL, what=NA, showMessages=FALSE, .kitInfo=NULL, debug=FALSE) {
+getKit<-function(kit=NULL, what=NA, show.messages=FALSE, .kit.info=NULL, debug=FALSE) {
 
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -61,7 +64,7 @@ getKit<-function(kit=NULL, what=NA, showMessages=FALSE, .kitInfo=NULL, debug=FAL
   
   # LOAD KIT INFO  ############################################################
 
-  if(is.null(.kitInfo)){
+  if(is.null(.kit.info)){
     # Get package path.
     packagePath <- path.package("strvalidator", quiet = FALSE)
     subFolder <- "extdata"
@@ -69,19 +72,19 @@ getKit<-function(kit=NULL, what=NA, showMessages=FALSE, .kitInfo=NULL, debug=FAL
     
     filePath <- paste(packagePath, subFolder, fileName, sep=.separator)
     
-    .kitInfo <- read.delim(file=filePath, header = TRUE, sep = "\t", quote = "\"",
+    .kit.info <- read.delim(file=filePath, header = TRUE, sep = "\t", quote = "\"",
                            dec = ".", fill = TRUE, stringsAsFactors=FALSE)
     
   }
 
   # Available kits. Must match else if construct.
-  kits<-unique(.kitInfo$Short.Name)
+  kits<-unique(.kit.info$Short.Name)
   
 	# Check if NULL
 	if (is.null(kit)) {
 
 		# Print available kits
-		if (showMessages){
+		if (show.messages){
 			message("Available kits:")
 		}
 		res<-kits
@@ -106,7 +109,7 @@ getKit<-function(kit=NULL, what=NA, showMessages=FALSE, .kitInfo=NULL, debug=FAL
 		if (any(is.na(index))) {
 			
 			# Print available kits
-			if (showMessages){
+			if (show.messages){
 				message(paste("No matching kit! \nAvailable kits:", 
                       paste(kits, collapse=", ")))
 			}
@@ -115,7 +118,7 @@ getKit<-function(kit=NULL, what=NA, showMessages=FALSE, .kitInfo=NULL, debug=FAL
 		# Assign matching kit information.
 		} else {
 		  
-		  currentKit <- .kitInfo[.kitInfo$Short.Name==kits[index], ]
+		  currentKit <- .kit.info[.kit.info$Short.Name==kits[index], ]
       
       res <- data.frame(Panel = currentKit$Panel,
                         Short.Name = currentKit$Short.Name,

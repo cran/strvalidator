@@ -4,6 +4,8 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 28.08.2015: Added importFrom
+# 26.06.2015: Fixed hard-coded kit/dye set.
 # 05.05.2015: First version.
 
 #' @title Block And Prepare Data To Analyze Analytical Threshold
@@ -40,6 +42,11 @@
 #' 
 #' @return data.frame with added columns 'Dye' and 'ILS'.
 #' 
+#' @export
+#' 
+#' @importFrom utils str head
+#' 
+#' @seealso \code{\link{calculateAT}}
 
 
 blockAT <- function(data, ref=NULL, block.height=TRUE, height=500,
@@ -202,8 +209,8 @@ blockAT <- function(data, ref=NULL, block.height=TRUE, height=500,
 
   # Get all dyes.
   dyes <- as.character(unique(data$Dye))
-  colorsKit <- unique(getKit("ESX17", what="Color")$Color)
-  dyesKit <- addColor(colorsKit, have="Color", need="Dye")
+  dyeILS <- unique(data$Dye[data$ILS])
+  dyesKit <- setdiff(dyes, dyeILS)
   
   # Get the data sample names.
   sample <- unique(data$Sample.File.Name)

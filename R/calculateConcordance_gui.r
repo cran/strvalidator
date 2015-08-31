@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 28.08.2015: Added importFrom
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 22.06.2014: First version.
@@ -25,6 +26,8 @@
 #' @return TRUE
 #' 
 #' @export
+#' 
+#' @importFrom utils help head str
 #' 
 #' @seealso \code{\link{calculateConcordance}}
 
@@ -95,7 +98,7 @@ calculateConcordance_gui <- function(env=parent.frame(), savegui=NULL,
   
   f0g0[1,1] <- glabel(text="Dataset:", container=f0g0)
   
-  f0_list <- c("<Select dataset>", listObjects(env=env, objClass="data.frame"))
+  f0_list <- c("<Select dataset>", listObjects(env=env, obj.class="data.frame"))
   
   f0g0[1,2] <- dataset_drp <- gdroplist(items=f0_list, selected = 1,
                                         editable = FALSE, container = f0g0) 

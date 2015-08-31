@@ -8,6 +8,8 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 28.08.2015: Added importFrom
+# 26.06.2015: More precise warning messages (include sample name and marker).
 # 15.12.2014: Changed parameter names to format: lower.case
 # 20.01.2014: Changed 'saveImage_gui' for 'ggsave_gui'.
 # 16.01.2014: Adde option for selection of one or more scoring methods.
@@ -81,6 +83,8 @@
 #' 'MethodX', 'Method1', 'Method2', 'MethodL' and 'MethodL.Ph'.
 #' 
 #' @export
+#' 
+#' @importFrom utils str
 #' 
 #' @references
 #' Peter Gill et.al.,
@@ -719,7 +723,8 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
           
         } else {
           
-          warning(paste("Unhandled number of expected alleles (expected =",
+          warning(paste("Sample:", sampleNames[s], "Marker: ", markers[m],
+                        "- Unhandled number of expected alleles (expected =",
                         expected,"in sample",  sampleNames[s]),
                   call. = TRUE, immediate. = FALSE, domain = NULL)
           
@@ -748,7 +753,8 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
           
         } else {
           
-          warning(paste("Unhandled combination (dropCount =",
+          warning(paste("Sample:", sampleNames[s], "Marker: ", markers[m],
+                        "- Unhandled combination (dropCount =",
                         dropCount,", het =", het),
                   call. = TRUE, immediate. = FALSE, domain = NULL)
           

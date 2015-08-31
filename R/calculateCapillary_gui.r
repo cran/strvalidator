@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 28.08.2015: Added importFrom
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 06.05.2014: Implemented 'checkDataset'.
@@ -26,6 +27,8 @@
 #' @return TRUE
 #' 
 #' @export
+#' 
+#' @importFrom utils help head
 #' 
 #' @seealso \code{\link{calculateCapillary}}
 
@@ -93,7 +96,7 @@ calculateCapillary_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[1,1] <- glabel(text="Samples Table:", container=g0)
   
-  dfs <- c("<Select a dataset>", listObjects(env=env, objClass="data.frame"))
+  dfs <- c("<Select a dataset>", listObjects(env=env, obj.class="data.frame"))
   
   g0[1,2] <- g0_data_drp <- gdroplist(items=dfs, 
                            selected = 1,

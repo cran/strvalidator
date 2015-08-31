@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 29.08.2015: Added importFrom.
 # 05.05.2015: Changed parameter 'ignoreCase' to 'ignore.case' for 'checkSubset' function.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
@@ -27,9 +28,12 @@
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
 #' 
+#' @return TRUE
+#' 
 #' @export
 #' 
-#' @return TRUE
+#' @importFrom utils help head str
+#' @importFrom graphics title
 #' 
 #' @seealso \code{\link{tablePrecision}}, \code{\link{checkSubset}}
 
@@ -101,7 +105,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[1,1] <- glabel(text="Select dataset:", container=g0)
   
-  dfs <- c("<Select a dataset>", listObjects(env=env, objClass="data.frame"))
+  dfs <- c("<Select a dataset>", listObjects(env=env, obj.class="data.frame"))
   
   g0[1,2] <- g0_data_drp <- gdroplist(items=dfs, 
                            selected = 1,

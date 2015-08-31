@@ -4,6 +4,8 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 29.08.2015: Added importFrom.
+# 11.06.2015: Fixed title for histogram plot.
 # 09.06.2015: Fixed 'overlay boxplot' not saved.
 # 04.05.2015: Added 'Histogram'.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
@@ -36,6 +38,8 @@
 #' @param parent widget to get focus when finished.
 #' 
 #' @export
+#' 
+#' @importFrom utils help str head
 #' 
 #' @return TRUE
 
@@ -82,7 +86,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
   gh <- ggroup(container = gv, expand=FALSE, fill="both")
   
   savegui_chk <- gcheckbox(text="Save GUI settings", checked=FALSE, container=gh)
-
+  
   addSpring(gh)
   
   help_btn <- gbutton(text="Help", container=gh)
@@ -107,7 +111,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
   
   f0g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
                                                 listObjects(env=env,
-                                                            objClass="data.frame")),
+                                                            obj.class="data.frame")),
                                         selected = 1,
                                         editable = FALSE,
                                         container = f0g0) 
@@ -259,10 +263,10 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
   f1g4[2,2] <- f1_adjustbw_cbo <- gcombobox(items=f1_adjust,
                                             selected = 3, editable = TRUE,
                                             container=f1g4)
-
+  
   f1e3 <- gexpandgroup(text = "Histogram", horizontal=FALSE,
                        spacing = 5, container = f1) 
-
+  
   f1g5 <- glayout(container = f1e3, spacing = 1)
   
   f1g5[1,1] <- glabel(text="Adjust binwidth:", container=f1g5)
@@ -511,19 +515,19 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
           
           mainTitle <- paste("Cumulative density function (",
                              nb, " observations)", sep="")
-
+          
           yTitle <- "Proportion"
           
         } else if(how=="pdf"){
           
           mainTitle <- paste("Probability density function (",
                              nb, " observations)", sep="")
-
+          
           yTitle <- "Proportion"
           
         } else if(how=="qplot"){
           
-          mainTitle <- paste("Quick plot (",
+          mainTitle <- paste("Histogram (",
                              nb, " observations)", sep="")
           
           yTitle <- "Count"
@@ -552,7 +556,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
           xTitle <- val_column
           
         }
-
+        
       }
       
       # Create plots.
@@ -577,7 +581,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
         gp <- gp + geom_density(aes_string(x=val_column), kernel=val_kernel, adjust=val_adjustbw)
         
       } else if(how == "qplot"){
-
+        
         # Get data as vector.
         dv <- val_data[, val_column]
         
@@ -585,11 +589,11 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
           print("Create Histogram")
           str(head(dv))
         }
-
+        
         # Create plot.
         gp <- qplot(x=dv, binwidth=val_binwidth)
-
-        } else {
+        
+      } else {
         
         warning(paste("how=", how, "not implemented for plots!"))
         
