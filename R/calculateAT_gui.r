@@ -7,6 +7,8 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 11.11.2015: Added importFrom ggplot2.
+# 21.10.2015: Added attributes.
 # 28.08.2015: Added importFrom
 # 18.08.2015: Changed label for AT4 option.
 # 04.05.2015: First version.
@@ -32,6 +34,8 @@
 #' 
 #' @importFrom utils help head str
 #' @importFrom graphics title
+#' @importFrom ggplot2 ggtitle scale_shape_discrete ggplot facet_wrap geom_point
+#'  aes_string scale_colour_manual geom_rect
 #' 
 #' @seealso \code{\link{calculateAT}}, \code{\link{blockAT}},
 #'  \code{\link{checkSubset}}
@@ -714,6 +718,36 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
                                ignore.case=val_ignore,
                                word=val_word,
                                debug=debug)
+        
+
+        # Add attributes.
+        attr(datanew[[1]], which="calculateAT_gui, data") <- svalue(g0_data_drp)
+        attr(datanew[[1]], which="calculateAT_gui, ref") <- svalue(g0_ref_drp)
+        attr(datanew[[1]], which="calculateAT_gui, k") <- val_k
+        attr(datanew[[1]], which="calculateAT_gui, rank.t") <- val_t
+        attr(datanew[[1]], which="calculateAT_gui, alpha") <- val_a
+        attr(datanew[[1]], which="calculateAT_gui, block.height") <- val_block_h
+        attr(datanew[[1]], which="calculateAT_gui, height") <- val_height
+        attr(datanew[[1]], which="calculateAT_gui, block") <- val_block
+        attr(datanew[[1]], which="calculateAT_gui, range.sample") <- val_range
+        attr(datanew[[1]], which="calculateAT_gui, block.ils") <- val_block_ils
+        attr(datanew[[1]], which="calculateAT_gui, range.ils") <- val_range_ils
+        attr(datanew[[1]], which="calculateAT_gui, per.dye") <- val_block_d
+        attr(datanew[[1]], which="calculateAT_gui, ignore.case") <- val_ignore
+        attr(datanew[[1]], which="calculateAT_gui, word") <- val_word
+        
+        attr(datanew[[2]], which="calculateAT_gui, data") <- svalue(g0_data_drp)
+        attr(datanew[[2]], which="calculateAT_gui, ref") <- svalue(g0_ref_drp)
+        attr(datanew[[2]], which="calculateAT_gui, rank.t") <- val_t
+        attr(datanew[[2]], which="calculateAT_gui, block.height") <- val_block_h
+        attr(datanew[[2]], which="calculateAT_gui, height") <- val_height
+        attr(datanew[[2]], which="calculateAT_gui, block") <- val_block
+        attr(datanew[[2]], which="calculateAT_gui, range.sample") <- val_range
+        attr(datanew[[2]], which="calculateAT_gui, block.ils") <- val_block_ils
+        attr(datanew[[2]], which="calculateAT_gui, range.ils") <- val_range_ils
+        attr(datanew[[2]], which="calculateAT_gui, per.dye") <- val_block_d
+        attr(datanew[[2]], which="calculateAT_gui, ignore.case") <- val_ignore
+        attr(datanew[[2]], which="calculateAT_gui, word") <- val_word
         
         # Save data.
         saveObject(name=val_name1, object=datanew[[1]], parent=w, env=env)

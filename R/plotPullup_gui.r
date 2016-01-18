@@ -5,6 +5,10 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.01.2016: Fixed theme methods not found and added more themes.
+# 11.11.2015: Added importFrom gridExtra arrangeGrob, and ggplot2.
+# 11.11.2015: Added importFrom grid.
+# 11.11.2015: Added more themes.
 # 29.08.2015: Added importFrom.
 # 14.12.2014: Updated to handle gender -> sex.marker option in getKit.
 # 08.12.2014: First version.
@@ -30,6 +34,13 @@
 #' 
 #' @importFrom utils help str
 #' @importFrom stats as.formula
+#' @importFrom grid unit textGrob grid.newpage grid.draw
+#' @importFrom gridExtra arrangeGrob
+#' @importFrom ggplot2 ggplot aes_string geom_point position_jitter facet_grid
+#'  facet_wrap scale_colour_manual coord_cartesian guides guide_legend theme
+#'  element_text labs xlab ylab element_blank ggplotGrob theme_gray theme_bw
+#'  theme_linedraw theme_light theme_dark theme_minimal theme_classic
+#'  theme_void 
 #' 
 #' @seealso \url{http://docs.ggplot2.org/current/} for details on plot settings.
 
@@ -134,7 +145,7 @@ plotPullup_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent
                                       " samples)", sep="")
       
       # Detect kit.
-      kitIndex <- detectKit(.gData)
+      kitIndex <- detectKit(.gData, index=TRUE)
       # Select in dropdown.
       svalue(kit_drp, index=TRUE) <- kitIndex
       
@@ -192,8 +203,11 @@ plotPullup_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent
   
   f1g2 <- glayout(container = f1)
   f1g2[1,1] <- glabel(text="Plot theme:", anchor=c(-1 ,0), container=f1g2)
-  f1g2[1,2] <- f1_theme_drp <- gdroplist(items=c("theme_grey()","theme_bw()"),
-                                         selected=1,
+  items_theme <- c("theme_grey()","theme_bw()","theme_linedraw()",
+                   "theme_light()","theme_dark()","theme_minimal()",
+                   "theme_classic()","theme_void()")
+  f1g2[1,2] <- f1_theme_drp <- gdroplist(items = items_theme,
+                                         selected = 1,
                                          container = f1g2)
   
   f1_drop_chk <- gcheckbox(text="Drop sex markers",

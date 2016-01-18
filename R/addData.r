@@ -1,10 +1,12 @@
 ################################################################################
 # TODO LIST
-# TODO: optional columns.
 # TODO: make 'exact' a vector.
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 09.01.2016: Added more attributes to result.
+# 30.11.2015: Added attributes to result.
+# 30.11.2015: Added parameter 'what' to specify columns to add.
 # 15.12.2014: Changed parameter names to format: lower.case
 # 30.09.2013: Fixed bug when exact=FALSE
 # 17.09.2013: Updated example to support new 'getKit' structure.
@@ -29,6 +31,7 @@
 #' @param then.by.col character, secondary key column.
 #' @param exact logical, TRUE matches keys exact.
 #' @param ignore.case logical, TRUE ignore case.
+#' @param what character vector defining columns to add. Default is all new columns.
 #' @param debug logical indicating printing debug information.
 #' 
 #' @return data.frame the original data frame containing additional columns.
@@ -47,16 +50,24 @@
 #' print(z)
 
 addData <- function(data, new.data, by.col, then.by.col=NULL, exact=TRUE,
-                    ignore.case=TRUE, debug=FALSE){
+                    ignore.case=TRUE, what=NULL, debug=FALSE){
   
-  # Adds columns in 'new.data' to 'data' by column 'by.col.
-  
+  # Parameters that are changed by the function must be saved first.
+  attr_data <- substitute(data)
+
   if(debug){
     print(paste("IN:", match.call()[[1]]))
   }
-
-  colNames <- names(data)
   
+  # Prepare -------------------------------------------------------------------
+  
+  # Remove unused colums.
+  if(!is.null(what)){
+    new.data <- new.data[ , c(by.col, then.by.col, what)]
+  }
+
+  # Get column names.
+  colNames <- names(data)
   colNamesNew <- names(new.data)
   colNamesNew <- colNamesNew[colNamesNew!=by.col]
   if(!is.null(then.by.col)){
@@ -225,6 +236,18 @@ addData <- function(data, new.data, by.col, then.by.col=NULL, exact=TRUE,
     }
   }
   
+  # Add attributes to result.
+  attr(data, which="addData, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
+  attr(data, which="addData, call") <- match.call()
+  attr(data, which="addData, date") <- date()
+  attr(data, which="addData, data") <- attr_data
+  attr(data, which="addData, new.data") <- substitute(new.data)
+  attr(data, which="addData, by.col") <- by.col
+  attr(data, which="addData, then.by.col") <- then.by.col
+  attr(data, which="addData, exact") <- exact
+  attr(data, which="addData, ignore.case") <- ignore.case
+  attr(data, which="addData, what") <- what
+
   if(debug){
     print(paste("EXIT:", match.call()[[1]]))
   }

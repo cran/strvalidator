@@ -1,9 +1,13 @@
 ################################################################################
 # TODO LIST
-# TODO: ...
+# TODO: Currently destroy information in unsupported columns e.g. Dye -> NA
+#       if add missing markers is TRUE and markers are missing.
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 09.01.2016: Added more attributes to result.
+# 16.12.2015: Added attributes to result and improved use of 'grepl'.
+# 15.12.2015: Added option to use 'exact' matching of sample names.
 # 29.08.2015: Added importFrom.
 # 09.04.2015: Added option 'invert' to filter peaks NOT in reference.
 # 15.12.2014: Changed parameter names to format: lower.case
@@ -44,6 +48,7 @@
 #' @param add.missing.loci logical. TRUE add loci present in ref but not in data.
 #' Overrides keep.na=FALSE.   
 #' @param ignore.case logical TRUE ignore case.
+#' @param exact logical TRUE use exact matching of sample names.
 #' @param invert logical TRUE filter peaks NOT matching the reference.
 #' @param debug logical indicating printing debug information.
 #' 
@@ -51,13 +56,14 @@
 #' @export
 #' 
 #' @importFrom plyr rbind.fill
-#' @importFrom utils str flush.console
+#' @importFrom utils str
 #' 
 #' @return data.frame with extracted result.
 #' 
 
 filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
-                          ignore.case=TRUE, invert=FALSE, debug=FALSE){
+                          ignore.case=TRUE, exact=FALSE,
+                          invert=FALSE, debug=FALSE){
 
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -71,6 +77,8 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
     print(keep.na)
     print("ignore.case:")
     print(ignore.case)
+    print("exact:")
+    print(exact)
     print("invert:")
     print(invert)
   }
@@ -117,21 +125,48 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
          call. = TRUE)
   }
 
+  # Check logical flags.
+  if(!is.logical(add.missing.loci)){
+    stop("'add.missing.loci' must be logical", call. = TRUE)
+  }
+  if(!is.logical(keep.na)){
+    stop("'keep.na' must be logical", call. = TRUE)
+  }
+  if(!is.logical(ignore.case)){
+    stop("'ignore.case' must be logical", call. = TRUE)
+  }
+  if(!is.logical(exact)){
+    stop("'exact' must be logical", call. = TRUE)
+  }
+  if(!is.logical(invert)){
+    stop("'invert' must be logical", call. = TRUE)
+  }
+  
   # PREPARE -------------------------------------------------------------------
   
   # Check if character data.
   if(!is.character(ref$Allele)){
+    
     message("'Allele' must be character. 'ref' converted")
+    
     data$Allele <- as.character(data$Allele)
+    
   }
+  
   if(!is.character(data$Allele)){
+    
     message("'Allele' must be character. 'data' converted")
+    
     data$Allele <- as.character(data$Allele)
+    
   }
 
   if(add.missing.loci & !keep.na){
-    warning("add.missing.loci overrides 'keep.na'. Setting keep.na=TRUE")
+    
+    message("add.missing.loci overrides 'keep.na'. Setting keep.na=TRUE")
+    
     keep.na=TRUE
+    
   }
   
   # SELECT METHOD -------------------------------------------------------------
@@ -148,31 +183,48 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
 
     # Clean NA (both 'false' and true NA).
     naAllele <- length(data$Allele[data$Allele=="NA"])
+    
     if(naAllele > 0){
-      data$Allele[data$Allele=="NA"] <- NA
+      
+      data$Allele[data$Allele == "NA"] <- NA
+      
       message(paste(naAllele, "\"NA\" in 'Allele' converted to NA"))
+      
     }
+
+    # Check if NA in alleles.
     naAllele <- sum(is.na(data$Allele))
     if(naAllele > 0){
-      data <- data[!is.na(data$Allele),]
+      
+      data <- data[!is.na(data$Allele), ]
+      
       message(paste("Removed", naAllele, "rows where Allele=<NA>"))
+      
     }
 
     # Get reference names.
     if("Sample.Name" %in% names(ref)){
+      
       # Get reference names from reference dataset.
       refSampleNames <- unique(ref$Sample.Name)
+      
     } else {
+      
       # Get reference names from dataset.
       refSampleNames <- unique(data$Sample.Name)
-    }
       
+    }
+
+    # Add regex for exact matching.
+    if(exact){
+      refSampleNames <- paste("^", refSampleNames, "$", sep="")
+    }
+
     if(debug){
       print("ref samples:")
       print(refSampleNames)
       print("data samples:")
       print(unique(data$Sample.Name))
-      flush.console()
     }
     
     # Initiate boolean match vector to FALSE.
@@ -183,21 +235,28 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
     currentRef <- ref
     
     # Loop through all reference samples.
-    for(s in seq(along=refSampleNames)){
+    for(s in seq(along = refSampleNames)){
       
       if("Sample.Name" %in% names(ref)){
+        
         # Get current reference subset.
-        currentRef <- ref[ref$Sample.Name==refSampleNames[s],]
+        selection <- grepl(refSampleNames[s], ref$Sample.Name,
+                            ignore.case = ignore.case)
+        currentRef <- ref[selection, ]
+        
       }
-      
-      # Select current subset.
-      if(ignore.case){
-        selectedSamples <- grepl(toupper(refSampleNames[s]),
-                                 toupper(data$Sample.Name))
-      } else {
-        selectedSamples <- grepl(refSampleNames[s], data$Sample.Name)
+
+      # Select matching samples.
+      selectedSamples <- grepl(refSampleNames[s], data$Sample.Name,
+                               ignore.case = ignore.case)
+
+      if(debug){
+        print("Current ref:")
+        print(refSampleNames[s])
+        print("Selected samples:")
+        print(unique(data[selectedSamples, ]$Sample.Name))
       }
-      
+
       # Get current marker.
       refMarkers <- unique(currentRef$Marker)
       
@@ -205,14 +264,14 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
       for(m in seq(along=refMarkers)){
         
         # Get reference alleles.
-        refAlleles <- currentRef$Allele[currentRef$Marker==refMarkers[m]]
+        refAlleles <- currentRef$Allele[currentRef$Marker == refMarkers[m]]
         
         # Loop through all alleles.
-        for(a in seq(along=refAlleles)){
+        for(a in seq(along = refAlleles)){
           
           # Get matching alleles in data.
-          mM <- data$Marker==refMarkers[m]
-          mA <- data$Allele==refAlleles[a]
+          mM <- data$Marker == refMarkers[m]
+          mA <- data$Allele == refAlleles[a]
           currentMatch <- selectedSamples & mM & mA
           
           # 'Concatenate' booleans
@@ -235,11 +294,13 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
     }
     
     # Create an empty data frame to hold the result.
-    resDf <- data.frame(t(rep(NA,length(data))))
+    resDf <- data.frame(t(rep(NA, length(data))))
+    
     # Add column names.
     names(resDf) <- names(data)
+    
     # Remove all NAs
-    resDf  <- resDf [-1,]
+    resDf  <- resDf[-1, ]
     
     if(debug){
       print("resDf:")
@@ -248,32 +309,50 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
 
     # Get reference names.
     if("Sample.Name" %in% names(ref)){
-      # Get reference names from reference dataset.
-      refSampleNames<- unique(ref$Sample.Name)
-    } else {
-      # Get reference names from dataset.
-      refSampleNames<- unique(data$Sample.Name)
-    }
       
+      # Get reference names from reference dataset.
+      refSampleNames <- unique(ref$Sample.Name)
+      
+    } else {
+      
+      # Get reference names from dataset.
+      refSampleNames <- unique(data$Sample.Name)
+      
+    }
+    
+    # Add regex for exact matching.
+    if(exact){
+      refSampleNames <- paste("^", refSampleNames, "$", sep="")
+    }
+
     # Get reference sample i.e. use one reference for all samples.
     # NB! only used if no 'Sample.Name' column in ref.
     currentRef <- ref
       
     # Loop through all reference samples.
-    for(r in seq(along=refSampleNames)){
+    for(r in seq(along = refSampleNames)){
       
       if("Sample.Name" %in% names(ref)){
+        
         # Get current reference subset.
-        currentRef <- ref[ref$Sample.Name==refSampleNames[r],]
+        selection <- grepl(refSampleNames[r], ref$Sample.Name,
+                           ignore.case = ignore.case)
+        currentRef <- ref[selection, ]
+        
       }
       
-      # Get current data subset.
-      if(ignore.case){
-        selectedSamples <- grepl(toupper(refSampleNames[r]),
-                                 toupper(data$Sample.Name))
-      } else {
-        selectedSamples <- grepl(refSampleNames[r], data$Sample.Name)
+      # Select matching samples.
+      selectedSamples <- grepl(refSampleNames[r], data$Sample.Name,
+                               ignore.case = ignore.case)
+      
+      if(debug){
+        print("Current ref:")
+        print(refSampleNames[r])
+        print("Selected samples:")
+        print(unique(data[selectedSamples, ]$Sample.Name))
       }
+
+      # Get selected samples.
       currentDataSubset <- data[selectedSamples, ]
 
       # Get sample names.
@@ -282,6 +361,7 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
       # Get current marker.
       refMarkers <- unique(currentRef$Marker)
       
+      # Loop over all samples.
       for(s in seq(along=dataSampleNames)){
 
         # Get current sample
@@ -294,16 +374,16 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
           refAlleles <- currentRef$Allele[currentRef$Marker==refMarkers[m]]
 
           # Select current marker.
-          selection <- currentData$Marker==refMarkers[m]
+          selection <- currentData$Marker == refMarkers[m]
           tmpDf <- currentData[selection, ]
 
           # dataAlleles is of length 0 if no matching marker.
           if(nrow(tmpDf) == 0 & add.missing.loci){
             
             # Add missing marker, allele will become NA in rbind.fill.
-            tmpDf <- data.frame(Sample.Name=dataSampleNames[s],
-                                Marker=refMarkers[m],
-                                stringsAsFactors=FALSE)
+            tmpDf <- data.frame(Sample.Name = dataSampleNames[s],
+                                Marker = refMarkers[m],
+                                stringsAsFactors = FALSE)
             
             if(debug){
               print(paste("missing marker added:", refMarkers[m]))
@@ -313,19 +393,27 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
 
             # Filter alleles and add to selection.
             if(invert){
+              
+              # Select peaks not in reference.
               selection <- selection & !currentData$Allele %in% refAlleles
+              
             } else {
+              
+              # Select peaks matching reference.
               selection <- selection & currentData$Allele %in% refAlleles
+              
             }
+            
+            # Get selected data.            
             tmpDf <- currentData[selection, ]
             
             # matching is of length 0 if no matching allele.
             if(nrow(tmpDf) == 0 & keep.na){
               
               # Add missing marker, allele will become NA in rbind.fill.
-              tmpDf <- data.frame(Sample.Name=dataSampleNames[s],
-                                  Marker=refMarkers[m],
-                                  stringsAsFactors=FALSE)
+              tmpDf <- data.frame(Sample.Name = dataSampleNames[s],
+                                  Marker = refMarkers[m],
+                                  stringsAsFactors = FALSE)
               
               if(debug){
                 print(paste("NA kept for marker", refMarkers[m]))
@@ -340,6 +428,7 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
             print(tmpDf)
           }
           
+          # Combine result.
           resDf <- plyr::rbind.fill(resDf, tmpDf)
           
         }
@@ -348,6 +437,18 @@ filterProfile <- function(data, ref, add.missing.loci=FALSE, keep.na=FALSE,
     }
 
   }
+  
+  # Add attributes to result.
+  attr(resDf, which="filterProfile, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
+  attr(resDf, which="filterProfile, call") <- match.call()
+  attr(resDf, which="filterProfile, date") <- date()
+  attr(resDf, which="filterProfile, data") <- substitute(data)
+  attr(resDf, which="filterProfile, ref") <- substitute(ref)
+  attr(resDf, which="filterProfile, add.missing.loci") <- add.missing.loci
+  attr(resDf, which="filterProfile, keep.na") <- keep.na
+  attr(resDf, which="filterProfile, ignore.case") <- ignore.case
+  attr(resDf, which="filterProfile, exact") <- exact
+  attr(resDf, which="filterProfile, invert") <- invert
   
   # RETURN --------------------------------------------------------------------
   

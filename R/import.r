@@ -1,9 +1,16 @@
 ################################################################################
 # TODO LIST
-# TODO: re-make function to read line and specify type for each column?
+# TODO: Update to use 'fread' when problem with colClasses is solved.
+
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 09.01.2016: Added more attributes to result.
+# 15.12.2015: Removed "0" from the default 'na.strings'.
+# 04.12.2015: Added parameter 'na.strings'.
+# 09.11.2015: Added "0" to 'na.strings' in 'read.table'.
+# 06.10.2015: Added call to 'colConvert' to convert known numeric columns.
+# 05.10.2015: Added attributes.
 # 31.08.2015: Removed option to manually pick folder using 'choose.dir'.
 # 29.08.2015: Added importFrom.
 # 01.06.2015: Re-named column name 'File' to 'File.Name' to increase specificity in 'trim'.
@@ -20,14 +27,8 @@
 #              and 'resultFolder' -> 'folder.name'.
 # 12.11.2013: Changed 'rbind' to 'rbind.fill' from package 'plyr'.
 # 13.06.2013: Added parameter 'debug'. Fixed regexbug when importing from folder.
-# <13.06.2013: Renamed from importGM to import.
-# <13.06.2013: Added parameter 'file.name' and 'folder.name' for direct import.
-# <13.06.2013: Changed regex from (".",".",extension, sep="") to (".*","\\.",extension, sep="")
-# <13.06.2013: Roxygenized.
-# <13.06.2013: add column 'File' when importing from a folder.
-# <13.06.2013: new parameter 'extension' (fixes error in folder import)
 
-#' @title Import Data.
+#' @title Import Data
 #'
 #' @description
 #' Import text files and apply post processing.
@@ -65,6 +66,7 @@
 #'  removed (FALSE).
 #' @param auto.slim logical indicating if dataset should be slimmed.
 #' @param slim.na logical indicating if rows without data should remain.
+#' @param na.strings character vector with strings to be replaced by NA.
 #' @param debug logical indicating printing debug information.
 #' 
 #' 
@@ -74,6 +76,7 @@
 #' 
 #' @importFrom plyr rbind.fill
 #' @importFrom utils read.table
+# @importFrom data.table fread
 #' 
 #' @seealso \code{\link{trim}}, \code{\link{slim}}, \code{\link{list.files}}, \code{\link{read.table}}
 
@@ -87,6 +90,7 @@ import <- function (folder = TRUE, extension="txt",
                     auto.trim = FALSE, trim.samples = NULL,
                     trim.invert = FALSE,
                     auto.slim = FALSE, slim.na = TRUE,
+                    na.strings = c("NA",""),
                     debug = FALSE){
   
   if(debug){
@@ -183,14 +187,25 @@ import <- function (folder = TRUE, extension="txt",
     
     # Read files.
     for (f in seq(along=import.file)) {
+
+      # Should change to more efficient and simpler 'fread' but
+      # problem is that autodetection of colClasses does not always work
+      # and it is not possible(?) to set all to character.
+      # Use read.table for the time being.
+      # Read a file.  
+      # tmpdf <- data.table::fread(import.file[f], data.table=FALSE)
       
+      # Ensures column names are identical as when read.table was used.
+      # Needed since many functions specify columns by name.
+      # names(tmpdf) <- make.names(colnames(tmpdf))
+
       # Read a file.  
       tmpdf <- read.table(import.file[f], header = TRUE,
-                        sep = separator, fill = TRUE,
-                        na.strings = c("NA",""),
-                        colClasses = "character",
-                        stringsAsFactors=FALSE)
-
+                          sep = separator, fill = TRUE,
+                          na.strings = na.strings,
+                          colClasses = "character",
+                          stringsAsFactors=FALSE)
+      
       # Autotrim datset (message before loop).
       if(auto.trim){
         tmpdf <- trim(data=tmpdf, samples=trim.samples,
@@ -254,7 +269,30 @@ import <- function (folder = TRUE, extension="txt",
     }
     
   }
-  
+
+  # Convert common known numeric columns.
+  res <- colConvert(data=res)
+    
+  # Add attributes.
+  attr(res, which="import, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
+  attr(res, which="import, call") <- match.call()
+  attr(res, which="import, date") <- date()
+  attr(res, which="import, folder") <- folder
+  attr(res, which="import, extension") <- extension
+  attr(res, which="import, suffix") <- suffix
+  attr(res, which="import, prefix") <- prefix
+  attr(res, which="import, import.file") <- import.file
+  attr(res, which="import, folder.name") <- folder.name
+  attr(res, which="import, file.name") <- time.stamp
+  attr(res, which="import, separator") <- separator
+  attr(res, which="import, ignore.case") <- ignore.case
+  attr(res, which="import, auto.trim") <- auto.trim
+  attr(res, which="import, trim.samples") <- trim.samples
+  attr(res, which="import, trim.invert") <- trim.invert
+  attr(res, which="import, auto.slim") <- auto.slim
+  attr(res, which="import, slim.na") <- slim.na
+  attr(res, which="import, na.strings") <- na.strings
+
   return(res)
   
 }

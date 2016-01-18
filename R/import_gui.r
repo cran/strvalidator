@@ -1,9 +1,13 @@
 ################################################################################
 # TODO LIST
 # TODO: Check folder DOES NOT WORK BECAUSE \ IS ESCAPE CHARACTER.
+# TODO: Update when 'import' is changed to use 'fread'.
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 15.12.2015: Removed "0" from the default 'na.strings'.
+# 04.12.2015: Implemented new parameter 'na.strings'.
+# 05.10.2015: Added attributes.
 # 29.08.2015: Added importFrom.
 # 23.05.2015: Added new options available in 'import'.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
@@ -50,24 +54,24 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
   # Define variables.
   defaultDir <- "Select a directory..."
   defaultFile <- "Select a file..."
-
   
-# Add new parameter , settings=FALSE  
-#  # Load settings.
-#   if(settings){
-#     if(exists(".strvalidator_import_gui_file")){
-#       defaultFile <- .strvalidator_import_gui_file
-#     }
-#     if(exists(".strvalidator_import_gui_dir")){
-#       defaultDir <- .strvalidator_import_gui_dir
-#     }
-#     
-#   }
+  
+  # Add new parameter , settings=FALSE  
+  #  # Load settings.
+  #   if(settings){
+  #     if(exists(".strvalidator_import_gui_file")){
+  #       defaultFile <- .strvalidator_import_gui_file
+  #     }
+  #     if(exists(".strvalidator_import_gui_dir")){
+  #       defaultDir <- .strvalidator_import_gui_dir
+  #     }
+  #     
+  #   }
   
   # Main window.  
   w <- gwindow(title="Import from files", 
                visible=FALSE)
-
+  
   # Runs when window is closed.
   addHandlerDestroy(w, handler = function (h, ...) {
     
@@ -87,7 +91,7 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
                use.scrollwindow=FALSE,
                container = w,
                expand=TRUE) 
-
+  
   # Help button group.
   gh <- ggroup(container = gv, expand=FALSE, fill="both")
   
@@ -103,21 +107,21 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
     print(help("import_gui", help_type="html"))
     
   })
-
+  
   # GUI #######################################################################
-
+  
   options <- c("Import multiple files from a directory into one dataset", 
                "Import a single file")
-
+  
   import_opt <- gradio(items=options, selected=2,
                        horizontal=FALSE, container=gv)
-
+  
   addHandlerChanged(import_opt, handler = function (h, ...) {
-
+    
     .refresh()
     
   })
-
+  
   import_file <- gfilebrowse(text=defaultFile,
                              initial.filename = defaultFile, # Not implemented in current version?
                              type="open",
@@ -132,27 +136,31 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
                                container=gv)
   
   enabled(import_folder) <- FALSE
-
+  
   # OPTIONS -------------------------------------------------------------------
-
+  
   opt_frm <- gframe(text="Options", pos=0, horizontal=FALSE, container=gv)
-
+  
   opt_file_chk <- gcheckbox(text="Save file name", checked = TRUE,
-                             container=opt_frm)
-
+                            container=opt_frm)
+  
   opt_time_chk <- gcheckbox(text="Save file time stamp", checked = TRUE,
                             container=opt_frm)
-
+  
   glabel(text="Delimiter:", container=opt_frm, anchor=c(-1 ,0))
   opt_sep_drp <- gdroplist(items=c("TAB","SPACE","COMMA","SEMICOLON"),
                            selected=1, editable=FALSE, container=opt_frm)
+  
+  glabel(text="NA strings (separated by comma):",
+         container=opt_frm, anchor=c(-1 ,0))
+  opt_na_edt <- gedit(text="NA,,", container=opt_frm)
 
   opt_trim_chk <- gcheckbox(text="Auto trim samples", checked = FALSE,
-                             container=opt_frm)
-
+                            container=opt_frm)
+  
   opt_slim_chk <- gcheckbox(text="Auto slim repeated columns",
-                             checked = FALSE, container=opt_frm)
-
+                            checked = FALSE, container=opt_frm)
+  
   addHandlerChanged(opt_trim_chk, handler = function (h, ...) {
     
     .refresh()
@@ -164,18 +172,18 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
     .refresh()
     
   })
-
-
+  
+  
   # MULTIPLE FILES OPTIONS ----------------------------------------------------
   
   multi_frm <- gexpandgroup(text="Multiple files options",
                             horizontal=FALSE, container=gv)
-
+  
   enabled(multi_frm) <- FALSE
-
+  
   multi_case_chk <- gcheckbox(text="Ignore case", checked = TRUE,
                               container=multi_frm)
-
+  
   glabel(text="Prefix:", container=multi_frm, anchor=c(-1 ,0))
   multi_pre_edt <- gedit(initial.msg="", width = 25,
                          container=multi_frm, expand=TRUE)
@@ -187,21 +195,21 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
   glabel(text="Extension:", container=multi_frm, anchor=c(-1 ,0))
   multi_ext_edt <- gedit(text="txt", width = 25,
                          container=multi_frm, expand=TRUE)
-
+  
   # TRIM ----------------------------------------------------------------------
   
   trim_frm <- gexpandgroup(text="Trim options",
                            horizontal=FALSE, container=gv)
-
+  
   glabel(text="Trim samples containing the word (separate by pipe |):",
          container=trim_frm, anchor=c(-1 ,0))
-
+  
   trim_samples_edt <- gedit(text="pos|neg|ladder",
                             width = 25, container=trim_frm, expand=TRUE)
-
+  
   trim_invert_chk <- gcheckbox(text="Invert (remove matching samples)", checked=TRUE,
                                container=trim_frm)
-
+  
   # SLIM ----------------------------------------------------------------------
   
   slim_frm <- gexpandgroup(text="Slim options",
@@ -209,23 +217,23 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
   
   slim_fix_chk <- gcheckbox(text="Keep all fixed (keep a row even if no data)",
                             checked=TRUE, container=slim_frm)
-
+  
   # SAVE --------------------------------------------------------------------
-
+  
   save_frm <- gframe(text="Save options", pos=0,
                      horizontal=FALSE, container=gv)
-
+  
   glabel(text="Name:", container=save_frm, anchor=c(-1 ,0))
   import_edt <- gedit(initial.msg="Name for new dataset",
                       width = 25, container=save_frm, expand=TRUE)
-
+  
   # IMPORT --------------------------------------------------------------------
-
+  
   import_btn <- gbutton(text="Import", border=TRUE, container=gv)
-
+  
   
   addHandlerChanged(import_btn, handler = function(h, ...) {
-
+    
     # Get values.
     file_val <- svalue(import_file)
     folder_val <- svalue(import_folder)
@@ -238,12 +246,13 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
     get_file_val <- svalue(opt_file_chk)
     get_time_val <- svalue(opt_time_chk)
     del_val <- svalue(opt_sep_drp, index=TRUE)
+    na_val <- svalue(opt_na_edt)
     trim_val <- svalue(opt_trim_chk)
     trim_what_val <- svalue(trim_samples_edt)
     trim_invert_val <- svalue(trim_invert_chk)
     slim_val <- svalue(opt_slim_chk)
     slim_fix_val <- svalue(slim_fix_chk)
-        
+    
     # Assign a delimiter character.
     if(del_val == 1){
       val_delimiter <- "\t"   
@@ -254,9 +263,13 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
     } else if(del_val == 4){
       val_delimiter <- ";"
     } 
-  
-    ok <- TRUE
     
+    # Convert to character vector.
+    val_na <- unlist(strsplit(na_val,","))
+
+    # Initiate variable.  
+    ok <- TRUE
+
     # Check that a name has been provided for the new data object.
     if(nchar(val_name) == 0){
       
@@ -266,22 +279,22 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
       ok <- FALSE
       
     }
-
-#     # TODO: DOES NOT WORK BECAUSE \ IS ESCAPE CHARACTER.
-#     # Check that folder exist.
-#     if(!file.exists(folder_val)){
-# 
-#       ok <- FALSE
-#       
-#       gmessage("The provided folder does not exist or is not accessible.",
-#                title="Error", icon="error", parent=w)
-#       
-#     }
+    
+    #     # TODO: DOES NOT WORK BECAUSE \ IS ESCAPE CHARACTER.
+    #     # Check that folder exist.
+    #     if(!file.exists(folder_val)){
+    # 
+    #       ok <- FALSE
+    #       
+    #       gmessage("The provided folder does not exist or is not accessible.",
+    #                title="Error", icon="error", parent=w)
+    #       
+    #     }
     
     
     # Check if ok to import data to 'env'.
     if(ok){
-
+      
       # Set arguments.
       if(folder_opt_val){
         file_val <- NA
@@ -318,6 +331,10 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
         print(get_time_val)
         print("del_val")
         print(del_val)
+        print("na_val")
+        print(na_val)
+        print("val_na")
+        print(val_na)
         print("trim_val")
         print(trim_val)
         print("trim_what_val")
@@ -350,6 +367,7 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
                         trim.invert=trim_invert_val,
                         auto.slim=slim_val,
                         slim.na=slim_fix_val,
+                        na.strings=val_na,
                         debug=debug)
       
       if(length(datanew) == 0){
@@ -365,7 +383,26 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
         enabled(import_btn) <- TRUE
         
       } else {
-
+        
+        # Add attributes.
+        attr(datanew, which="import_gui, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
+        attr(datanew, which="import_gui, folder") <- folder_opt_val
+        attr(datanew, which="import_gui, extension") <- extension_val
+        attr(datanew, which="import_gui, suffix") <- suffix_val
+        attr(datanew, which="import_gui, prefix") <- prefix_val
+        attr(datanew, which="import_gui, import.file") <- file_val
+        attr(datanew, which="import_gui, folder.name") <- folder_val
+        attr(datanew, which="import_gui, file.name") <- get_file_val
+        attr(datanew, which="import_gui, time.stamp") <- get_time_val
+        attr(datanew, which="import_gui, ignore.case") <- ignore_val
+        attr(datanew, which="import_gui, auto.trim") <- trim_val
+        attr(datanew, which="import_gui, trim.samples") <- trim_what_val
+        attr(datanew, which="import_gui, trim.invert") <- trim_invert_val
+        attr(datanew, which="import_gui, auto.slim") <- slim_val
+        attr(datanew, which="import_gui, slim.na") <- slim_fix_val
+        attr(datanew, which="import_gui, separator") <- val_delimiter
+        attr(datanew, which="import_gui, na.strings") <- val_na
+        
         # Save data.
         saveObject(name=val_name, object=datanew, parent=w, env=env)
         
@@ -377,7 +414,7 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
     }
     
   } )
-
+  
   # INTERNAL FUNCTIONS ########################################################
   
   .refresh <- function(){
@@ -395,7 +432,7 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
       enabled(trim_samples_edt) <- FALSE
       enabled(trim_invert_chk) <- FALSE
     }
-
+    
     if(val_slim){
       enabled(slim_fix_chk) <- TRUE
     } else {
@@ -413,7 +450,7 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
     }
     
   }
-
+  
   .loadSavedSettings <- function(){
     
     # First check status of save flag.
@@ -449,6 +486,9 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
       }
       if(exists(".strvalidator_import_gui_sep", envir=env, inherits = FALSE)){
         svalue(opt_sep_drp) <- get(".strvalidator_import_gui_sep", envir=env)
+      }
+      if(exists(".strvalidator_import_gui_na", envir=env, inherits = FALSE)){
+        svalue(opt_na_edt) <- get(".strvalidator_import_gui_na", envir=env)
       }
       if(exists(".strvalidator_import_gui_ignore", envir=env, inherits = FALSE)){
         svalue(multi_case_chk) <- get(".strvalidator_import_gui_ignore", envir=env)
@@ -494,6 +534,7 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
       assign(x=".strvalidator_import_gui_file", value=svalue(opt_file_chk), envir=env)
       assign(x=".strvalidator_import_gui_time", value=svalue(opt_time_chk), envir=env)
       assign(x=".strvalidator_import_gui_sep", value=svalue(opt_sep_drp), envir=env)
+      assign(x=".strvalidator_import_gui_na", value=svalue(opt_na_edt), envir=env)
       assign(x=".strvalidator_import_gui_ignore", value=svalue(multi_case_chk), envir=env)
       assign(x=".strvalidator_import_gui_prefix", value=svalue(multi_pre_edt), envir=env)
       assign(x=".strvalidator_import_gui_suffix", value=svalue(multi_suf_edt), envir=env)
@@ -520,6 +561,9 @@ import_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
       }
       if(exists(".strvalidator_import_gui_sep", envir=env, inherits = FALSE)){
         remove(".strvalidator_import_gui_sep", envir = env)
+      }
+      if(exists(".strvalidator_import_gui_na", envir=env, inherits = FALSE)){
+        remove(".strvalidator_import_gui_na", envir = env)
       }
       if(exists(".strvalidator_import_gui_ignore", envir=env, inherits = FALSE)){
         remove(".strvalidator_import_gui_ignore", envir = env)

@@ -4,6 +4,9 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.01.2016: Fixed theme methods not found and added more themes.
+# 11.11.2015: Added importFrom grid unit.c, gridExtra arrangeGrob, and ggplot2.
+# 11.11.2015: Added more themes.
 # 29.08.2015: Added importFrom.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 12.09.2014: Filter rows with Allele=NA (Fixes issue #6).
@@ -36,12 +39,16 @@
 #' 
 #' @export
 #' 
-# @importFrom gridExtra arrangeGrob
-#' @importFrom grid unit textGrob grid.newpage grid.draw
+#' @importFrom gridExtra arrangeGrob
+#' @importFrom grid unit textGrob grid.newpage grid.draw unit.c
 # @importFrom gtable gtable_add_grob gtable
 #' @importFrom utils help str head
 #' @importFrom grDevices palette
 #' @importFrom stats as.formula
+#' @importFrom ggplot2 ggplot geom_point aes_string geom_boxplot facet_grid
+#'  facet_wrap coord_cartesian labs xlab ylab theme element_text element_blank
+#'  ggplotGrob theme_gray theme_bw theme_linedraw theme_light theme_dark
+#'  theme_minimal theme_classic theme_void 
 #' 
 #' @seealso \url{http://docs.ggplot2.org/current/} for details on plot settings.
 #' 
@@ -138,7 +145,7 @@ plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
       svalue(f5_save_edt) <- paste(val_obj, "_ggplot", sep="")
       
       # Detect kit.
-      kitIndex <- detectKit(.gData)
+      kitIndex <- detectKit(.gData, index=TRUE)
       # Select in dropdown.
       svalue(kit_drp, index=TRUE) <- kitIndex
       
@@ -209,8 +216,11 @@ plotPrecision_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
                                      container = f1g2)
 
   f1g2[2,1] <- glabel(text="Plot theme:", anchor=c(-1 ,0), container=f1g2)
-  f1g2[2,2] <- f1_theme_drp <- gdroplist(items=c("theme_grey()","theme_bw()"),
-                                         selected=1,
+  items_theme <- c("theme_grey()","theme_bw()","theme_linedraw()",
+                   "theme_light()","theme_dark()","theme_minimal()",
+                   "theme_classic()","theme_void()")
+  f1g2[2,2] <- f1_theme_drp <- gdroplist(items = items_theme,
+                                         selected = 1,
                                          container = f1g2)
   
   

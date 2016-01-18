@@ -7,6 +7,16 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.01.2016: Fixed theme methods not found and added more themes.
+# 04.01.2016: Fixed error object 'val_ncol' not found when val_wrap=1.
+# 30.12.2015: Wrapping options changed to radio button and implemented by Dye.
+# 30.12.2015: Changed default for drop sex markers to FALSE.
+# 30.12.2015: Wrapped 'is.numeric' with checking that columns exist.
+# 19.11.2015: Changed axes default to 'fixed' to avoid common plot error.
+# 11.11.2015: Added importFrom gridExtra arrangeGrob, and ggplot2.
+# 11.11.2015: Added more themes.
+# 08.11.2015: Added new plot options 'Hb vs. Marker' and 'Lb vs. Marker'.
+# 08.11.2015: Added options to plot all data 'Facet per marker and wrap by dye'. 
 # 29.08.2015: Added importFrom.
 # 17.04.2015: Included a check for plot facet error caused by all NA's.
 # 14.12.2014: Updated to handle gender -> sex.marker option in getKit.
@@ -21,12 +31,6 @@
 # 14.04.2014: Fixed position_jitter height now fixed to zero (prev. default).
 # 23.02.2014: Fixed different y max for complex plot, when supposed to be fixed.
 # 23.02.2014: Implemented theme.
-# 23.02.2014: Fixed shape for 'complex' plots.
-# 20.01.2014: Implemented ggsave with workaround for 'complex' plots.
-# 18.12.2013: New plot option 'Hb by Delta' + better handling of titles.
-# 02.12.2013: Fixed 'val_palette' to get 'R.Color'.
-# 30.11.2013: Fixed 'complex' plot.
-# 30.11.2013: Specified package for functions in 'grid' -> 'grid::xxxxx'
 
 #' @title Plot Balance
 #'
@@ -50,10 +54,16 @@
 #' 
 #' @importFrom utils help str
 #' @importFrom stats as.formula
-# @importFrom gridExtra arrangeGrob
+#' @importFrom gridExtra arrangeGrob
 #' @importFrom grid unit textGrob grid.newpage grid.draw
 # @importFrom gtable gtable_add_grob gtable
 #' @importFrom plyr rbind.fill
+#' @importFrom  data.table data.table
+#' @importFrom ggplot2 ggplot aes_string geom_boxplot geom_point position_jitter
+#'  facet_grid facet_wrap scale_colour_manual coord_cartesian guides guide_legend
+#'  theme element_text labs xlab ylab element_blank ggplotGrob theme_gray
+#'  theme_bw theme_linedraw theme_light theme_dark theme_minimal theme_classic
+#'  theme_void 
 #' 
 #' @return TRUE
 #' 
@@ -158,7 +168,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
                                       " samples)", sep="")
 
       # Detect kit.
-      kitIndex <- detectKit(.gData)
+      kitIndex <- detectKit(.gData, index=TRUE)
       # Select in dropdown.
       svalue(kit_drp, index=TRUE) <- kitIndex
       
@@ -219,17 +229,22 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
 
   f1g2 <- glayout(container = f1)
   f1g2[1,1] <- glabel(text="Plot theme:", anchor=c(-1 ,0), container=f1g2)
-  f1g2[1,2] <- f1_theme_drp <- gdroplist(items=c("theme_grey()","theme_bw()"),
-                                         selected=1,
+  items_theme <- c("theme_grey()","theme_bw()","theme_linedraw()",
+                   "theme_light()","theme_dark()","theme_minimal()",
+                   "theme_classic()","theme_void()")
+  f1g2[1,2] <- f1_theme_drp <- gdroplist(items = items_theme,
+                                         selected = 1,
                                          container = f1g2)
 
-  f1_drop_chk <- gcheckbox(text="Drop sex markers",
-                              checked=TRUE,
-                              container=f1)
-
-  f1_logHb_chk <- gcheckbox(text="Plot Log(balance)",
-                                        checked=FALSE,
-                                        container=f1)
+  f1_drop_chk <- gcheckbox(text="Drop sex markers", checked=FALSE, container=f1)
+  
+  f1_logHb_chk <- gcheckbox(text="Plot Log(balance)", checked=FALSE,
+                            container=f1)
+  
+  f1_wrap_opt <- gradio(items = c("Do not facet or wrap",
+                                  "Wrap by Dye",
+                                  "Facet by Marker and wrap by Dye"),
+                        horizontal = FALSE, container = f1)
   
   # FRAME 7 ###################################################################
   
@@ -251,13 +266,21 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
                                        border=TRUE,
                                        container=grid7) 
   
-  grid7[1,4] <- plot_lb_btn <- gbutton(text="Lb vs. Height",
+  grid7[1,4] <- plot_hb_m_btn <- gbutton(text="Hb vs. Marker",
+                                         border=TRUE,
+                                         container=grid7) 
+  
+  grid7[1,5] <- plot_lb_btn <- gbutton(text="Lb vs. Height",
                                        border=TRUE,
                                        container=grid7) 
 
-  grid7[1,5] <- plot_lb_h_btn <- gbutton(text="Lb vs. 'H'",
+  grid7[1,6] <- plot_lb_h_btn <- gbutton(text="Lb vs. 'H'",
                                        border=TRUE,
                                        container=grid7) 
+  
+  grid7[1,7] <- plot_lb_m_btn <- gbutton(text="Lb vs. Marker",
+                                         border=TRUE,
+                                         container=grid7) 
   
   addHandlerChanged(plot_hb_btn, handler = function(h, ...) {
     
@@ -337,6 +360,32 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
     
   } )
 
+  addHandlerChanged(plot_hb_m_btn, handler = function(h, ...) {
+    
+    # Check if suitable for plot.
+    requiredCol <- c("Sample.Name", "Marker", "Hb")
+    
+    if(!all(requiredCol %in% colnames(.gData))){
+      
+      missingCol <- requiredCol[!requiredCol %in% colnames(.gData)]
+      
+      message <- paste("Additional columns required:\n",
+                       paste(missingCol, collapse="\n"), sep="")
+      
+      gmessage(message, title="message",
+               icon = "error",
+               parent = w) 
+      
+    } else {
+      
+      enabled(plot_hb_m_btn) <- FALSE
+      .plotBalance(what="Hb_M", complex = FALSE)
+      enabled(plot_hb_m_btn) <- TRUE
+      
+    }
+    
+  } )
+  
   addHandlerChanged(plot_lb_btn, handler = function(h, ...) {
     
     # Check if suitable for plot.
@@ -389,6 +438,32 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
     
   } )
 
+  addHandlerChanged(plot_lb_m_btn, handler = function(h, ...) {
+    
+    # Check if suitable for plot.
+    requiredCol <- c("Sample.Name", "Marker", "Lb")
+    
+    if(!all(requiredCol %in% colnames(.gData))){
+      
+      missingCol <- requiredCol[!requiredCol %in% colnames(.gData)]
+      
+      message <- paste("Additional columns required:\n",
+                       paste(missingCol, collapse="\n"), sep="")
+      
+      gmessage(message, title="message",
+               icon = "error",
+               parent = w) 
+      
+    } else {
+      
+      enabled(plot_lb_m_btn) <- FALSE
+      .plotBalance(what="Lb_M", complex = FALSE)
+      enabled(plot_lb_m_btn) <- TRUE
+      
+    }
+    
+  } )
+  
   # FRAME 5 ###################################################################
   
   f5 <- gframe(text = "Save as",
@@ -476,7 +551,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
   
   grid3[1,4] <- glabel(text="Scales:", container=grid3)
   grid3[2:4,4] <- e3_scales_opt <- gradio(items=c("fixed","free_x","free_y","free"),
-                                      selected = 2,
+                                      selected = 1,
                                       horizontal = FALSE,
                                       container = grid3)
   
@@ -489,7 +564,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
   grid4 <- glayout(container = e4)
   
   grid4[1,1] <- glabel(text="Text size (pts):", container=grid4)
-  grid4[1,2] <- e4_size_edt <- gedit(text="8", width=4, container=grid4)
+  grid4[1,2] <- e4_size_edt <- gedit(text="10", width=4, container=grid4)
 
   grid4[1,3] <- glabel(text="Angle:", container=grid4)
   grid4[1,4] <- e4_angle_spb <- gspinbutton (from=0, to=360, by=1,
@@ -510,7 +585,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
   # FUNCTIONS #################################################################
   
   
-  .plotBalance <- function(what){
+  .plotBalance <- function(what, complex=NULL){
     
     # Get values.
     val_titles <- svalue(f1_titles_chk)
@@ -533,6 +608,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
     val_kit <- svalue(kit_drp)
     val_drop <- svalue(f1_drop_chk)
     val_theme <- svalue(f1_theme_drp)
+    val_wrap <- svalue(f1_wrap_opt, index = TRUE)
     
     if(debug){
       print("val_title")
@@ -569,6 +645,8 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
       print(val_kit)
       print("val_theme")
       print(val_theme)
+      print("val_wrap")
+      print(val_wrap)
     }
     
     # Declare variables.
@@ -615,20 +693,28 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
       }
       
       # Height must be numeric (not string).
-      if(!is.numeric(.gData$MPH)){
-        .gData$MPH <- as.numeric(as.character(.gData$MPH))
-        message("'MPH' not numeric, converting to numeric.")
-        
+      if("MPH" %in% names(.gData)){
+        if(!is.numeric(.gData$MPH)){
+          .gData$MPH <- as.numeric(as.character(.gData$MPH))
+          message("'MPH' not numeric, converting to numeric.")
+        }
       }
       
       # Height must be numeric (not string).
-      if(!is.numeric(.gData$TPH)){
-        .gData$TPH <- as.numeric(as.character(.gData$TPH))
-        message("'TPH' not numeric, converting to numeric.")
-        
+      if("TPH" %in% names(.gData)){
+        if(!is.numeric(.gData$TPH)){
+          .gData$TPH <- as.numeric(as.character(.gData$TPH))
+          message("'TPH' not numeric, converting to numeric.")
+          
+        }
       }
       
-      # Check if 'simple' or 'complex' plotting:
+      # Control complex plot.
+      if(val_wrap == 1 | val_wrap == 2){
+        complex <- FALSE
+        message("val_wrap=1/2 overrides and set complex=FALSE")
+      }
+      
       # Make data frame from dataset marker levels.
       markerDye <- data.frame(Marker=levels(.gData$Marker))
       # Add colors.
@@ -639,6 +725,14 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
       uniqueMarkerDye <- markerDye[!duplicated(markerDye),]
       # Calculate number of unique columns per dye.
       val_ncol <- unique(table(uniqueMarkerDye$Dye))
+
+      # Check if 'simple' or 'complex' plotting:
+      if(is.null(complex)){
+        
+        # Auto detect if complex plot.
+        complex <- length(val_ncol) > 1
+        
+      }
       
       # Make palette.
       val_palette <- unique(getKit(val_kit, what="Color")$Color)
@@ -707,6 +801,16 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
             yTitle <- "Ratio"
           }
           
+        } else if (what == "Hb_M") {
+          
+          mainTitle <- "Heterozygous balance"
+          xTitle <- "Locus"
+          if(val_log){
+            yTitle <- "Log(Ratio)"
+          } else {
+            yTitle <- "Ratio"
+          }
+          
         } else if (what == "Lb") {
           
           mainTitle <- "Locus balance"
@@ -727,6 +831,20 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
             yTitle <- "Ratio"
           }
           
+        } else if (what == "Lb_M") {
+          
+          mainTitle <- "Locus balance"
+          xTitle <- "Locus"
+          if(val_log){
+            yTitle <- "Log(Ratio)"
+          } else {
+            yTitle <- "Ratio"
+          }
+          
+        } else {
+          
+          stop(paste("what =", what, "not implemented for create title!"))
+          
         }
       }
 
@@ -738,7 +856,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
       }
       
       # Construct plot differently.
-      if(length(val_ncol) == 1){
+      if(!complex){
         # Simple plot, equal number of markers per dye.
 
         if(debug){
@@ -746,12 +864,13 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
         }
 
         # Create data.table to check for facet error caused by all NA's.
-        dt <- data.table(.gData)
+        dt <- data.table::data.table(.gData)
         
         # Select what to plot and create default titles.
         if(what == "Hb"){
           
           gp <- ggplot(.gData, aes_string(x="MPH", y="Hb", colour="Dye"))
+          val_box <- FALSE
           
           # Check for facet error caused by all NA's.
           tmp <- dt[, list(Sum=sum(Hb)), by=Marker]
@@ -762,7 +881,8 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
         } else if (what == "Hb_D") {
           
           gp <- ggplot(.gData, aes_string(x="Delta", y="Hb", colour="Dye"))
-
+          val_box <- FALSE
+          
           # Check for facet error caused by all NA's.
           tmp <- dt[, list(Sum=sum(Hb)), by=Marker]
           if(any(is.na(tmp$Sum))){
@@ -772,7 +892,19 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
         } else if (what == "Hb_H") {
           
           gp <- ggplot(.gData, aes_string(x="H", y="Hb", colour="Dye"))
-
+          val_box <- FALSE
+          
+          # Check for facet error caused by all NA's.
+          tmp <- dt[, list(Sum=sum(Hb)), by=Marker]
+          if(any(is.na(tmp$Sum))){
+            message("Empty facets detected! If this leads to plot error try another scale for axes")
+          }
+          
+        } else if (what == "Hb_M") {
+          
+          gp <- ggplot(.gData, aes_string(x="Marker", y="Hb", colour="Dye"))
+          val_box <- TRUE
+          
           # Check for facet error caused by all NA's.
           tmp <- dt[, list(Sum=sum(Hb)), by=Marker]
           if(any(is.na(tmp$Sum))){
@@ -782,6 +914,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
         } else if (what == "Lb") {
           
           gp <- ggplot(.gData, aes_string(x="TPH", y="Lb", colour="Dye"))
+          val_box <- FALSE
           
           # Check for facet error caused by all NA's.
           tmp <- dt[, list(Sum=sum(Lb)), by=Marker]
@@ -792,6 +925,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
         } else if (what == "Lb_H") {
           
           gp <- ggplot(.gData, aes_string(x="H", y="Lb", colour="Dye"))
+          val_box <- FALSE
           
           # Check for facet error caused by all NA's.
           tmp <- dt[, list(Sum=sum(Lb)), by=Marker]
@@ -799,8 +933,23 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
             message("Empty facets detected! If this leads to plot error try another scale for axes")
           }
           
+        } else if (what == "Lb_M") {
+          
+          gp <- ggplot(.gData, aes_string(x="Marker", y="Lb", colour="Dye"))
+          val_box <- TRUE
+          
+          # Check for facet error caused by all NA's.
+          tmp <- dt[, list(Sum=sum(Lb)), by=Marker]
+          if(any(is.na(tmp$Sum))){
+            message("Empty facets detected! If this leads to plot error try another scale for axes")
+          }
+          
+        } else {
+          
+          stop(paste("what =", what, "not implemented for create plot!"))
+          
         }
-
+        
         if(debug){
           print("Plot created.")
         }
@@ -808,14 +957,47 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
         # Apply theme.
         gp <- gp + eval(parse(text=val_theme))
         
-        # Plot settings.
-        gp <- gp + geom_point(shape=val_shape, alpha=val_alpha,
-                              position=position_jitter(height = 0, width=val_jitter))
-        gp <- gp + facet_grid("Dye ~ Marker")
-        # NB! 'facet_wrap' does not seem to support strings.
-        #     Use 'as.formula(paste("string1", "string2"))' as a workaround.
-        gp <- gp + facet_wrap(as.formula(paste("~", "Marker")), ncol=val_ncol, # No dye labels.
-                              drop=FALSE, scales=val_scales)
+        # Create Plot.
+        if(val_box){
+          
+          # Create box and whisker plot.
+          gp <- gp + geom_boxplot(alpha=val_alpha)
+          
+        } else {
+          
+          # Create scatter plot.
+          gp <- gp + geom_point(shape=val_shape, alpha=val_alpha,
+                                position=position_jitter(height = 0, width=val_jitter))
+          
+        }
+        
+        # Facet plot.
+        if(val_wrap == 1){
+          
+          # Do nothing.
+          
+        } else if(val_wrap == 2){
+          
+          # Plot by dye per row.
+          gp <- gp + facet_wrap(as.formula(paste("~", "Dye")), ncol=1,
+                                drop=FALSE, scales=val_scales)
+
+        } else if(val_wrap == 3){
+
+          # Plot per marker one dye per row.
+          gp <- gp + facet_grid("Dye ~ Marker")
+          # NB! 'facet_wrap' does not seem to support strings.
+          #     Use 'as.formula(paste("string1", "string2"))' as a workaround.
+          gp <- gp + facet_wrap(as.formula(paste("~", "Marker")),
+                                ncol=val_ncol, drop=FALSE, scales=val_scales)
+          
+        } else {
+          
+          stop("val_wrap =", val_wrap, "not implemented.")
+          
+        }
+        
+        # Add colours.
         gp <- gp + scale_colour_manual(guide=FALSE, values=val_palette)
         
         # Restrict y axis.
@@ -854,7 +1036,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
         svalue(f5_save_btn) <- "Save as object"
         enabled(f5_save_btn) <- TRUE
         
-      } else if (length(val_ncol) > 1){
+      } else if (complex){
         # Complex plot, unequal number of markers per dye.
         
         if(debug){
@@ -918,14 +1100,15 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
           gDataSub$Dye <- factor(dyes[d])
           
           # Create data.table to check for facet error caused by all NA's.
-          dt <- data.table(gDataSub)
+          dt <- data.table::data.table(gDataSub)
           
           # Create a plot for the current subset.
           # Select what to plot.
           if(what == "Hb"){
             
             gp <- ggplot(gDataSub, aes_string(x = "MPH", y = "Hb", colour="Dye"))
-
+            val_box <- FALSE
+            
             # Check for facet error caused by all NA's.
             tmp <- dt[, list(Sum=sum(Hb)), by=Marker]
             if(any(is.na(tmp$Sum))){
@@ -935,7 +1118,8 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
           } else if (what == "Hb_D") {
             
             gp <- ggplot(gDataSub, aes_string(x="Delta", y="Hb", colour="Dye"))
-
+            val_box <- FALSE
+            
             # Check for facet error caused by all NA's.
             tmp <- dt[, list(Sum=sum(Hb)), by=Marker]
             if(any(is.na(tmp$Sum))){
@@ -945,6 +1129,18 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
           } else if (what == "Hb_H") {
             
             gp <- ggplot(gDataSub, aes_string(x = "H", y = "Hb", colour="Dye"))
+            val_box <- FALSE
+            
+            # Check for facet error caused by all NA's.
+            tmp <- dt[, list(Sum=sum(Hb)), by=Marker]
+            if(any(is.na(tmp$Sum))){
+              message("Empty facets detected! If this leads to plot error try another scale for axes")
+            }
+            
+          } else if (what == "Hb_M") {
+            
+            gp <- ggplot(gDataSub, aes_string(x = "Marker", y = "Hb", colour="Dye"))
+            val_box <- TRUE
             
             # Check for facet error caused by all NA's.
             tmp <- dt[, list(Sum=sum(Hb)), by=Marker]
@@ -955,7 +1151,8 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
           } else if (what == "Lb") {
             
             gp <- ggplot(gDataSub, aes_string(x = "TPH", y = "Lb", colour="Dye"))
-          
+            val_box <- FALSE
+            
             # Check for facet error caused by all NA's.
             tmp <- dt[, list(Sum=sum(Lb)), by=Marker]
             if(any(is.na(tmp$Sum))){
@@ -965,6 +1162,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
           } else if (what == "Lb_H") {
             
             gp <- ggplot(gDataSub, aes_string(x = "H", y = "Lb", colour="Dye"))
+            val_box <- FALSE
             
             # Check for facet error caused by all NA's.
             tmp <- dt[, list(Sum=sum(Lb)), by=Marker]
@@ -972,18 +1170,47 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
               message("Empty facets detected! If this leads to plot error try another scale for axes")
             }
             
+          } else if (what == "Lb_M") {
+            
+            gp <- ggplot(gDataSub, aes_string(x = "Marker", y = "Lb", colour="Dye"))
+            val_box <- TRUE
+            
+            # Check for facet error caused by all NA's.
+            tmp <- dt[, list(Sum=sum(Lb)), by=Marker]
+            if(any(is.na(tmp$Sum))){
+              message("Empty facets detected! If this leads to plot error try another scale for axes")
+            }
+            
+          } else {
+            
+            stop(paste("what =", what, "not implemented for create complex plot!"))
+            
           }
-
+          
           # Apply theme.
           gp <- gp + eval(parse(text=val_theme))
           
-          # Plot settings.
-          gp <- gp + geom_point(shape=val_shape, alpha = val_alpha,
-                                position = position_jitter(height = 0, width = val_jitter))
-          gp <- gp + scale_colour_manual(guide=FALSE, values=val_palette[d], drop=FALSE)
+          # Create Plot.
+          if(val_box){
+            
+            # Create box and whisker plot.
+            gp <- gp + geom_boxplot(alpha=val_alpha)
+            
+          } else {
+            
+            # Create scatter plot.
+            gp <- gp + geom_point(shape=val_shape, alpha = val_alpha,
+                                  position = position_jitter(height = 0,
+                                                             width = val_jitter))
+            
+          }
+          
+          # Wrap by marker one dye per row.
           gp <- gp + facet_grid("Dye ~ Marker", scales=val_scales, drop = FALSE) # Keep dye labels.
-          #gp <- gp + facet_grid("~ Marker", scales=val_scales)  # No dye labels.
 
+          # Add colours.
+          gp <- gp + scale_colour_manual(guide=FALSE, values=val_palette[d], drop=FALSE)
+          
           # Set margin around each plot. Note: top, right, bottom, left.
           gp <- gp + theme(plot.margin = grid::unit(c(0.25, 1.25, 0, 0), "lines"))
           
@@ -1043,10 +1270,7 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
         svalue(f5_save_btn) <- "Save as object"
         enabled(f5_save_btn) <- FALSE
         
-      } else {
-        # Not supported!
-        stop(paste("Unsupported number of columns:", val_ncol))
-      }
+      } # End if(complex)
       
       # Store in global variable.
       .gPlot <<- gp
@@ -1144,7 +1368,10 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
       if(exists(".strvalidator_plotBalance_gui_theme", envir=env, inherits = FALSE)){
         svalue(f1_theme_drp) <- get(".strvalidator_plotBalance_gui_theme", envir=env)
       }
-      
+      if(exists(".strvalidator_plotBalance_gui_wrap", envir=env, inherits = FALSE)){
+        svalue(f1_wrap_opt) <- get(".strvalidator_plotBalance_gui_wrap", envir=env)
+      }
+
       if(debug){
         print("Saved settings loaded!")
       }
@@ -1177,7 +1404,8 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
       assign(x=".strvalidator_plotBalance_gui_xlabel_justh", value=svalue(e4_hjust_spb), envir=env)
       assign(x=".strvalidator_plotBalance_gui_xlabel_justv", value=svalue(e4_vjust_spb), envir=env)
       assign(x=".strvalidator_plotBalance_gui_theme", value=svalue(f1_theme_drp), envir=env)
-      
+      assign(x=".strvalidator_plotBalance_gui_wrap", value=svalue(f1_wrap_opt), envir=env)
+
     } else { # or remove all saved values if false.
       
       if(exists(".strvalidator_plotBalance_gui_savegui", envir=env, inherits = FALSE)){
@@ -1240,7 +1468,10 @@ plotBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
       if(exists(".strvalidator_plotBalance_gui_theme", envir=env, inherits = FALSE)){
         remove(".strvalidator_plotBalance_gui_theme", envir = env)
       }
-      
+      if(exists(".strvalidator_plotBalance_gui_wrap", envir=env, inherits = FALSE)){
+        remove(".strvalidator_plotBalance_gui_wrap", envir = env)
+      }
+
       if(debug){
         print("Settings cleared!")
       }

@@ -1,3 +1,99 @@
+Version 1.6.0
+------------------------------------------------------------------------------
+* STR-validator now requires R version >= 3.1.3 and ggplot2 version >= 2.0.0
+* Updated kit file. Added 'Fusion 6C', removed 'ESI17'.
+  Kit sorted roughly according to vendor and release.
+* Bug fixes and improvements with the most significant listed below:
+  - calculateDropout / calculateDropout_gui
+  Handles the case when a reference allele is NA (skip to next marker).
+  Reverted fix in 1.5.2.9000 and instead removed all NA rows from reference prior to analysis.
+  - calculateDropout_gui
+  Added automatic calculation of average peak height 'H'.
+  - calculateDropout
+  Fixed reference sample name subsetting bug. Confirmed with new test #09.
+  Some 'warnings' changed to 'stop'.
+  Better information in stop messages.
+  - readPanelsFile
+  Convert all color names to lower case. Fixes kit plot D16 bug in Fusion 6C.
+  - calculateBalance / calculateBalance_gui
+  Added option to calculate Hb by LMW/HMW, and updated test-calculateBalance accordingly.
+  - calculateBalance_gui
+  Added automatic calculation of average peak height 'H'.
+  Added option for exact matching, and drop sex markers, fixed word option not saved.
+  - plotBalance_gui
+  Added new plot options 'Hb vs. Marker' and 'Lb vs. Marker'.
+  Added options to plot all data 'Facet per marker and wrap by dye'. 
+  Implemented by dye.
+  Better default values reduce risk of plot error.
+  - editData_gui
+  Added option to limit number of rows.
+  Added option to show attributes.
+  - plotDistribution_gui
+  NA's now removed prior to plotting and subtracted from number of observations.
+  - cropData_gui
+  Option to remove NA (earlier NA was automatically removed).
+  Fixed 'Info' not updated when selecting a column.
+  - import / import_gui
+  New parameter 'na.strings' to specify what gets converted to NA.
+  - addData / addData_gui
+  New parameter to specify columns to add.
+  - heightToPeak
+  Improved implementation.
+  - checkSubset_gui
+  'Marker' is no longer a required column.
+  - filterProfile / filterProfile_gui
+  New parameter 'exact' for sample name matching.
+  - checkSubset / checkSubset_gui
+  New parameter 'exact' for sample name matching.
+  - columns / columns_gui
+  Now possible to add new column without combining with an existing column.
+  - ggsave_gui
+  Updated to work with ggplot2 2.0. Fixes error 'dev' function not found.
+  - generateEPG / generateEPG_gui
+  Rewrote funtion and fixed dye channel bug introduced in ggplot2 2.0.
+* New functions:
+  - scrambleAlleles
+  Scrambles alleles in a dataset to anonymise the profile.
+  - colConvert
+  - calculateSpike / calculateSpike_gui
+  Detection of spikes in profiles.
+  - calculateAllele
+  Counts the number of each allele per marker over the entire dataset.
+  - calculateLb / calculateLb_gui
+  Implemented locus balance calculations using data.table wich is much faster.
+  Does not require a reference dataset. Calculates as proportion, normalised,
+  or centred quantities (sum to 0). Global or by dye.
+  - calculateRatio / calculateRatio_gui / plotRatio_gui
+  Implemented calculation of locus ratios and plotting of the result.
+* New exported function:
+  - detectKit
+* New tests:
+  test-filterProfile
+    - Test for unfiltered data.
+  test-calculateDropout
+    - Test for reference subsetting bug.
+  test-calculateLb
+    - Tests for new function.
+* Removed global variables for ggplot2 in 'globals.R', added importFrom in functions.
+* Functions removed:
+  - compact
+* Added attributes for the following functions:
+  - addColor/addDye_gui
+  - addData/addData_gui
+  - addMarker/addMarker_gui
+  - addSize/addSize_gui
+  - calculateAT/calculateAT_gui
+  - calculateBalance/calculateBalance_gui
+  - calculateDropout/calculateDropout_gui
+  - calculateHeight/calculateHeight_gui
+  - calculateStutter/calculateStutter_gui
+  - filterProfile/filterProfile_gui
+  - heightToPeak
+  - import/import_gui
+  - slim/slim_gui
+  - tableBalance/tableBalance_gui
+  - trim/trim_gui
+
 Version 1.5.2
 ------------------------------------------------------------------------------
 * Bug fixes and improvements with the most significant listed below:
@@ -6,6 +102,7 @@ Version 1.5.2
   - slim / slim_gui
   Fixed error when 'stack' and 'slim' is empty or "" (replaced by 'NULL').
   Now handle no columns to slim/stack (return unchanged data.frame).
+  - Plot AT confidence interval now matches the one-sided used in calculateAT6.
 * Corrections in documentation or GUI:
   - calculateBalance / calculateBalance_gui
   Parameter description for 'hb=2' changed to 'Max2(Ph)/Max1(Ph)'.
@@ -13,17 +110,12 @@ Version 1.5.2
   - modelDropout_gui
   More information in the detailes.
 * Use of 'importFrom' as required in R 3.3.0 pre-release.
-
-Version 1.5.1.9000
-------------------------------------------------------------------------------
 * Now fully enforces the version numbering convention (http://r-pkgs.had.co.nz/release.html)
  x.y.z.9XXX, where x is a major release, y is a minor release, z is a bug fix, 
  and 9XXX is a in-development version. Development versions will be synchronised to
  GitHub (https://github.com/OskarHansson/strvalidator) and possibly made available at
  the website (https://sites.google.com/site/forensicapps/strvalidator) as file
  for manual download and installation (binary package).
-* Bug fix:
-  - Plot AT confidence interval now matches the one-sided used in calculateAT6.
 
 Version 1.5.1
 ------------------------------------------------------------------------------

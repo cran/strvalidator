@@ -2,10 +2,18 @@
 # TODO LIST
 # TODO: calculate the distributions...
 # TODO: Regression Analysis and construction of Hb bins...
+# TODO: Rewrite using data.table (1 Filter, 2 calculate H, 3 Size (if not present),
+# 4 data.table by... size descending or ascending to get HMW/LMW etc. Will be faster!
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
-# 28.08.2015: Added importFrom
+# 17.01.2016: Fixed save attribute saves dataset.
+# 09.01.2016: Added more attributes to result.
+# 30.12.2015: Removed unused code.
+# 02.12.2015: Added error message at 'stop' when >2 matching alleles or peaks.
+# 13.11.2015: Added option to calculate Hb as LMW/HMW.
+# 12.10.2015: Added attributes.
+# 28.08.2015: Added importFrom.
 # 17.08.2015: Changed erroneus description for parameter 'hb'  to 'hb=2; Max2(Ph)/Max1(Ph)'.
 # 08.06.2015: Fixed 'Error in if (dyeOk[d]) { : missing value where TRUE/FALSE needed' (Fixes issue#9).
 # 15.12.2014: Changed parameter names to format: lower.case
@@ -20,12 +28,6 @@
 # 09.09.2013: Added parameter 'hb' to specify the definition of Hb.
 # 26.07.2013: Removed parameters 'minHeight', 'maxHeight', 'matchSource' and related code.
 # 04.06.2013: Added warning/stop for missing markers.
-# 20.04.2013: Lb can be calculated per dye channel with no missing markers.
-# 20.04.2013: Changes max/min to max1/max2 so can handle unfiltered data.
-# 20.04.2013: If ref=NULL use guess 'ref' from 'data' and issue a warning.
-# 20.04.2013: Fixed bug for homozygous: min/2 to max/2.
-# 14.04.2013: Reworked the code:
-#             Removed dependency of column 'Zygosity' by adding parameter 'ref'.
 
 #' @title Calculate Balance
 #'
@@ -39,7 +41,6 @@
 #' Be careful to not have actual alleles marked as 'OL' in dataset.
 #' It will lead to underestimation of the total peak height per locus/sample.
 #' Also calculates the allele size difference between heterozygous alleles.
-#' Takes 'slimmed' data for samples and references as input.
 #' NB! Requires at least one row for each marker per sample, even if no data.
 #' NB! 'X' and 'Y' will be handled as '1' and '2' respectively.
 #' 
@@ -51,7 +52,8 @@
 #' 'norm' locus balance is normalised in relation to the locus with the highest total peakheight.
 #' @param per.dye logical, default is TRUE and locus balance is calculated within each dye.
 #'  FALSE locus balance is calculated globally across all dyes.
-#' @param hb numerical, definition of heterozygous balance. hb=1; HMW/LMW, hb=2; Max2(Ph)/Max1(Ph).
+#' @param hb numerical, definition of heterozygous balance. Default is hb=1. 
+#'  hb=1: HMW/LMW, hb=2: LMW/HMW, hb=3; Max2(Ph)/Max1(Ph).
 #' @param ignore.case logical indicating if sample matching should ignore case.
 #' @param word logical indicating if word boundaries should be added before sample matching.
 #' @param debug logical indicating printing debug information.
@@ -71,6 +73,9 @@
 calculateBalance <- function(data, ref, lb="prop", per.dye=TRUE,
                              hb=1, ignore.case=TRUE, word=FALSE, debug=FALSE){
   
+  # Parameters that are changed by the function must be saved first.
+  attr_data <- substitute(data)
+
   if(debug){
     print(paste("IN:", match.call()[[1]]))
     print("Parameters:")
@@ -184,8 +189,7 @@ calculateBalance <- function(data, ref, lb="prop", per.dye=TRUE,
   
   # Get the reference sample names.
   refNames <- unique(ref$Sample.Name)
-  sampleNames <- unique(data$Sample.Name)
-  
+
   # Create match vector.
   if(word){
     # Add word anchor.
@@ -279,9 +283,15 @@ calculateBalance <- function(data, ref, lb="prop", per.dye=TRUE,
         cHeights <- cHeights[matchIndex]
 
         if(length(cAlleles) > 2){
+          print(paste("Error at sample", cSampleNames[s],
+                        "marker", markerNames[m],
+                        "alleles=", paste(cAlleles, collapse = ", ")))
           stop("More than two alleles after matching with reference sample!")
         }
         if(length(cHeights) > 2){
+          print(paste("Error at sample", cSampleNames[s],
+                        "marker", markerNames[m],
+                        "heights=", paste(cHeights, collapse = ", ")))
           stop("More than two heigths after matching with reference sample!")
         }
         
@@ -353,8 +363,24 @@ calculateBalance <- function(data, ref, lb="prop", per.dye=TRUE,
               }
               
             }
-            
+
           } else if(hb == 2){
+            # Low molecular weight over high molecular weigt.
+            
+            if(!is.na(allele1) && !is.na(allele2)){
+              
+              if(as.numeric(allele1) > as.numeric(allele2)){
+                nominator <- max2
+                denominator <- max1
+              } else {
+                nominator <- max1
+                denominator <- max2
+              }
+              
+            }
+              
+              
+          } else if(hb == 3){
           # Highest peak over second highest peak.
             
             nominator <- max2
@@ -363,9 +389,8 @@ calculateBalance <- function(data, ref, lb="prop", per.dye=TRUE,
           } else {
           # Not supported.
             
-            nominator <- NA
-            denominator <- NA
-            
+            stop(paste("hb =", hb, "not implemented!"))
+
           }
           
           # Heterozygote balance.
@@ -502,6 +527,18 @@ calculateBalance <- function(data, ref, lb="prop", per.dye=TRUE,
     }
     
   }
+  
+  # Add attributes to result.
+  attr(res, which="calculateBalance, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
+  attr(res, which="calculateBalance, call") <- match.call()
+  attr(res, which="calculateBalance, date") <- date()
+  attr(res, which="calculateBalance, data") <- attr_data
+  attr(res, which="calculateBalance, ref") <- substitute(ref)
+  attr(res, which="calculateBalance, lb") <- lb
+  attr(res, which="calculateBalance, per.dye") <- per.dye
+  attr(res, which="calculateBalance, hb") <- hb
+  attr(res, which="calculateBalance, ignore.case") <- ignore.case
+  attr(res, which="calculateBalance, word") <- word
   
   if(debug){
     print(paste("EXIT:", match.call()[[1]]))

@@ -8,6 +8,13 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 09.01.2016: Added more attributes to result.
+# 07.12.2015: Fixed reference sample name subsetting bug.
+# 05.12.2015: More information in 'stop' messages.
+#            'warning' for unhandled combinations changed to 'stop'.
+# 05.10.2015: Added attributes to result.
+# 28.09.2015: Remove rows with missing alleles from the reference dataset.
+# 11.09.2015: Handle reference allele is NA.
 # 28.08.2015: Added importFrom
 # 26.06.2015: More precise warning messages (include sample name and marker).
 # 15.12.2014: Changed parameter names to format: lower.case
@@ -22,9 +29,6 @@
 # 20.10.2013: Fixed dropout always scoring for 'Model'. 
 # 17.10.2013: New parameter threshold, and corrections complying with ref. 2012. 
 # 18.07.2013: Fixed "OL" bug.
-# 18.07.2013: Added 'debug' parameter, example, and text in details.
-# 15.05.2013: Added check that 'Height' is numeric, convert if not.
-# 13.04.2013: Rewritten function for 'slim' data only.
 
 #' @title Calculate Drop-out Events
 #'
@@ -225,6 +229,21 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
 #            call. = TRUE)
 #     }
 #   }
+
+  # PREPARE -------------------------------------------------------------------
+  
+  if(any(is.na(ref$Allele))){
+    # Remove markers with no allele in reference dataset.
+    
+    tmp1 <- nrow(ref)
+    
+    ref <- ref[!is.na(ref$Allele), ]
+    
+    tmp2 <- nrow(ref)
+    
+    message(paste("Removed", tmp1 - tmp2, "NA rows in 'ref'. This may be DYS markers in female profiles."))
+
+  }
   
   # ANALYZE -------------------------------------------------------------------
 
@@ -267,12 +286,16 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
     if(ignore.case){
       selectedSamples <- grepl(toupper(sampleNamesRef[r]),
                                toupper(data$Sample.Name))
-      selectedRefs <- grepl(toupper(sampleNamesRef[r]),
+      selectedRefs <- grepl(paste("\\b",
+                                  toupper(sampleNamesRef[r]),
+                                  "\\b", sep=""),
                             toupper(ref$Sample.Name))
     } else {
       selectedSamples <- grepl(sampleNamesRef[r],
                                data$Sample.Name)
-      selectedRefs <- grepl(sampleNamesRef[r],
+      selectedRefs <- grepl(paste("\\b",
+                                  sampleNamesRef[r],
+                                  "\\b", sep=""),
                             ref$Sample.Name)
     }
     
@@ -327,9 +350,9 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
 
         # Count the number of observed alleles.
         observed <- length(matchedAlleles)
-
+        
         # Score dropout for modelling -----------------------------------------
-
+        
         # Reset variables.
         methodXTmp <- NULL
         method1Tmp <- NULL
@@ -338,7 +361,7 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
         methodLPh <- NULL
         
         if(observed == 1 || observed == 2){
-
+          
           # Check expected number of alleles.
           if(expected == 1){
             # Expected homozygous.
@@ -358,12 +381,12 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
             # Choose Allele 1   
             selected1 <- match(refAlleles[1], matchedAlleles)
             partner1 <- match(refAlleles[2], matchedAlleles)
-
+            
             # Choose Allele 2   
             selected2 <- match(refAlleles[2], matchedAlleles)
             partner2 <- match(refAlleles[1], matchedAlleles)
             
-
+            
             # SCORE RANDOM ALLELE ---------------------------------------BEGIN-
             if("X" %in% toupper(method)){
               
@@ -422,7 +445,7 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
                 
                 # Score as dropout.
                 modeldrop <- 1
-  
+                
                 # Save one or two entries.
                 if(observed == 1){
                   method1Tmp <- modeldrop
@@ -565,7 +588,15 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
                     methodLPh[1] <- max(peakHeight[selA1], peakHeight[selA2], rm.na=TRUE)
                     methodLPh[2] <- NA
                   } else {
-                    stop("observed not 1 or 2")
+                    stop(paste("Sample: ", sampleNames[s],
+                               ", Marker: ", markers[m],
+                               " - unhandled number of observed alleles",
+                               " (observed = ", observed,
+                               ", matchedAlleles = ", paste(matchedAlleles, collapse="/"),
+                               ", passingAlleles = ",  paste(passingAlleles, collapse="/"),
+                               ")", sep=""),
+                         call. = TRUE)
+                    
                   }
                 } else if (passingAlleles == 2){
                   methodLTmp[1] <- 0
@@ -582,18 +613,30 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
                     methodLPh[1] <- NA
                     methodLPh[2] <- NA
                   } else {
-                    stop("observed not 1 or 2")
+                    stop(paste("Sample: ", sampleNames[s],
+                               " Marker: ", markers[m],
+                               " - unhandled number of observed alleles",
+                               " (observed = ", observed,
+                               ", matchedAlleles = ", paste(matchedAlleles, collapse="/"),
+                               ", passingAlleles = ", paste(passingAlleles, collapse="/"),
+                               ")", sep=""),
+                         call. = TRUE)
                   }
                 } else {
-                  stop("passingAlleles not {0,1,2}")
+                  stop(paste("Sample: ", sampleNames[s],
+                             " Marker: ", markers[m],
+                             " - unhandled number of observed alleles > LDT",
+                             " (passingAlleles = ", paste(passingAlleles, collapse="/"),
+                             ", matchedAlleles = ", paste(matchedAlleles, collapse="/"),
+                             ")", sep=""),
+                       call. = TRUE)
+                  
                 }
                 
               } else { # No dropout or NA.
                 
                 if(debug){
                   print("No dropout:")
-                }
-                if(debug){
                   print("Observed:")
                   print(observed)
                 }
@@ -636,7 +679,7 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
             methodLPh <- rep(NA, observed)
           }
         }
-
+        
         # Score all dropouts --------------------------------------------------
         # TODO: This is not needed if the 'locus' method is used. With that
         #       approach both regression and heat-maps can use the same data.
@@ -656,7 +699,7 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
         
         # Count the number of alleles that have dropped out.
         dropCount <- expected - observedPass
-
+        
         if(debug){
           if(length(dataHeight) != length(dataAlleles)){
             print("WARNING! Different length for dataHeight and dataAlleles")
@@ -692,7 +735,7 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
           records <- length(matchedAlleles)
           
         }
-
+        
         # Uppdate vector.
         allelesVec <- c(allelesVec, allelesTmp)
         heightsVec <- c(heightsVec, heightsTmp)
@@ -709,7 +752,7 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
         # Update vectors.
         samplesVec <- c(samplesVec, samplesTmp)
         markersVec <- c(markersVec, markersTmp)
-
+        
         # Indicate zygosity (1-Heterozygote, 0-Homozygote).
         if(expected == 1){
           
@@ -723,10 +766,13 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
           
         } else {
           
-          warning(paste("Sample:", sampleNames[s], "Marker: ", markers[m],
-                        "- Unhandled number of expected alleles (expected =",
-                        expected,"in sample",  sampleNames[s]),
-                  call. = TRUE, immediate. = FALSE, domain = NULL)
+          stop(paste("Sample: ", sampleNames[s],
+                     " Marker: ", markers[m],
+                     " - unhandled number of expected alleles",
+                     " (expected = ", expected,
+                     ", refAlleles = ", paste(refAlleles, collapse="/"),
+                     ")", sep=""),
+               call. = TRUE)
           
         }
         
@@ -753,10 +799,13 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
           
         } else {
           
-          warning(paste("Sample:", sampleNames[s], "Marker: ", markers[m],
-                        "- Unhandled combination (dropCount =",
-                        dropCount,", het =", het),
-                  call. = TRUE, immediate. = FALSE, domain = NULL)
+          stop(paste("Sample: ", sampleNames[s],
+                     " Marker: ", markers[m],
+                     " - unhandled combination",
+                     " (dropCount = ", dropCount,
+                     ", het = ", het,
+                     ")", sep=""),
+                  call. = TRUE)
           
         }
         
@@ -771,10 +820,10 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
         
         # Update vector.
         dropoutVec <- c(dropoutVec, dropoutTmp)
-
+        
         # Store peak height of surviving allele, or NA.
         if(dropCount == 1 & observed > 0){
-        
+          
           rfuTmp <- peakHeight
           
         } else {
@@ -790,46 +839,46 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
         
         # Update vector.
         rfuVec <- c(rfuVec, rfuTmp)
-                
-        if(debug){
-            print("dataAlleles")
-            print(dataAlleles)
-            print("dataHeight")
-            print(dataHeight)
-            print("pass")
-            print(pass)
-            print("expected")
-            print(expected)
-            print("observedPass")
-            print(observedPass)
-            print("Sample")
-            print(sampleNames[s])
-            print("Marker")
-            print(markers[m])
-            print("records")
-            print(records)
-            print("samplesTmp")
-            print(samplesTmp)
-            print("markersTmp")
-            print(markersTmp)
-            print("allelesTmp")
-            print(allelesTmp)
-            print("heightsTmp")
-            print(heightsTmp)
-            print("dropoutTmp")
-            print(dropoutTmp)
-            print("rfuTmp")
-            print(rfuTmp)
-            print("hetTmp")
-            print(hetTmp)
-            print("methodXTmp")
-            print(methodXTmp)
-            print("method1Tmp")
-            print(method1Tmp)
-            print("method2Tmp")
-            print(method2Tmp)
-        }
         
+        if(debug){
+          print("dataAlleles")
+          print(dataAlleles)
+          print("dataHeight")
+          print(dataHeight)
+          print("pass")
+          print(pass)
+          print("expected")
+          print(expected)
+          print("observedPass")
+          print(observedPass)
+          print("Sample")
+          print(sampleNames[s])
+          print("Marker")
+          print(markers[m])
+          print("records")
+          print(records)
+          print("samplesTmp")
+          print(samplesTmp)
+          print("markersTmp")
+          print(markersTmp)
+          print("allelesTmp")
+          print(allelesTmp)
+          print("heightsTmp")
+          print(heightsTmp)
+          print("dropoutTmp")
+          print(dropoutTmp)
+          print("rfuTmp")
+          print(rfuTmp)
+          print("hetTmp")
+          print(hetTmp)
+          print("methodXTmp")
+          print(methodXTmp)
+          print("method1Tmp")
+          print(method1Tmp)
+          print("method2Tmp")
+          print(method2Tmp)
+        }
+          
       }
 
     }
@@ -886,7 +935,16 @@ calculateDropout <- function(data, ref, threshold=NULL, method=c("1","2","X","L"
     dataDrop$MethodL.Ph <- methodLPhVec
   }
     
-
+  # Add attributes to result.
+  attr(dataDrop, which="calculateDropout, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
+  attr(dataDrop, which="calculateDropout, call") <- match.call()
+  attr(dataDrop, which="calculateDropout, date") <- date()
+  attr(dataDrop, which="calculateDropout, data") <- substitute(data)
+  attr(dataDrop, which="calculateDropout, ref") <- substitute(ref)
+  attr(dataDrop, which="calculateDropout, threshold") <- threshold
+  attr(dataDrop, which="calculateDropout, method") <- method
+  attr(dataDrop, which="calculateDropout, ignore.case") <- ignore.case
+  
   if(debug){
     print(paste("EXIT:", match.call()[[1]]))
   }
