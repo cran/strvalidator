@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 25.01.2016: Fixed save attribute saves dataset.
 # 09.01.2016: Added more attributes to result.
 # 06.01.2016: Added attributes to result.
 # 12.10.2014: Fixed bug when NA in Allele column.
@@ -38,6 +39,9 @@
 #'  "OL" in the 'Allele' column.
 #' @param add logical default is TRUE which will add/overwrite columns
 #' 'H', 'TPH', and 'Peaks' in the provided 'data'.
+#' @param sex.rm logical, default FALSE to include sex markers in the analysis.
+#' @param qs.rm logical, default TRUE to exclude quality sensors from the analysis.
+#' @param kit character, required if sex.rm=TRUE or qs.rm=TRUE to define the kit.
 #' @param debug logical indicating printing debug information.
 #' 
 #' @return data.frame with with at least columns 'Sample.Name', 'TPH', and 'Peaks'.
@@ -52,7 +56,11 @@
 #'  Pages 855-874, 10.1111/j.1467-9876.2010.00722.x.
 #' \url{http://dx.doi.org/10.1111/j.1467-9876.2010.00722.x}
 
-calculateHeight <- function(data, na=NULL, add=TRUE, exclude=NULL, debug=FALSE){
+calculateHeight <- function(data, na=NULL, add=TRUE, exclude=NULL,
+                            sex.rm=FALSE, qs.rm=FALSE, kit=NULL, debug=FALSE){
+  
+  # Parameters that are changed by the function must be saved first.
+  attr_data <- substitute(data)
 
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -70,8 +78,8 @@ calculateHeight <- function(data, na=NULL, add=TRUE, exclude=NULL, debug=FALSE){
   }
 
   if(!any(grepl("Heterozygous", names(data), fixed = TRUE))){
-    message("'data' does not contain a column 'Heterozygous'.
-            Average peak height 'H' will not be calculated.")
+    message("'data' does not contain a column 'Heterozygous'.",
+            "Average peak height 'H' will not be calculated.")
     flagH <- FALSE
   }
   
@@ -98,13 +106,96 @@ calculateHeight <- function(data, na=NULL, add=TRUE, exclude=NULL, debug=FALSE){
          call. = TRUE)
   }
 
-  # Check na.
+  # Check logical arguments.
   if(!is.logical(add)){
-    stop("'add' must be TRUE or FALSE.",
-         call. = TRUE)
+    stop("'add' must be logical.", call. = TRUE)
+  }
+  if(!is.logical(sex.rm)){
+    stop("'sex.rm' must logical.", call. = TRUE)
+  }
+  if(!is.logical(qs.rm)){
+    stop("'qs.rm' must be logical.", call. = TRUE)
+  }
+
+  # Check kit.  
+  if(!is.null(kit)){
+    if(is.na(getKit(kit = kit))){
+      stop("'kit' was not found in the kit definition file.")
+    }
+  }
+
+  # Check dependencies.  
+  if(sex.rm){
+    if(is.null(kit)){
+      stop("'kit' can't be NULL if sex.rm=TRUE.")
+    }
+  }
+  if(qs.rm){
+    if(is.null(kit)){
+      stop("'kit' can't be NULL if qs.rm=TRUE.")
+    }
   }
   
   # PREPARE -----------------------------------------------------------------
+
+  # Remove sex markers.
+  if(sex.rm){
+    
+    message("Removing sex markers defined in kit: ", kit)
+    
+    # Get sex markers.    
+    sexMarkers <- getKit(kit = kit, what = "Sex.Marker")
+    
+    if(debug){
+      print("Sex markers:")
+      print(sexMarkers)
+    }
+    
+    # Loop through and remove all sex markers in data.
+    message("Removing sex markers in 'data':")
+    for(i in seq(along = sexMarkers)){
+      
+      tmp1 <- nrow(data)
+      
+      data <- data[data$Marker != sexMarkers[i],]
+      
+      tmp2 <- nrow(data)
+      
+      message("Removed ", tmp1 - tmp2, " rows with marker ", sexMarkers[i])
+      
+    }
+    
+  }
+  
+  # Remove quality sensors. 
+  if(qs.rm){
+    
+    message("Removing quality sensors defined in kit: ", kit, ".")
+    
+    # Get quality sensors.
+    qsMarkers <- getKit(kit = kit, what = "Quality.Sensor")
+    
+    if(debug){
+      print("Quality sensors:")
+      print(qsMarkers)
+    }
+    
+    # Loop through and remove all quality sensors in data.
+    message("Removing quality sensors in 'data':")
+    for(i in seq(along = qsMarkers)){
+      
+      tmp1 <- nrow(data)
+      
+      data <- data[data$Marker != qsMarkers[i],]
+      
+      tmp2 <- nrow(data)
+      
+      message("Removed ", tmp1 - tmp2,
+              " rows with quality sensor ", qsMarkers[i], ".")
+      
+    }
+    
+  }
   
   if(!is.null(exclude)){
     
@@ -156,6 +247,8 @@ calculateHeight <- function(data, na=NULL, add=TRUE, exclude=NULL, debug=FALSE){
     resPeaks <- NULL
     
   }
+  
+  # ANALYSE -------------------------------------------------------------------
 
   # Create a vector 'Z', where 1 is heterozygous and 2 is homozygous.
   if(flagH){
@@ -260,14 +353,17 @@ calculateHeight <- function(data, na=NULL, add=TRUE, exclude=NULL, debug=FALSE){
   }
 	
 	# Add attributes to result.
+	attr(res, which="kit") <- kit
 	attr(res, which="calculateHeight, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
 	attr(res, which="calculateHeight, call") <- match.call()
 	attr(res, which="calculateHeight, date") <- date()
-	attr(res, which="calculateHeight, data") <- substitute(data)
+	attr(res, which="calculateHeight, data") <- attr_data
 	attr(res, which="calculateHeight, na") <- na
 	attr(res, which="calculateHeight, add") <- add
 	attr(res, which="calculateHeight, exclude") <- exclude
-
+	attr(res, which="calculateHeight, sex.rm") <- sex.rm
+	attr(res, which="calculateHeight, qs.rm") <- qs.rm
+	
 	# Return result.
 	return(res)
 
