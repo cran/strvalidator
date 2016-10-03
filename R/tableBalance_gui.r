@@ -4,6 +4,10 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 24.09.2016: Now accepts both 'Hb' and 'Lb' data.
+# 12.09.2016: Removed 'Lb' as a required column.
+# 07.09.2016: Re-named to tableHb.
+# 07.09.2016: Updated to use output from new function calculateHb.
 # 06.01.2016: Added attributes to result.
 # 29.08.2015: Added importFrom.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
@@ -110,7 +114,7 @@ tableBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
     val_obj <- svalue(f0g0_dataset_drp)
     
     # Check if suitable.
-    requiredCol <- c("Marker","Hb", "Lb")
+    requiredCol <- c("Marker")
     ok <- checkDataset(name=val_obj, reqcol=requiredCol,
                        env=env, parent=w, debug=debug)
     
@@ -157,16 +161,14 @@ tableBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   f1g1[2,1] <- glabel(text="Summarize by", container=f1g1)
   
   f1g1[3,1] <- f1g1_scope_opt <- gradio(items=c("global","locus"),
-                              selected = 2,
-                              horizontal = FALSE,
-                              container = f1g1)
+                                        selected = 2,
+                                        horizontal = FALSE,
+                                        container = f1g1)
 
   addHandlerChanged(f1g1_scope_opt, handler = function (h, ...) {
 
-    svalue(f2_save_edt) <- paste(.gDataName,
-                                 "_table_",
-                                 svalue(f1g1_scope_opt),
-                                 sep="")
+    svalue(f2_save_edt) <- paste(.gDataName, "_table_",
+                                 svalue(f1g1_scope_opt), sep="")
     
   })
   
@@ -187,9 +189,7 @@ tableBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
     print("BUTTON")
   }  
   
-  run_btn <- gbutton(text="Summarize",
-                      border=TRUE,
-                      container=gv)
+  run_btn <- gbutton(text="Summarize", border=TRUE, container=gv)
   
   addHandlerChanged(run_btn, handler = function(h, ...) {
     
@@ -207,8 +207,8 @@ tableBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
       enabled(run_btn) <- FALSE
       
       datanew <- tableBalance(data=val_data,
-                   quant=val_ratio,
-                   scope=val_scope)
+                              quant=val_ratio,
+                              scope=val_scope)
       
       # Add attributes.
       attr(datanew, which="tableBalance_gui, data") <- val_data_name

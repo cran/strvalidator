@@ -2,7 +2,7 @@
 # TODO LIST
 # TODO: Object size not sorted correct (seem to sort as character)
 # TODO: Migrate to gWidgets2.
-# TODO: Save .importPath in ws for last used path (only in coming gWidgets2 ??)
+# TODO: Save .importPath in ws for last used path (only in gWidgets2 ??)
 # TODO: Multiple selection not working.
 # TODO: USe viwweports instead of grid.arrange in complex plots?
 # http://www.imachordata.com/extra-extra-get-your-gridextra/#comment-146
@@ -14,6 +14,8 @@
 # See http://r-pkgs.had.co.nz/release.html for advice on release.
 # IMPORTANT: Use build_win() to test on current R and R-dev 'library(devtools)'.
 # IMPORTANT: Use devtools::release() to submitt to CRAN.
+# NB! The error below indicates some problem with the test server (try again later).
+# Error in curl::curl_fetch_memory(url, handle = h) : Timeout was reached
 
 # Versioning convention (x.yy.z[.9###]):
 # Increment x on major change.
@@ -39,6 +41,10 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.09.2016: tableBalance_gui replaced by tableHb_gui.
+# 29.08.2016: calculateBalance_gui replaced by calculateHb_gui.
+# 15.08.2016: Removed calculateHeterozygous, added calculateCopies in the 'Edit' tab.
+# 04.08.2016: Added button to plot contamination in the 'Result' tab.
 # 27.06.2016: Added button to create new project in the 'Workspace' tab.
 # 02.05.2016: Added button to the function 'removeArtefact' in the 'Result' tab.
 # 29.04.2016: Added button to the function 'calculateAllele' in the 'Result' tab.
@@ -55,10 +61,6 @@
 # 01.06.2015: Added 'Calculate' and 'Plot' (AT6) button in 'AT' tab.
 # 24.05.2015: Added 'Columns' button in 'Tools' tab.
 # 04.05.2015: Added 'AT' tab.
-# 01.01.2015: Fixed error in 'Workspace' tab when no selection and 'Delete' is pressed.
-# 19.12.2014: Added 'EPG' button in 'Tools' tab.
-# 12.12.2014: Re-named 'Edit' tab to 'Tools' and change name on some buttons.
-# 04.12.2014: Added 'Pull-up' tab.
 
 #' @title Graphical User Interface For The STR-validator Package
 #'
@@ -1416,18 +1418,18 @@ strvalidator <- function(debug=FALSE){
   
   # CALCULATE HETEROZYGOUS ----------------------------------------------------
   
-  edit_grid[14,1] <- edit_het_btn <- gbutton(text="Heterozygous",
+  edit_grid[14,1] <- edit_copies_btn <- gbutton(text="Copies",
                                              border=TRUE,
                                              container = edit_grid) 
   
-  edit_grid[14,2] <- glabel(text="Indicate heterozygous loci for a reference dataset.",
+  edit_grid[14,2] <- glabel(text="Calculate allele copies.",
                             container=edit_grid,
                             anchor=c(-1 ,0))
   
-  addHandlerChanged(edit_het_btn, handler = function(h, ...) {
+  addHandlerChanged(edit_copies_btn, handler = function(h, ...) {
     
     # Open GUI.
-    calculateHeterozygous_gui(env=.strvalidator_env, debug=debug, parent=w)
+    calculateCopies_gui(env=.strvalidator_env, savegui=.save_gui, debug=debug, parent=w)
     
   } )
   
@@ -1655,14 +1657,14 @@ strvalidator <- function(debug=FALSE){
                                                     border=TRUE,
                                                     container = balance_g2) 
   
-  balance_g2[1,2] <- glabel(text="Calculate intra/inter locus balance for a dataset (reference required).",
+  balance_g2[1,2] <- glabel(text="Calculate intra-locus balance.",
                             container=balance_g2)
   
   
   addHandlerChanged(balance_g2_calc_1_btn, handler = function(h, ...) {
     
     # Open GUI.
-    calculateBalance_gui(env=.strvalidator_env, savegui=.save_gui, debug=debug, parent=w)
+    calculateHb_gui(env=.strvalidator_env, savegui=.save_gui, debug=debug, parent=w)
     
   } )
   
@@ -1671,7 +1673,7 @@ strvalidator <- function(debug=FALSE){
                                                     border=TRUE,
                                                     container = balance_g2) 
   
-  balance_g2[2,2] <- glabel(text="Calculate inter locus balance for a dataset (no reference required).",
+  balance_g2[2,2] <- glabel(text="Calculate inter-locus balance.",
                             container=balance_g2)
   
   
@@ -1704,7 +1706,7 @@ strvalidator <- function(debug=FALSE){
                                                   border=TRUE,
                                                   container = balance_g2) 
   
-  balance_g2[4,2] <- glabel(text="Summarize balance data in a table.",
+  balance_g2[4,2] <- glabel(text="Calculate summary statistics for balance data.",
                             container=balance_g2)
   
   addHandlerChanged(balance_table_btn, handler = function(h, ...) {
@@ -2204,6 +2206,22 @@ strvalidator <- function(debug=FALSE){
     
     # Open GUI.
     removeArtefact_gui(env=.strvalidator_env, savegui=.save_gui, debug=debug, parent=w)
+    
+  } )
+  
+  # PLOT CONTAMINATION --------------------------------------------------------
+  
+  result_g5[3,1] <- result_g5_cont_btn <- gbutton(text="Plot",
+                                                    border=TRUE,
+                                                    container = result_g5) 
+  
+  result_g5[3,2] <- glabel(text="Plot contamination.",
+                           container=result_g5)
+  
+  addHandlerChanged(result_g5_cont_btn, handler = function(h, ...) {
+    
+    # Open GUI.
+    plotContamination_gui(env=.strvalidator_env, savegui=.save_gui, debug=debug, parent=w)
     
   } )
   

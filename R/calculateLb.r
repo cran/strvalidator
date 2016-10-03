@@ -7,6 +7,9 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.09.2016: Fixed implementation of filterProfile function.
+# 29.08.2016: Implemented updated filterProfile function.
+# 13.07.2016: Fixed 'data' save as attribute.
 # 28.06.2016: Added option to remove quality sensor.
 # 27.06.2016: Fixed problem with replacing NAs.
 # 19.02.2016: Add fix broken dye after removing OL alleles.
@@ -71,7 +74,7 @@
 #' 
 #' @references
 #' Torben Tvedebrink et.al.,
-#'  Performance of two 17 locus forensic identi???cation STR kits-Applied
+#'  Performance of two 17 locus forensic identification STR kits-Applied
 #'  Biosystems's AmpFlSTR NGMSElect and Promega's PowerPlex ESI17 kits,
 #'  Forensic Science International: Genetics, Volume 6, Issue 5, September 2012,
 #'  Pages 523-531, ISSN 1872-4973, 10.1016/j.fsigen.2011.12.006.
@@ -93,6 +96,10 @@ calculateLb <- function(data, ref = NULL, option = "prop", by.dye = FALSE,
                         ol.rm = TRUE, sex.rm = FALSE, qs.rm = FALSE,
                         na = NULL, kit = NULL, ignore.case = TRUE,
                         word = FALSE, exact = FALSE, debug = FALSE){
+  
+  # Parameters that are changed by the function must be saved first.
+  attr_data <- substitute(data)
+  attr_ref <- substitute(ref)
   
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -273,14 +280,16 @@ calculateLb <- function(data, ref = NULL, option = "prop", by.dye = FALSE,
     
     message("Extracting known profiles and adding missing loci.")
     
-    # Extract known profile.
-    data <- filterProfile(data = data, ref = ref, add.missing.loci = TRUE,
-                          keep.na = TRUE, ignore.case = ignore.case,
-                          exact = exact, invert = FALSE, debug = debug)
+    # Filter dataset.
+    data <- filterProfile(data = data, ref = ref,
+                          add.missing.loci = TRUE, keep.na = TRUE, invert = FALSE, 
+                          ignore.case = ignore.case, exact = exact, word = word,
+                          sex.rm = sex.rm, qs.rm = qs.rm, kit = kit, debug = debug)
 
-    # Check and fix dye.
+    # Check if Dye exist.    
     if(!is.null((data$Dye))){
 
+      # Check and fix dye.
       if(any(is.na(data$Dye))){
         
         # Fix broken dye.
@@ -291,66 +300,17 @@ calculateLb <- function(data, ref = NULL, option = "prop", by.dye = FALSE,
       
     }
 
-  }
-  
-  # Remove sex markers. 
-  if(sex.rm){
-    # NB! Must come after filterProfile, since it adds missing markers.
-    
-    message("Removing sex markers defined in kit: ", kit, ".")
-    
-    # Get sex markers.    
-    sexMarkers <- getKit(kit = kit, what = "Sex.Marker")
-    
-    if(debug){
-      print("Sex markers:")
-      print(sexMarkers)
-    }
-    
-    # Loop through and remove all sex markers.
-    for(i in seq(along = sexMarkers)){
-      
-      tmp1 <- nrow(data)
-      
-      data <- data[data$Marker != sexMarkers[i],]
-      
-      tmp2 <- nrow(data)
-      
-      message("Removed ", tmp1 - tmp2,
-              " rows with marker ", sexMarkers[i], ".")
-      
-    }
-    
-  }
+  } else {
 
-  # Remove quality sensors. 
-  if(qs.rm){
-    # NB! Must come after filterProfile, since it adds missing markers.
+    message("Reference dataset not provided.")
     
-    message("Removing quality sensors defined in kit: ", kit, ".")
-    
-    # Get quality sensors.
-    qsMarkers <- getKit(kit = kit, what = "Quality.Sensor")
-    
-    if(debug){
-      print("Quality sensors:")
-      print(qsMarkers)
-    }
-    
-    # Loop through and remove all quality sensors.
-    for(i in seq(along = qsMarkers)){
-      
-      tmp1 <- nrow(data)
-      
-      data <- data[data$Marker != qsMarkers[i],]
-      
-      tmp2 <- nrow(data)
-      
-      message("Removed ", tmp1 - tmp2,
-              " rows with quality sensor ", qsMarkers[i], ".")
-      
-    }
-    
+    # Filter dataset.
+    data <- filterProfile(data = data, ref = NULL, add.missing.loci = FALSE,
+                          keep.na = TRUE, invert = FALSE,
+                          ignore.case = ignore.case, exact = exact, word = word,
+                          sex.rm = sex.rm, qs.rm = qs.rm, kit = kit,
+                          filter.allele = FALSE, debug = debug)
+
   }
   
   # Convert to numeric.  
@@ -472,8 +432,8 @@ calculateLb <- function(data, ref = NULL, option = "prop", by.dye = FALSE,
   attr(res, which="calculateLb, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
   attr(res, which="calculateLb, call") <- match.call()
   attr(res, which="calculateLb, date") <- date()
-  attr(res, which="calculateLb, data") <- substitute(data)
-  attr(res, which="calculateLb, ref") <- substitute(ref)
+  attr(res, which="calculateLb, data") <- attr_data
+  attr(res, which="calculateLb, ref") <- attr_ref
   attr(res, which="calculateLb, option") <- option
   attr(res, which="calculateLb, by.dye") <- by.dye
   attr(res, which="calculateLb, ol.rm") <- ol.rm
