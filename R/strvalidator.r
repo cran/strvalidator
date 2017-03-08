@@ -6,13 +6,21 @@
 # TODO: Multiple selection not working.
 # TODO: USe viwweports instead of grid.arrange in complex plots?
 # http://www.imachordata.com/extra-extra-get-your-gridextra/#comment-146
+# TODO: Bug in 'save description': if project A is open in the 'workspace' and
+# description is changed in 'Projects' and the project is save from the ws
+# the variable holding the description will be overwritten by an empty/previous value.
+# (must check which project is open and update both?)
+# TODO: Open projects folder does not update 'projects' list (to empty) if no
+# R files in selected folder.
 
 # IMPORTANT: To manually run R CMD check in RStudio all packages must be installed in
 # both the 32 and 64 bit version. Make sure it is possible to start manually
 # (GTK+ must be installed by clicking 'OK' on the message box).
 
 # See http://r-pkgs.had.co.nz/release.html for advice on release.
-# IMPORTANT: Use build_win() to test on current R and R-dev 'library(devtools)'.
+# IMPORTANT: Use devtools::build_win() to test on current R and R-dev.
+# IMPORTANT: Use devtools::revdep_check() to check reverse dependencies
+# (Does not work - gui related error).
 # IMPORTANT: Use devtools::release() to submitt to CRAN.
 # NB! The error below indicates some problem with the test server (try again later).
 # Error in curl::curl_fetch_memory(url, handle = h) : Timeout was reached

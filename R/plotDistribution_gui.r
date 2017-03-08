@@ -1,9 +1,13 @@
 ################################################################################
 # TODO LIST
-# TODO: Implement (x-)axis scale controls.
+# TODO: ...
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.03.2017: Removed dead web page references.
+# 01.11.2016: 'Probability' on y axis changed to 'Density'.
+# 11.10.2016: Added controls for x and y axis range.
+# 11.10.2016: No longer required to select a group if column Group is present.
 # 19.09.2016: Fixed factor levels in group drop-down after change in calculatePeaks.
 # 27.06.2016: Fixed 'bins' not saved.
 # 16.06.2016: Implemented log option and number of bins.
@@ -20,12 +24,6 @@
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 11.05.2014: Fixed boxplot bug, box not drawn.
-# 08.05.2014: Implemented 'checkDataset'.
-# 23.02.2014: No column required.
-# 23.02.2014: Conversion of 'Height', 'Size', and 'Data.Point' to numeric.
-# 23.02.2014: Fixed boxplot width bug.
-# 09.02.2014: Automatically try to guess x title from chosen column.
-# 07.02.2014: First version.
 
 #' @title Plot Distribution
 #'
@@ -37,7 +35,6 @@
 #' a group (in column 'Group' if any), finally select a column to plot the distribution of.
 #' It is possible to overlay a boxplot and to plot logarithms.
 #' Various smoothing kernels and bandwidths can be specified.
-#' More info on kernels and bandwidth: \url{http://www.inside-r.org/r-doc/stats/density}
 #' The bandwidth or the number of bins can be specified for the histogram.
 #' Automatic plot titles can be replaced by custom titles.
 #' A name for the result is automatiaclly suggested.
@@ -57,7 +54,7 @@
 #' 
 #' @return TRUE
 #' 
-#' @seealso \code{\link{log}}
+#' @seealso \code{\link{log}}, \code{\link{geom_density}}
 
 
 plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NULL){
@@ -68,6 +65,8 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
   .gPlot <- NULL
   .palette <- c("Set1","Set2","Set3","Accent","Dark2",
                 "Paired","Pastel1", "Pastel2")
+  .defaultGroup <- "<Select group>"
+  .defaultColumn <- "<Select column>"
   # Qualitative palette, do not imply magnitude differences between legend
   # classes, and hues are used to create the primary visual differences 
   # between classes. Qualitative schemes are best suited to representing
@@ -136,12 +135,12 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
   f0g0[1,3] <- f0_samples_lbl <- glabel(text=" (0 rows)", container=f0g0)
   
   f0g0[2,1] <- glabel(text="Select group:", container=f0g0)
-  f0g0[2,2] <- f0_group_drp <- gdroplist(items="<Select group>",
+  f0g0[2,2] <- f0_group_drp <- gdroplist(items=.defaultGroup,
                                          selected = 1, container=f0g0)
   f0g0[2,3] <- f0_rows_lbl <- glabel(text=" (0 rows)", container=f0g0)
   
   f0g0[3,1] <- glabel(text="Select column:", container=f0g0)
-  f0g0[3,2] <- f0_column_drp <- gdroplist(items="<Select column>",
+  f0g0[3,2] <- f0_column_drp <- gdroplist(items=.defaultColumn,
                                           selected = 1, container=f0g0)
   
   
@@ -331,6 +330,23 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
     
   } )
   
+
+  f1e4 <- gexpandgroup(text="Axes", horizontal=FALSE, container = f1)
+  
+#  f1g6 <- gframe(text = "", horizontal = FALSE, container = f1e4)
+  
+  glabel(text="NB! Must provide both min and max value.",
+         anchor=c(-1 ,0), container = f1e4)
+  
+  f1g6 <- glayout(container = f1e4, spacing = 1)
+  f1g6[1,1:2] <- glabel(text="Limit Y axis (min-max)", container=f1g6)
+  f1g6[2,1] <- f1g6_y_min_edt <- gedit(text="", width=5, container=f1g6)
+  f1g6[2,2] <- f1g6_y_max_edt <- gedit(text="", width=5, container=f1g6)
+  
+  f1g6[3,1:2] <- glabel(text="Limit X axis (min-max)", container=f1g6)
+  f1g6[4,1] <- f1g6_x_min_edt <- gedit(text="", width=5, container=f1g6)
+  f1g6[4,2] <- f1g6_x_max_edt <- gedit(text="", width=5, container=f1g6)
+
   # FRAME 7 ###################################################################
   
   f7 <- gframe(text = "Plot distribution",
@@ -345,7 +361,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
     
     val_column <- svalue(f0_column_drp)
     
-    if(val_column == "<Select column>"){
+    if(val_column == .defaultColumn){
       
       gmessage(message="A data column must be specified!",
                title="Error",
@@ -367,7 +383,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
     
     val_column <- svalue(f0_column_drp)
     
-    if(val_column == "<Select column>"){
+    if(val_column == .defaultColumn){
       
       gmessage(message="A data column must be specified!",
                title="Error",
@@ -389,7 +405,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
     
     val_column <- svalue(f0_column_drp)
     
-    if(val_column == "<Select column>"){
+    if(val_column == .defaultColumn){
       
       gmessage(message="A data column must be specified!",
                title="Error",
@@ -472,7 +488,11 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
     val_log <- svalue(f1_log_chk)
     val_base <- as.numeric(svalue(f1_base_edt))
     val_bins <- as.numeric(svalue(f1_bins_edt))
-    
+    val_xmin <- as.numeric(svalue(f1g6_x_min_edt))
+    val_xmax <- as.numeric(svalue(f1g6_x_max_edt))
+    val_ymin <- as.numeric(svalue(f1g6_y_min_edt))
+    val_ymax <- as.numeric(svalue(f1g6_y_max_edt))
+
     if(debug){
       print("val_titles")
       print(val_titles)
@@ -498,6 +518,14 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
       print(val_base)
       print("val_bins")
       print(val_bins)
+      print("val_xmin")
+      print(val_xmin)
+      print("val_xmax")
+      print(val_xmax)
+      print("val_ymin")
+      print(val_ymin)
+      print("val_ymax")
+      print(val_ymax)
     }
     
     # Check if data.
@@ -515,19 +543,25 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
       # Get data for selected group.
       if("Group" %in% names(val_data)){
         
-        # Store nb of observations.
-        nb0 <- nb
+        if(val_group != .defaultGroup){
+
+          # Store nb of observations.
+          nb0 <- nb
+          
+          # Subset according to group.
+          val_data <- val_data[val_data$Group==val_group, ]
+          
+          # Update number of observations.
+          nb <- nrow(val_data)
+          
+          # Show message.
+          message(paste("Subset group = '", val_group,
+                        "', removed ", nb0-nb, " rows.", sep=""))
+          
+        }
         
-        # Subset according to group.
-        val_data <- val_data[val_data$Group==val_group, ]
-        
-        # Update number of observations.
-        nb <- nrow(val_data)
-        
-        # Show message.
-        message(paste("Subset group = '", val_group,
-                      "', removed ", nb0-nb, " rows.", sep=""))
-        
+        message("No group selected.")
+
       }
       
       # Convert to numeric.
@@ -592,14 +626,14 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
           mainTitle <- paste("Cumulative density function (",
                              nb, " observations)", sep="")
           
-          yTitle <- "Proportion"
+          yTitle <- "Density"
           
         } else if(how=="pdf"){
           
           mainTitle <- paste("Probability density function (",
                              nb, " observations)", sep="")
           
-          yTitle <- "Proportion"
+          yTitle <- "Density"
           
         } else if(how=="histogram"){
           
@@ -653,7 +687,6 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
         }
         
         gp <- ggplot(data=val_data, aes_string(x=val_column))
-        # More info on kernels and bandwidth: http://www.inside-r.org/r-doc/stats/density
         gp <- gp + geom_density(aes_string(x=val_column), kernel=val_kernel, adjust=val_adjustbw)
         
       } else if(how == "histogram"){
@@ -771,6 +804,32 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
       # Apply theme.
       gp <- gp + eval(parse(text=val_theme))
       
+      # Limit y axis.
+      if(!is.na(val_ymin) && !is.na(val_ymax)){
+        val_y <- c(val_ymin, val_ymax)
+      } else {
+        val_y <- NULL
+      }
+      
+      # Limit x axis.
+      if(!is.na(val_xmin) && !is.na(val_xmax)){
+        val_x <- c(val_xmin, val_xmax)
+      } else {
+        val_x <- NULL
+      }
+      
+      # Check if any axis limits.
+      if(any(!is.null(val_y), !is.null(val_x))){
+        
+        message("Zoom plot xmin/xmax,ymin/ymax:",
+                paste(val_x,collapse="/"), ",",
+                paste(val_y,collapse="/"))
+        
+        # Zoom in without dropping observations.
+        gp <- gp + coord_cartesian(xlim = val_x, ylim = val_y)
+        
+      }
+
       # plot.
       print(gp)
       
@@ -836,7 +895,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
       blockHandler(f0_group_drp)
       
       # Populate drop list.
-      f0_group_drp[] <- c("<Select group>", groups)
+      f0_group_drp[] <- c(.defaultGroup, groups)
       
       unblockHandler(f0_group_drp)
       
@@ -845,7 +904,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
       blockHandler(f0_group_drp)
       
       # Reset drop list and select first item.
-      f0_group_drp[] <- c("<Select group>")
+      f0_group_drp[] <- c(.defaultGroup)
       svalue(f0_group_drp, index = TRUE) <- 1
 
       unblockHandler(f0_group_drp)
@@ -858,7 +917,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
       blockHandler(f0_column_drp)
       
       # Populate drop list.
-      f0_column_drp[] <- c("<Select column>", columns)
+      f0_column_drp[] <- c(.defaultColumn, columns)
       
       unblockHandler(f0_column_drp)
 
@@ -867,7 +926,7 @@ plotDistribution_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, 
       blockHandler(f0_column_drp)
       
       # Reset drop list and select first item.
-      f0_column_drp[] <- c("<Select column>")
+      f0_column_drp[] <- c(.defaultColumn)
       svalue(f0_column_drp, index = TRUE) <- 1
       
       unblockHandler(f0_column_drp)
