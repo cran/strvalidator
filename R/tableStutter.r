@@ -4,6 +4,8 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 01.08.2017: Added attributes to result.
 # 29.08.2015: Added importFrom.
 # 01.11.2013: Fixed quant parameter always 0.95 (hard-coded instead of variable).
 # 06.08.2013: Fixed data.frame bug giving 'TRUE' instead of 'NA'.
@@ -39,6 +41,9 @@
 
 
 tableStutter <- function(data, scope="stutter", quant=0.95){
+  
+  # Parameters that are changed by the function must be saved first.
+  attr_data <- substitute(data)
   
   # Column name for quantile.
   quantName <- paste("Perc",quant*100, sep=".")
@@ -121,6 +126,9 @@ tableStutter <- function(data, scope="stutter", quant=0.95){
     }
   }
   
+  # Update audit trail.
+  sTable <- auditTrail(obj = sTable, f.call = match.call(), package = "strvalidator")
+
   return(sTable)
   
 }

@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 28.08.2015: Added importFrom.
 # 05.05.2015: Changed parameter 'ignoreCase' to 'ignore.case' for 'checkSubset' function.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
@@ -19,7 +24,7 @@
 #' Simplifies the use of the \code{\link{calculateMixture}} function by
 #' providing a graphical user interface.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -40,6 +45,9 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
   .gData <- NULL
   .gRef1 <- NULL
   .gRef2 <- NULL
+  .gNameData <- NULL
+  .gNameRef1 <- NULL
+  .gNameRef2 <- NULL
   
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -108,10 +116,11 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
   
   dfs <- c("<Select a dataset>", listObjects(env=env, obj.class="data.frame"))
   
-  g0[1,2] <- g0_data_drp <- gdroplist(items=dfs, 
+  g0[1,2] <- g0_data_drp <- gcombobox(items=dfs, 
                                       selected = 1,
                                       editable = FALSE,
-                                      container = g0)
+                                      container = g0,
+                                      ellipsize = "none")
   g0[1,3] <- g0_data_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
   addHandlerChanged(g0_data_drp, handler = function (h, ...) {
@@ -129,6 +138,7 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
       
       # get dataset.
       .gData <<- get(val_obj, envir=env)
+      .gNameData <<- val_obj
       svalue(g0_data_samples_lbl) <- paste(length(unique(.gData$Sample.Name)),
                                            "samples.")
       svalue(f4_save_edt) <- paste(val_obj, "_mixture", sep="")
@@ -137,6 +147,7 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
       
       # Reset components.
       .gData <<- NULL
+      .gNameData <<- NULL
       svalue(g0_data_drp, index=TRUE) <- 1
       svalue(g0_data_samples_lbl) <- " 0 samples"
       svalue(f4_save_edt) <- ""
@@ -150,10 +161,11 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
   g0[2,1] <- glabel(text="Select reference dataset (major):", container=g0)
   
   # NB! dfs defined in previous section.
-  g0[2,2] <- g0_ref1_drp <- gdroplist(items=dfs, 
+  g0[2,2] <- g0_ref1_drp <- gcombobox(items=dfs, 
                                      selected = 1,
                                      editable = FALSE,
-                                     container = g0)
+                                     container = g0,
+                                     ellipsize = "none")
   
   g0[2,3] <- g0_ref1_samples_lbl <- glabel(text=" 0 references", container=g0)
   
@@ -171,6 +183,7 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
       # Load or change components.
       
       .gRef1 <<- get(val_obj, envir=env)
+      .gNameRef1 <<- val_obj
       svalue(g0_ref1_samples_lbl) <- paste(length(unique(.gRef1$Sample.Name)),
                                           "samples.")
       
@@ -178,6 +191,7 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
       
       # Reset components.
       .gRef1 <<- NULL
+      .gNameRef1 <<- NULL
       svalue(g0_ref1_drp, index=TRUE) <- 1
       svalue(g0_ref1_samples_lbl) <- " 0 references"
       
@@ -189,10 +203,11 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
   g0[3,1] <- glabel(text="Select reference dataset (minor):", container=g0)
   
   # NB! dfs defined in previous section.
-  g0[3,2] <- g0_ref2_drp <- gdroplist(items=dfs, 
+  g0[3,2] <- g0_ref2_drp <- gcombobox(items=dfs, 
                                      selected = 1,
                                      editable = FALSE,
-                                     container = g0)
+                                     container = g0,
+                                     ellipsize = "none")
   
   g0[3,3] <- g0_ref2_samples_lbl <- glabel(text=" 0 references", container=g0)
   
@@ -210,6 +225,7 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
       # Load or change components.
       
       .gRef2 <<- get(val_obj, envir=env)
+      .gNameRef2 <<- val_obj
       svalue(g0_ref2_samples_lbl) <- paste(length(unique(.gRef2$Sample.Name)),
                                           "samples.")
       
@@ -217,6 +233,7 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
       
       # Reset components.
       .gRef2 <<- NULL
+      .gNameRef2 <<- NULL
       svalue(g0_ref2_drp, index=TRUE) <- 1
       svalue(g0_ref2_samples_lbl) <- " 0 references"
       
@@ -230,9 +247,7 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
     print("CHECK")
   }  
   
-  g0[4,2] <- g0_check_btn <- gbutton(text="Check subsetting",
-                                     border=TRUE,
-                                     container=g0)
+  g0[4,2] <- g0_check_btn <- gbutton(text="Check subsetting", container=g0)
   
   addHandlerChanged(g0_check_btn, handler = function(h, ...) {
     
@@ -276,7 +291,7 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and two reference sets",
                title="Error",
                icon = "error")      
@@ -321,14 +336,17 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
     print("BUTTON")
   }  
   
-  calculate_btn <- gbutton(text="Calculate", border=TRUE, container=gv)
+  calculate_btn <- gbutton(text="Calculate", container=gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
     val_ref1 <- .gRef1
     val_ref2 <- .gRef2
+    val_name_data <- .gNameData
+    val_name_ref1 <- .gNameRef1
+    val_name_ref2 <- .gNameRef2
     val_name <- svalue(f4_save_edt)
     val_ol <- svalue(f1_ol_chk)
     val_drop <- svalue(f1_drop_chk)
@@ -353,7 +371,9 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
     if(!is.null(.gData) & !is.null(.gRef1) & !is.null(.gRef2)){
       
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
       
       datanew <- calculateMixture(data=val_data,
@@ -362,6 +382,19 @@ calculateMixture_gui <- function(env=parent.frame(), savegui=NULL,
                                   ol.rm=val_ol,
                                   ignore.dropout=val_drop,
                                   debug=debug)
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "ref1", "ref2",
+                   "ol.rm", "ignore.dropout")
+      
+      values <- list(val_name_data, val_name_ref1, val_name_ref2,
+                     val_ol, val_drop)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateMixture_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)

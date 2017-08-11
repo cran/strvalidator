@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
 # 02.05.2016: Added parameters 'sex.rm' and 'kit'.
 # 02.05.2016: Implemented calculation of proportion and frequency.
 # 29.04.2016: Added more attributes.
@@ -15,14 +16,14 @@
 #' Calculates summary statistics for alleles per marker over the entire dataset.
 #'
 #' @details Creates a table of the alleles in the dataset sorted by number of
-#' observations.For each allele the porportion of total observations is
+#' observations.For each allele the proportion of total observations is
 #' calculated. Using a threshold this can be used to separate likely artefacts
 #' from likely drop-in peaks. In addition the observed allele frequency is
 #' calculated. If columns 'Height' and/or 'Size' are available summary
 #' statistics is calculated. 
 #' NB! The function removes NA's and OL's prior to analysis.
 #' 
-#' @param data data.frame including colums 'Marker' and 'Allele', and
+#' @param data data.frame including columns 'Marker' and 'Allele', and
 #'  optionally 'Height' and 'Size'.
 #' @param threshold numeric if not NULL only peak heights above 'threshold'
 #'  will be considered.
@@ -225,13 +226,10 @@ calculateAllele <- function(data, threshold=NULL, sex.rm=FALSE, kit=NULL,
   res <- as.data.frame(res)
   
   # Add attributes to result.
-  attr(res, which="calculateAllele, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
-  attr(res, which="calculateAllele, call") <- match.call()
-  attr(res, which="calculateAllele, date") <- date()
-  attr(res, which="calculateAllele, data") <- attr_data
-  attr(res, which="calculateAllele, threshold") <- threshold
-  attr(res, which="calculateAllele, sex.rm") <- sex.rm
-  attr(res, which="calculateAllele, kit") <- kit
+  attr(res, which="kit") <- kit
+  
+  # Update audit trail.
+  res <- auditTrail(obj = res, f.call = match.call(), package = "strvalidator")
   
   if(debug){
     print(paste("EXIT:", match.call()[[1]]))

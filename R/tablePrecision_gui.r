@@ -4,6 +4,12 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
+# 07.07.2017: Replaced gWidgets:: with gWidgets2::
 # 29.08.2015: Added importFrom.
 # 05.05.2015: Changed parameter 'ignoreCase' to 'ignore.case' for 'checkSubset' function.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
@@ -23,7 +29,7 @@
 #' Simplifies the use of the \code{\link{tablePrecision}} function by providing 
 #' a graphical user interface.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -43,6 +49,8 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
   # Global variables.
   .gData <- data.frame(Columns="NA")
   .gRef <- NULL
+  .gDataName <- NULL
+  .gRefName <- NULL
   
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -107,10 +115,11 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
   
   dfs <- c("<Select a dataset>", listObjects(env=env, obj.class="data.frame"))
   
-  g0[1,2] <- g0_data_drp <- gdroplist(items=dfs, 
+  g0[1,2] <- g0_data_drp <- gcombobox(items=dfs, 
                            selected = 1,
                            editable = FALSE,
-                           container = g0)
+                           container = g0,
+                           ellipsize = "none")
   g0[1,3] <- g0_data_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
   addHandlerChanged(g0_data_drp, handler = function (h, ...) {
@@ -126,7 +135,8 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
       
       # Load or change components.
       .gData <<- get(val_obj, envir=env)
-
+      .gDataName <<- val_obj
+      
       .refresh_key_tbl()
       .refresh_target_tbl()
 
@@ -146,6 +156,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
 
       # Reset components.
       .gData <<- data.frame(Columns="NA")
+      .gDataName <<- NULL
       svalue(g0_data_drp, index=TRUE) <- 1
       svalue(g0_data_samples_lbl) <- " 0 samples"
       svalue(f4_save_edt) <- ""
@@ -204,12 +215,16 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
   f2g1[1,1] <- glabel(text="Select reference dataset:", container=f2g1)
   
   # NB! dfs defined in previous section.
-  f2g1[2,1] <- f2g1_ref_drp <- gdroplist(items=dfs, 
+  f2g1[2,1] <- f2g1_ref_drp <- gcombobox(items=dfs, 
                                      selected = 1,
                                      editable = FALSE,
-                                     container = f2g1)
+                                     container = f2g1,
+                                     ellipsize = "none")
   
-  f2g1[2,2] <- f2g1_ref_samples_lbl <- glabel(text=" 0 references", container=g0)
+  f2g1[2,2] <- f2g1_ref_samples_lbl <- glabel(text=" 0 references", container=f2g1)
+  
+  f2g1[2,3] <- f2g1_ignore_chk <- gcheckbox(text="Ignore case", checked=TRUE, container=f2g1)
+
   
   addHandlerChanged(f2g1_ref_drp, handler = function (h, ...) {
     
@@ -218,6 +233,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
     if(exists(val_obj, envir=env, inherits = FALSE)){
       
       .gRef <<- get(val_obj, envir=env)
+      .gRefName <<- val_obj
       
       # Check if required columns...
       requiredCol <- c("Sample.Name", "Marker", "Allele")
@@ -236,6 +252,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
         
         # Reset components.
         .gRef <<- NULL
+        .gRefName <<- NULL
         svalue(f2g1_ref_drp, index=TRUE) <- 1
         svalue(f2g1_ref_samples_lbl) <- " 0 references"
         
@@ -273,16 +290,17 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
 
   # CHECK ---------------------------------------------------------------------
   
-  f2g1[3,1] <- f2g1_check_btn <- gbutton(text="Check subsetting",
-                                  border=TRUE,
-                                  container=f2g1)
+  f2g1[3,1] <- f2g1_check_btn <- gbutton(text="Check subsetting", 
+                                         container=f2g1)
   
   addHandlerChanged(f2g1_check_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
     val_ref <- .gRef
-    val_ignore <- svalue(f1_ignore_chk)
+    val_name_data <- .gDataName
+    val_name_ref <- .gRefName
+    val_ignore <- svalue(f2g1_ignore_chk)
     val_word <- FALSE
     
     if (!is.null(.gData) || !is.null(.gRef)){
@@ -305,7 +323,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      
@@ -321,10 +339,11 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
   
   glabel(text="Select kit:", container=f2g2)
   
-  f2g2_kit_drp <- gdroplist(items=getKit(), 
+  f2g2_kit_drp <- gcombobox(items=getKit(), 
                        selected = 1,
                        editable = FALSE,
-                       container = f2g2) 
+                       container = f2g2,
+                       ellipsize = "none") 
   
   f2g2_virtual_chk <- gcheckbox(text="Exclude virtual bins.",
                               checked=TRUE,
@@ -338,10 +357,6 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
                expand=TRUE,
                container = gv) 
   
-  f1_ignore_chk <- gcheckbox(text="Ignore case",
-                             checked=TRUE,
-                             container=f1)
-  
   # KEY -----------------------------------------------------------------------
   
   f1_key_f <- gframe("Create key from columns", 
@@ -353,7 +368,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
                       width = 40,
                       container=f1_key_f)
   
-  f1_key_tbl <- gWidgets::gtable(items=names(.gData), 
+  f1_key_tbl <- gWidgets2::gtable(items=names(.gData), 
                                  container=f1_key_f,
                                  expand=TRUE)
   
@@ -388,7 +403,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
                       width = 40,
                       container=f1_target_f)
   
-  f1_target_tbl <- gWidgets::gtable(items=names(.gData), 
+  f1_target_tbl <- gWidgets2::gtable(items=names(.gData), 
                                  container=f1_target_f,
                                  expand=TRUE)
   
@@ -425,19 +440,19 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
   
   # BUTTON ####################################################################
   
-  calculate_btn <- gbutton(text="Calculate",
-                           border=TRUE,
-                           container=gv)
+  calculate_btn <- gbutton(text="Calculate", container=gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     # Get values.
     val_filter <- svalue(f2_filter_opt, index=TRUE)
-    val_ignore <- svalue(f1_ignore_chk)
+    val_ignore <- svalue(f2g1_ignore_chk)
     val_key <- svalue(f1_key_txt)
     val_target <- svalue(f1_target_txt)
     val_data <- .gData
     val_ref <- .gRef
+    val_name_data <- .gDataName
+    val_name_ref <- .gRefName
     val_name <- svalue(f4_save_edt)
     val_kit <- svalue(f2g2_kit_drp)
     val_exclude <- svalue(f2g2_virtual_chk)
@@ -479,7 +494,9 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
     if(!is.null(val_data) & !is.null(val_ref)){
 
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
 
       # Filter dataset.
@@ -514,6 +531,18 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
                                     key=val_key,
                                     target=val_target,
                                     debug=debug)
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "filter", "ref", "ignore",
+                   "kit", "exclude", "key", "target")
+      
+      values <- list(val_name_data, val_filter, val_name_ref, val_ignore,
+                     val_kit, val_exclude, val_key, val_target)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "tablePrecision_gui", arguments = FALSE,
+                            package = "strvalidator")
       
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
@@ -550,7 +579,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
     delete(f1_target_f, f1_target_tbl)
     
     # ...creating a new table.
-    f1_target_tbl <<- gWidgets::gtable(items=names(.gData),
+    f1_target_tbl <<- gWidgets2::gtable(items=names(.gData),
                                     container=f1_target_f,
                                     expand=TRUE)
     
@@ -591,7 +620,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
     delete(f1_key_f, f1_key_tbl)
     
     # ...creating a new table.
-    f1_key_tbl <<- gWidgets::gtable(items=names(.gData), 
+    f1_key_tbl <<- gWidgets2::gtable(items=names(.gData), 
                                     container=f1_key_f,
                                     expand=TRUE)
     
@@ -648,7 +677,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
         svalue(f2_filter_opt) <- get(".strvalidator_tablePrecision_gui_filter", envir=env)
       }
       if(exists(".strvalidator_tablePrecision_gui_ignore", envir=env, inherits = FALSE)){
-        svalue(f1_ignore_chk) <- get(".strvalidator_tablePrecision_gui_ignore", envir=env)
+        svalue(f2g1_ignore_chk) <- get(".strvalidator_tablePrecision_gui_ignore", envir=env)
       }
       if(exists(".strvalidator_tablePrecision_gui_exclude", envir=env, inherits = FALSE)){
         svalue(f2g2_virtual_chk) <- get(".strvalidator_tablePrecision_gui_exclude", envir=env)
@@ -667,7 +696,7 @@ tablePrecision_gui <- function(env=parent.frame(), savegui=NULL,
       
       assign(x=".strvalidator_tablePrecision_gui_savegui", value=svalue(savegui_chk), envir=env)
       assign(x=".strvalidator_tablePrecision_gui_filter", value=svalue(f2_filter_opt), envir=env)
-      assign(x=".strvalidator_tablePrecision_gui_ignore", value=svalue(f1_ignore_chk), envir=env)
+      assign(x=".strvalidator_tablePrecision_gui_ignore", value=svalue(f2g1_ignore_chk), envir=env)
       assign(x=".strvalidator_tablePrecision_gui_exclude", value=svalue(f2g2_virtual_chk), envir=env)
       
     } else { # or remove all saved values if false.

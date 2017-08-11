@@ -4,6 +4,12 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 01.08.2017: Added kit attribute to result.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 24.09.2016: Now accepts both 'Hb' and 'Lb' data.
 # 12.09.2016: Removed 'Lb' as a required column.
 # 07.09.2016: Re-named to tableHb.
@@ -26,7 +32,7 @@
 #' Simplifies the use of the \code{\link{tableBalance}} function by providing a graphical 
 #' user interface to it.
 #' 
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -99,12 +105,13 @@ tableBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   
   f0g0[1,1] <- glabel(text="Select dataset:", container=f0g0)
   
-  f0g0[1,2] <- f0g0_dataset_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[1,2] <- f0g0_dataset_drp <- gcombobox(items=c("<Select dataset>",
                                                      listObjects(env=env,
                                                                  obj.class="data.frame")),
                                              selected = 1,
                                              editable = FALSE,
-                                             container = f0g0)
+                                             container = f0g0,
+                                             ellipsize = "none")
   
   f0g0[1,3] <- f0g0_samples_lbl <- glabel(text=" 0 samples",
                                               container=f0g0)
@@ -189,9 +196,9 @@ tableBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
     print("BUTTON")
   }  
   
-  run_btn <- gbutton(text="Summarize", border=TRUE, container=gv)
+  run_btn <- gbutton(text="Summarize", container=gv)
   
-  addHandlerChanged(run_btn, handler = function(h, ...) {
+  addHandlerClicked(run_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
@@ -199,22 +206,33 @@ tableBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
     val_ratio <- as.numeric(svalue(f1g1_quant_spb))
     val_scope <- svalue(f1g1_scope_opt)
     val_name <- svalue(f2_save_edt)
+    val_kit <-  attr(x=.gData, which="kit", exact = TRUE)
     
     if (!is.null(.gData)){
       
       # Change button.
+      blockHandlers(run_btn)
       svalue(run_btn) <- "Processing..."
+      unblockHandlers(run_btn)
       enabled(run_btn) <- FALSE
       
       datanew <- tableBalance(data=val_data,
                               quant=val_ratio,
                               scope=val_scope)
       
-      # Add attributes.
-      attr(datanew, which="tableBalance_gui, data") <- val_data_name
-      attr(datanew, which="tableBalance_gui, ratio") <- val_ratio
-      attr(datanew, which="tableBalance_gui, scope") <- val_scope
+      # Add attributes to result.
+      attr(datanew, which="kit") <- val_kit
 
+      # Create key-value pairs to log.
+      keys <- list("data", "ratio", "scope")
+      
+      values <- list(val_data_name, val_ratio, val_scope)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "tableBalance_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
       
@@ -228,7 +246,7 @@ tableBalance_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      

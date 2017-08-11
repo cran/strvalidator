@@ -7,6 +7,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
 # 18.09.2016: Fixed dataset saved to attributes.
 # 28.08.2016: First version.
 
@@ -28,7 +29,7 @@
 #'  'Sample.Name', 'Marker', 'Allele'.
 #' @param hb numerical, definition of heterozygote balance. Default is hb=1. 
 #'  hb=1: HMW/LMW, hb=2: LMW/HMW, hb=3; min(Ph)/max(Ph).
-#' @param kit character defining the kit used. If NULL autodetection is attempted.
+#' @param kit character defining the kit used. If NULL automatic detection is attempted.
 #' @param ignore.case logical indicating if sample matching should ignore case.
 #' @param word logical indicating if word boundaries should be added before sample matching.
 #' @param exact logical indicating if exact sample matching should be used.
@@ -250,16 +251,10 @@ calculateHb <- function(data, ref, hb=1, kit=NULL, sex.rm=FALSE, qs.rm=FALSE,
   
   # Add attributes to result.
   attr(res, which="kit") <- kit
-  attr(res, which="calculateHb, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
-  attr(res, which="calculateHb, call") <- match.call()
-  attr(res, which="calculateHb, date") <- date()
-  attr(res, which="calculateHb, data") <- attr_data
-  attr(res, which="calculateHb, ref") <- attr_ref
-  attr(res, which="calculateHb, hb") <- hb
-  attr(res, which="calculateHb, ignore.case") <- ignore.case
-  attr(res, which="calculateHb, exact") <- exact
-  attr(res, which="calculateHb, word") <- word
-
+  
+  # Update audit trail.
+  res <- auditTrail(obj = res, f.call = match.call(), package = "strvalidator")
+  
   if(debug){
     print(paste("EXIT:", match.call()[[1]]))
   }

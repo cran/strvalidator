@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 15.08.2016: Implemented new calculateHeight, removed calculateHeterozygous.
 # 28.06.2016: Added option to remove quality sensor.
 # 02.12.2016: Fixed options save bug.
@@ -18,7 +23,7 @@
 #' Simplifies the use of the \code{\link{calculateLb}} function
 #' by providing a graphical user interface.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -109,10 +114,11 @@ calculateLb_gui <- function(env=parent.frame(), savegui=NULL,
   
   dfs <- c("<Select a dataset>", listObjects(env=env, obj.class="data.frame"))
   
-  g0[1,2] <- g0_data_drp <- gdroplist(items=dfs, 
+  g0[1,2] <- g0_data_drp <- gcombobox(items=dfs, 
                            selected = 1,
                            editable = FALSE,
-                           container = g0)
+                           container = g0,
+                           ellipsize = "none")
   g0[1,3] <- g0_data_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
   addHandlerChanged(g0_data_drp, handler = function (h, ...) {
@@ -160,10 +166,11 @@ calculateLb_gui <- function(env=parent.frame(), savegui=NULL,
   g0[2,1] <- glabel(text="Select reference dataset:", container=g0)
 
   # NB! dfs defined in previous section.
-  g0[2,2] <- g0_ref_drp <- gdroplist(items=dfs, 
+  g0[2,2] <- g0_ref_drp <- gcombobox(items=dfs, 
                                    selected = 1,
                                    editable = FALSE,
-                                   container = g0)
+                                   container = g0,
+                                   ellipsize = "none")
   tooltip(g0_ref_drp) <- "If provided, known alleles will be extracted from data"
   
   g0[2,3] <- g0_ref_samples_lbl <- glabel(text=" 0 references", container=g0)
@@ -208,9 +215,7 @@ calculateLb_gui <- function(env=parent.frame(), savegui=NULL,
     print("CHECK")
   }  
   
-  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting",
-                                  border=TRUE,
-                                  container=g0)
+  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting", container=g0)
   
   addHandlerChanged(g0_check_btn, handler = function(h, ...) {
     
@@ -241,7 +246,7 @@ calculateLb_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      
@@ -254,8 +259,9 @@ calculateLb_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[4,1] <- glabel(text="Select the kit used:", container=g0)
   
-  g0[4,2] <- kit_drp <- gdroplist(items = getKit(), selected = 1,
-                                  editable = FALSE, container = g0) 
+  g0[4,2] <- kit_drp <- gcombobox(items = getKit(), selected = 1,
+                                  editable = FALSE, container = g0,
+                                  ellipsize = "none") 
   
 
   # FRAME 1 ###################################################################
@@ -344,11 +350,9 @@ calculateLb_gui <- function(env=parent.frame(), savegui=NULL,
     print("BUTTON")
   }
   
-  calculate_btn <- gbutton(text = "Calculate",
-                      border = TRUE,
-                      container = gv)
+  calculate_btn <- gbutton(text = "Calculate", container = gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     # Get values.
     val_option <- svalue(f1_lb_opt, index=TRUE)
@@ -443,7 +447,9 @@ calculateLb_gui <- function(env=parent.frame(), savegui=NULL,
         }
         
         # Change button.
+        blockHandlers(calculate_btn)
         svalue(calculate_btn) <- "Processing..."
+        unblockHandlers(calculate_btn)
         enabled(calculate_btn) <- FALSE
         
         datanew <- calculateLb(data = val_data,
@@ -460,21 +466,23 @@ calculateLb_gui <- function(env=parent.frame(), savegui=NULL,
                                exact = val_exact,
                                debug=debug)
         
-        # Add attributes.
+        # Add attributes to result.
         attr(datanew, which="kit") <- val_kit
-        attr(datanew, which="calculateLb_gui, data") <- .gDataName
-        attr(datanew, which="calculateLb_gui, ref") <- .gRefName
-        attr(datanew, which="calculateLb_gui, option") <- val_option
-        attr(datanew, which="calculateLb_gui, by.dye") <- val_dye
-        attr(datanew, which="calculateLb_gui, ol.rm") <- val_ol
-        attr(datanew, which="calculateLb_gui, sex.rm") <- val_sex
-        attr(datanew, which="calculateLb_gui, qs.rm") <- val_qs
-        attr(datanew, which="calculateLb_gui, na") <- val_na
-        attr(datanew, which="calculateLb_gui, ignore.case") <- val_ignore
-        attr(datanew, which="calculateLb_gui, word") <- val_word
-        attr(datanew, which="calculateLb_gui, exact") <- val_exact
-        attr(datanew, which="calculateLb_gui, calculate.h") <- val_h
         
+        # Create key-value pairs to log.
+        keys <- list("data", "ref", "option", "by.dye",
+                     "ol.rm", "sex.rm", "qs.rm", "na", "kit", "ignore.case",
+                     "word", "exact", "calculate.h")
+        
+        values <- list(val_data_name, val_ref_name, val_option, val_dye, 
+                       val_ol, val_sex, val_qs, val_na, val_kit, val_ignore,
+                       val_word, val_exact, val_h)
+        
+        # Update audit trail.
+        datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                              label = "calculateLb_gui", arguments = FALSE,
+                              package = "strvalidator")
+
         # Calculate and add average peak height.
         if(val_h){
           

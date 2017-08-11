@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 29.08.2016: First version.
 
 #' @title Calculate Heterozygote Balance
@@ -15,7 +20,7 @@
 #' Simplifies the use of the \code{\link{calculateHb}} function
 #' by providing a graphical user interface.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -96,8 +101,9 @@ calculateHb_gui <- function(env=parent.frame(), savegui=NULL,
   dfs <- c("<Select a dataset>",
            listObjects(env = env, obj.class = "data.frame"))
   
-  g0[1,2] <- g0_data_drp <- gdroplist(items = dfs, selected = 1,
-                                       editable = FALSE, container = g0)
+  g0[1,2] <- g0_data_drp <- gcombobox(items = dfs, selected = 1,
+                                      editable = FALSE, container = g0,
+                                      ellipsize = "none")
   
   g0[1,3] <- g0_data_samples_lbl <- glabel(text = " 0 samples", container = g0)
   
@@ -144,8 +150,9 @@ calculateHb_gui <- function(env=parent.frame(), savegui=NULL,
   g0[2,1] <- glabel(text = "Select reference dataset:", container = g0)
 
   # NB! dfs defined in previous section.
-  g0[2,2] <- g0_ref_drp <- gdroplist(items = dfs, selected = 1,
-                                     editable = FALSE, container = g0)
+  g0[2,2] <- g0_ref_drp <- gcombobox(items = dfs, selected = 1,
+                                     editable = FALSE, container = g0,
+                                     ellipsize = "none")
   
   g0[2,3] <- g0_ref_samples_lbl <- glabel(text = " 0 references",
                                           container = g0)
@@ -179,8 +186,7 @@ calculateHb_gui <- function(env=parent.frame(), savegui=NULL,
   
   # CHECK ---------------------------------------------------------------------
   
-  g0[3,2] <- g0_check_btn <- gbutton(text = "Check subsetting",
-                                     border = TRUE, container = g0)
+  g0[3,2] <- g0_check_btn <- gbutton(text = "Check subsetting", container = g0)
   
   addHandlerChanged(g0_check_btn, handler = function(h, ...) {
     
@@ -236,8 +242,8 @@ calculateHb_gui <- function(env=parent.frame(), savegui=NULL,
                   "Low molecular weight / high molecular weight",
                   "Smaller peak / larger peak")
   
-  f1_method_drp <- gdroplist(items = f1_methods, selected = 1,
-                             expand = FALSE, container = f1)
+  f1_method_drp <- gcombobox(items = f1_methods, selected = 1,
+                             expand = FALSE, container = f1, ellipsize = "none")
   
   glabel(text = "Sample name matching:", anchor = c(-1 ,0), container = f1)
   
@@ -267,19 +273,21 @@ calculateHb_gui <- function(env=parent.frame(), savegui=NULL,
   
   glabel(text = " Kit attribute:", container = f4)
   
-  f4_kit_drp <- gdroplist(items = getKit(), selected = 1,
-                          editable = FALSE, container = f4) 
+  f4_kit_drp <- gcombobox(items = getKit(), selected = 1,
+                          editable = FALSE, container = f4, ellipsize = "none") 
   
 
   # BUTTON ####################################################################
 
-  calculate_btn <- gbutton(text = "Calculate", border = TRUE, container = gv)
+  calculate_btn <- gbutton(text = "Calculate", container = gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
     val_ref <- .gRef
+    val_name_data <- svalue(g0_data_drp)
+    val_name_ref <- svalue(g0_ref_drp)
     val_sex <- svalue(f1_sex_chk)
     val_qs <- svalue(f1_qs_chk)
     val_hb <- svalue(f1_method_drp, index=TRUE)
@@ -294,7 +302,9 @@ calculateHb_gui <- function(env=parent.frame(), savegui=NULL,
     if(!is.null(val_data) & !is.null(val_ref)){
 
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
       
       datanew <- calculateHb(data = val_data, ref = val_ref, hb = val_hb,
@@ -302,18 +312,21 @@ calculateHb_gui <- function(env=parent.frame(), savegui=NULL,
                              ignore.case = val_ignore, exact = val_exact,
                              word = val_word, debug = debug)
       
-      # Add attributes.
+      # Add attributes to result.
       attr(datanew, which="kit") <- val_kit
-      attr(datanew, which="calculateHb_gui, data") <- svalue(g0_data_drp)
-      attr(datanew, which="calculateHb_gui, ref") <- svalue(g0_ref_drp)
-      attr(datanew, which="calculateHb_gui, sex.rm") <- val_sex
-      attr(datanew, which="calculateHb_gui, qs.rm") <- val_qs
-      attr(datanew, which="calculateHb_gui, hb") <- val_hb
-      attr(datanew, which="calculateHb_gui, ignore.case") <- val_ignore
-      attr(datanew, which="calculateHb_gui, word") <- val_word
-      attr(datanew, which="calculateHb_gui, exact") <- val_exact
-      attr(datanew, which="calculateHb_gui, calculate.h") <- val_h
       
+      # Create key-value pairs to log.
+      keys <- list("data", "ref", "sex.rm", "qs.rm", "hb",
+                   "kit", "ignore.case", "word", "exact", "calculate.h")
+      
+      values <- list(val_name_data, val_name_ref, val_sex, val_qs, val_hb,
+                     val_kit, val_ignore, val_word, val_exact, val_h)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateHb_gui", arguments = FALSE,
+                            package = "strvalidator")
+
       # Calculate and add average peak height.
       if(val_h){
         

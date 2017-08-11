@@ -5,6 +5,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
 # 18.09.2016: Added attributes to result.
 # 28.08.2015: Added importFrom.
 # 15.12.2014: Changed parameter names to format: lower.case
@@ -35,7 +36,7 @@
 #'  
 #' @param data a data frame containing at least the column 'Sample.Name'.
 #' @param kit character string or integer defining the kit.
-#' @param add.missing.marker logical, defualt is TRUE which adds missing markers.
+#' @param add.missing.marker logical, default is TRUE which adds missing markers.
 #' @param threshold integer indicating the dropout threshold.
 #' @param mixture.limits integer or vector indicating subtypes of 'Mixture'.
 #' @param partial.limits integer or vector indicating subtypes of 'Partial'.
@@ -285,17 +286,10 @@ calculateResultType <- function(data, kit=NULL, add.missing.marker=TRUE,
 	
 	# Add attributes to result.
 	attr(res, which="kit") <- kit
-	attr(res, which="calculateResultType, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
-	attr(res, which="calculateResultType, call") <- match.call()
-	attr(res, which="calculateResultType, date") <- date()
-	attr(res, which="calculateResultType, data") <- attr_data
-	attr(res, which="calculateResultType, add.missing.marker") <- add.missing.marker
-	attr(res, which="calculateResultType, threshold") <- threshold
-	attr(res, which="calculateResultType, mixture.limits") <- mixture.limits
-	attr(res, which="calculateResultType, partial.limits") <- partial.limits
-	attr(res, which="calculateResultType, subset.name") <- subset.name
-	attr(res, which="calculateResultType, marker.subset") <- marker.subset
-
+	
+	# Update audit trail.
+	res <- auditTrail(obj = res, f.call = match.call(), package = "strvalidator")
+	
   if(debug){
     print("head(res):")
     print(head(res))

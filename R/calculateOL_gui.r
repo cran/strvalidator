@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 28.08.2015: Added importFrom
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
@@ -13,7 +18,7 @@
 # 29.09.2013: First version.
 
 
-#' @title Analyse Off-ladder Alleles
+#' @title Analyze Off-ladder Alleles
 #'
 #' @description
 #' GUI wrapper for the \code{\link{calculateOL}} function.
@@ -24,7 +29,7 @@
 #' kit(s). Virtual alleles can be excluded from the calculation.
 #' Small frequencies can be limited to the estimate 5/2N.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -136,8 +141,8 @@ calculateOL_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, parent
   
   f1_db_names <- getDb()
   
-  f1_db_drp <- gdroplist(items=f1_db_names, fill=FALSE,
-                         selected = 1, container=f1)
+  f1_db_drp <- gcombobox(items=f1_db_names, fill=FALSE,
+                         selected = 1, container=f1, ellipsize = "none")
 
   f1_virtual_chk <- gcheckbox(text="Include virtual bins in analysis",
                               checked=TRUE,
@@ -167,11 +172,9 @@ calculateOL_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, parent
   # BUTTON ####################################################################
   
   
-  analyse_btn <- gbutton(text="Analyse",
-                         border=TRUE,
-                         container=gv)
+  analyse_btn <- gbutton(text="Analyse", container=gv)
   
-  addHandlerChanged(analyse_btn, handler = function(h, ...) {
+  addHandlerClicked(analyse_btn, handler = function(h, ...) {
     
     val_name <- svalue(f5_save_edt)
     val_kits <- svalue(kit_checkbox_group)
@@ -184,7 +187,9 @@ calculateOL_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, parent
     if(length(val_kits) >0){
     
       # Change button.
+      blockHandlers(analyse_btn)
       svalue(analyse_btn) <- "Processing..."
+      unblockHandlers(analyse_btn)
       enabled(analyse_btn) <- FALSE
       
       # Get kits.
@@ -212,6 +217,16 @@ calculateOL_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, parent
                              limit=val_limit,
                              debug=debug)
   
+      # Create key-value pairs to log.
+      keys <- list("kit", "db", "virtual", "limit")
+      
+      values <- list(val_kits, val_db_selected, val_virtual, val_limit)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateOL_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
       

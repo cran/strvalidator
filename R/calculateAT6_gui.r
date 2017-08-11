@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 25.04.2016: 'Save as' textbox expandable.
 # 30.11.2015: Added warning.
 # 28.08.2015: Added importFrom
@@ -16,7 +21,7 @@
 #' GUI wrapper for the \code{\link{calculateAT6}} function.
 #'
 #' @details Scores dropouts for a dataset.
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -38,6 +43,9 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
   .gData <- NULL
   .gRef <- NULL
   .gAm <- NULL
+  .gNameData <- NULL
+  .gNameRef <- NULL
+  .gNameAm <- NULL
   
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -95,12 +103,13 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[1,1] <- glabel(text="Select dataset:", container=g0)
   
-  g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[1,2] <- dataset_drp <- gcombobox(items=c("<Select dataset>",
                                               listObjects(env=env,
                                                           obj.class="data.frame")), 
                                       selected = 1,
                                       editable = FALSE,
-                                      container = g0)
+                                      container = g0,
+                                      ellipsize = "none")
   
   g0[1,3] <- g0_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
@@ -117,6 +126,7 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
       # Load or change components.
       
       .gData <<- get(val_obj, envir=env)
+      .gNameData <<- val_obj
       samples <- length(unique(.gData$Sample.Name))
       svalue(g0_samples_lbl) <- paste("", samples, "samples")
       
@@ -127,6 +137,7 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
       
       # Reset components.
       .gData <<- NULL
+      .gNameData <<- NULL
       svalue(dataset_drp, index=TRUE) <- 1
       svalue(g0_samples_lbl) <- " 0 samples"
       svalue(f2_save_edt) <- ""
@@ -137,12 +148,13 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[2,1] <- glabel(text="Select reference dataset:", container=g0)
   
-  g0[2,2] <- refset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[2,2] <- refset_drp <- gcombobox(items=c("<Select dataset>",
                                              listObjects(env=env,
                                                          obj.class="data.frame")), 
                                      selected = 1,
                                      editable = FALSE,
-                                     container = g0) 
+                                     container = g0,
+                                     ellipsize = "none") 
   
   g0[2,3] <- g0_ref_lbl <- glabel(text=" 0 references", container=g0)
   
@@ -159,6 +171,7 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
       # Load or change components.
       
       .gRef <<- get(val_obj, envir=env)
+      .gNameRef <<- val_obj
       ref <- length(unique(.gRef$Sample.Name))
       svalue(g0_ref_lbl) <- paste("", ref, "references")
       
@@ -166,6 +179,7 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
       
       # Reset components.
       .gRef <<- NULL
+      .gNameRef <<- NULL
       svalue(refset_drp, index=TRUE) <- 1
       svalue(g0_ref_lbl) <- " 0 references"
       
@@ -179,9 +193,7 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
     print("CHECK")
   }  
   
-  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting",
-                                     border=TRUE,
-                                     container=g0)
+  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting", container=g0)
   
   addHandlerChanged(g0_check_btn, handler = function(h, ...) {
     
@@ -210,7 +222,7 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      
@@ -223,12 +235,13 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[4,1] <- glabel(text="Select amount dataset:", container=g0)
   
-  g0[4,2] <- amset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[4,2] <- amset_drp <- gcombobox(items=c("<Select dataset>",
                                             listObjects(env=env,
                                                         obj.class="data.frame")), 
                                     selected = 1,
                                     editable = FALSE,
-                                    container = g0) 
+                                    container = g0,
+                                    ellipsize = "none") 
   
   g0[4,3] <- g0_am_lbl <- glabel(text=" 0 samples", container=g0)
   
@@ -245,6 +258,7 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
       # Load or change components.
       
       .gAm <<- get(val_obj, envir=env)
+      .gNameAm <<- val_obj
       am <- length(unique(.gAm$Sample.Name))
       svalue(g0_am_lbl) <- paste("", am, "samples")
       
@@ -252,6 +266,7 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
       
       # Reset components.
       .gAm <<- NULL
+      .gNameAm <<- NULL
       svalue(amset_drp, index=TRUE) <- 1
       svalue(g0_am_lbl) <- " 0 samples"
       
@@ -293,16 +308,17 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
   
   # BUTTON ####################################################################
   
-  calculate_btn <- gbutton(text="Calculate",
-                           border=TRUE,
-                           container=gv)
+  calculate_btn <- gbutton(text="Calculate", container=gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     val_ignore_case <- svalue(f1_ignore_case_chk)
     val_weighted <- ifelse(svalue(f1_weighted_opt, index=TRUE)==1, FALSE, TRUE)
     val_alpha <- svalue(f1_alpha_spn)
     val_name <- svalue(f2_save_edt)
+    val_name_data <- .gNameData
+    val_name_ref <- .gNameRef
+    val_name_amount <- .gNameAm
     
     if(debug){
       print("GUI options:")
@@ -319,7 +335,9 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
     if(!is.null(.gData) & !is.null(.gRef)){
       
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
       
       datanew <- calculateAT6(data=.gData,
@@ -329,6 +347,18 @@ calculateAT6_gui <- function(env=parent.frame(), savegui=NULL,
                               alpha=val_alpha,
                               ignore.case=val_ignore_case,
                               debug=debug)
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "ref", "amount", 
+                   "weighted", "alpha", "ignore.case")
+      
+      values <- list(val_name_data, val_name_ref, val_name_amount,
+                     val_weighted, val_alpha, val_ignore_case)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateAT6_gui", arguments = FALSE,
+                            package = "strvalidator")
       
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)

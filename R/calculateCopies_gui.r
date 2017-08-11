@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 15.08.2016: Added save settings.
 # 14.08.2016: Renamed to calculateCopies_gui and implementing new calculateCopies.
 # 16.06.2016: 'Save as' textbox expandable.
@@ -26,7 +31,7 @@
 #' Simplifies the use of the \code{\link{calculateCopies}} function by
 #' providing a graphical user interface to it.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -103,10 +108,11 @@ calculateCopies_gui <- function(env=parent.frame(), savegui=NULL,
   
   f0g0[1,1] <- glabel(text = "Select dataset:", container = f0g0)
   
-  dataset_drp <- gdroplist(items = c("<Select dataset>",
+  dataset_drp <- gcombobox(items = c("<Select dataset>",
                                      listObjects(env = env,
                                                  obj.class = "data.frame")),
-                           selected = 1, editable = FALSE, container = f0g0)
+                           selected = 1, editable = FALSE, container = f0g0,
+                           ellipsize = "none")
   f0g0[1,2] <- dataset_drp
   
   f0g0_samples_lbl <- glabel(text = " 0 samples", container = f0g0)
@@ -177,9 +183,9 @@ calculateCopies_gui <- function(env=parent.frame(), savegui=NULL,
   
   # BUTTON ####################################################################
   
-  calculate_btn <- gbutton(text = "Calculate", border = TRUE, container = gv)
+  calculate_btn <- gbutton(text = "Calculate", container = gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     val_name <- svalue(f2_save_edt)
     val_data <- .gData
@@ -191,19 +197,25 @@ calculateCopies_gui <- function(env=parent.frame(), savegui=NULL,
     if(!is.null(val_data)){
       
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
       
       datanew <- calculateCopies(data = val_data, observed = val_obs,
                                  copies = val_cop, heterozygous = val_het,
                                  debug = debug)
 
-      # Add attributes.
-      attr(datanew, which = "calculateCopies_gui, data") <- val_data_name
-      attr(datanew, which = "calculateCopies_gui, observed") <- val_obs
-      attr(datanew, which = "calculateCopies_gui, copies") <- val_cop
-      attr(datanew, which = "calculateCopies_gui, heterozygous") <- val_het
-
+      # Create key-value pairs to log.
+      keys <- list("data", "observed", "copies", "heterozygous")
+      
+      values <- list(val_data_name, val_obs, val_cop, val_het)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateCopies_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       # Save data.
       saveObject(name = val_name, object = datanew, parent = w, env = env)
       

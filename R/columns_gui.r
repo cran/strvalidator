@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 10.08.2017: Fixed column dropdowns lose selection after selecting dataset.
+# 07.08.2017: Added audit trail.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 09.05.2016: Added attributes to result.
 # 09.05.2016: 'Save as' textbox expandable.
 # 22.12.2015: Removed colum check to enable no selected column etc.
@@ -20,7 +25,7 @@
 #' Simplifies the use of the \code{\link{columns}} function by providing a
 #'  graphical user interface to it.
 #' 
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -94,12 +99,13 @@ columns_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   f0g0[1,1] <- glabel(text="Select dataset:", container=f0g0)
   
-  f0g0[1,2] <- f0g0_data_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[1,2] <- f0g0_data_drp <- gcombobox(items=c("<Select dataset>",
                                                  listObjects(env=env,
                                                              obj.class="data.frame")),
                                          selected = 1,
                                          editable = FALSE,
-                                         container = f0g0)
+                                         container = f0g0,
+                                         ellipsize = "none")
   
   f0g0[1,3] <- f0g0_data_col_lbl <- glabel(text=" 0 columns",
                                               container=f0g0)
@@ -121,7 +127,9 @@ columns_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
       svalue(f2_name) <- paste(.gDataName, "new", sep="_")
       
       f1g1_col1_drp[] <- c(.columnDropDefault, names(.gData))
+      svalue(f1g1_col1_drp, index = TRUE) <- 1
       f1g1_col2_drp[] <- c(.columnDropDefault, names(.gData))
+      svalue(f1g1_col2_drp, index = TRUE) <- 1
       
     } else {
       
@@ -131,8 +139,10 @@ columns_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
       svalue(f2_name) <- ""
       
       f1g1_col1_drp[] <- c(.columnDropDefault)
+      svalue(f1g1_col1_drp, index = TRUE) <- 1
       f1g1_col2_drp[] <- c(.columnDropDefault)
-
+      svalue(f1g1_col2_drp, index = TRUE) <- 1
+      
     }
     
   } )
@@ -145,15 +155,17 @@ columns_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   f1g1[1,1] <- glabel(text="Select column 1:", container=f1g1)
   
-  f1g1[1,2] <- f1g1_col1_drp <- gdroplist(items=c(.columnDropDefault),
-                                           editable = FALSE,
-                                           container = f1g1)
+  f1g1[1,2] <- f1g1_col1_drp <- gcombobox(items=c(.columnDropDefault),
+                                          editable = FALSE,
+                                          container = f1g1,
+                                          ellipsize = "none")
   
   f1g1[2,1] <- glabel(text="Select column 2:", container=f1g1)
   
-  f1g1[2,2] <- f1g1_col2_drp <- gdroplist(items=c(.columnDropDefault),
-                                           editable = FALSE,
-                                           container = f1g1)
+  f1g1[2,2] <- f1g1_col2_drp <- gcombobox(items=c(.columnDropDefault),
+                                          editable = FALSE,
+                                          container = f1g1,
+                                          ellipsize = "none")
 
   addHandlerChanged(f1g1_col1_drp, handler = function (h, ...) {
     
@@ -208,8 +220,9 @@ columns_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   f3g1[3,1] <- glabel(text="Action:", container=f3g1)
   
   action_items <- c("&","+","*","-", "/", "substr")
-  f3g1[3,2] <- f3g1_action_drp <- gdroplist(items=action_items, selected=1,
-                                              editable=FALSE, container=f3g1)
+  f3g1[3,2] <- f3g1_action_drp <- gcombobox(items=action_items, selected=1,
+                                            editable=FALSE, container=f3g1,
+                                            ellipsize = "none")
 
   f3g1[4,1] <- glabel(text="Start position:", container=f3g1)
   
@@ -242,9 +255,7 @@ columns_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
     print("BUTTON")
   }  
   
-  combine_btn <- gbutton(text="Execute",
-                      border=TRUE,
-                      container=gv)
+  combine_btn <- gbutton(text="Execute", container=gv)
   
   addHandlerChanged(combine_btn, handler = function(h, ...) {
     
@@ -272,16 +283,18 @@ columns_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
                        target=val_target, start=val_start, stop=val_stop,
                        debug=debug)
     
-    # Add attributes.
-    attr(datanew, which="columns_gui, data") <- val_data_name
-    attr(datanew, which="columns_gui, col1") <- val_col1
-    attr(datanew, which="columns_gui, col2") <- val_col2
-    attr(datanew, which="columns_gui, action") <- val_action
-    attr(datanew, which="columns_gui, target") <- val_target
-    attr(datanew, which="columns_gui, fixed") <- val_fixed
-    attr(datanew, which="columns_gui, start") <- val_start
-    attr(datanew, which="columns_gui, stop") <- val_stop
+    # Create key-value pairs to log.
+    keys <- list("data", "col1", "col2", "action", "target",
+                 "fixed", "start", "stop")
     
+    values <- list(val_data_name, val_col1, val_col2, val_action, val_target,
+                   val_fixed, val_start, val_stop)
+    
+    # Update audit trail.
+    datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                          label = "columns_gui", arguments = FALSE,
+                          package = "strvalidator")
+
     # Save data.
     saveObject(name=val_name, object=datanew, parent=w, env=env)
       

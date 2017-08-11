@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 09.01.2016: Added attributes to result.
 # 28.08.2015: Added importFrom
 # 27.11.2014: Fixed bug (GitHub issue #7) introduced in strvalidator version 1.3.1.
@@ -23,7 +28,7 @@
 #' Simplifies the use of the \code{\link{addSize}} function by providing a
 #' graphical user interface to it.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -98,12 +103,13 @@ addSize_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   f0g1[1,1] <- glabel(text="Select dataset:", container=f0g1)
   
-  f0g1[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
-                                                 listObjects(env=env,
-                                                             obj.class="data.frame")),
-                                         selected = 1,
-                                         editable = FALSE,
-                                         container = f0g1)
+  f0g1[1,2] <- dataset_drp <- gcombobox(items=c("<Select dataset>",
+                                                listObjects(env=env,
+                                                            obj.class="data.frame")),
+                                        selected = 1,
+                                        editable = FALSE,
+                                        container = f0g1,
+                                        ellipsize = "none")
   
   f0g1[1,3] <- dataset_samples_lbl <- glabel(text=" 0 samples",
                                               container=f0g1)
@@ -149,10 +155,11 @@ addSize_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   f0g1[2,1] <- glabel(text="Kit:", container=f0g1)
   
-  kit_drp <- gdroplist(items=getKit(),
-                           selected = 1,
-                           editable = FALSE,
-                           container = f0g1)
+  kit_drp <- gcombobox(items=getKit(),
+                       selected = 1,
+                       editable = FALSE,
+                       container = f0g1,
+                       ellipsize = "none")
   
   f0g1[2,2] <- kit_drp
   
@@ -187,11 +194,9 @@ addSize_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
     print("BUTTON")
   }  
   
-  add_btn <- gbutton(text="Add size",
-                      border=TRUE,
-                      container=gv)
+  add_btn <- gbutton(text="Add size", container=gv)
   
-  addHandlerChanged(add_btn, handler = function(h, ...) {
+  addHandlerClicked(add_btn, handler = function(h, ...) {
     
     # Get values.
     val_kit <- svalue(kit_drp)
@@ -221,16 +226,26 @@ addSize_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
     }
     
     # Change button.
+    blockHandlers(add_btn)
     svalue(add_btn) <- "Processing..."
+    unblockHandlers(add_btn)
     enabled(add_btn) <- FALSE
     
     datanew <- addSize(data=val_data, kit=val_kitinfo,
                        bins=val_bins, debug=debug)
 
-    # Add attributes.
-    attr(datanew, which="addSize_gui, data") <- val_data_name
-    attr(datanew, which="addSize_gui, kit") <- val_kit
-    attr(datanew, which="addSize_gui, bins") <- val_bins
+    # Add attributes to result.
+    attr(datanew, which="kit") <- val_kit
+    
+    # Create key-value pairs to log.
+    keys <- list("data", "kit", "bins")
+    
+    values <- list(val_data_name, val_kit, val_bins)
+    
+    # Update audit trail.
+    datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                          label = "addSize_gui", arguments = FALSE,
+                          package = "strvalidator")
 
     # Save data.
     saveObject(name=val_name, object=datanew, parent=w, env=env)

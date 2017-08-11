@@ -5,6 +5,12 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 18.07.2017: Fixed issue with infinite loop for the 'model' button.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed expanded 'gexpandgroup'.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 18.11.2016: Added reference.
 # 16.06.2016: 'Save as' textbox expandable.
 # 11.11.2015: Added importFrom ggplot2.
@@ -20,12 +26,6 @@
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 28.06.2014: Changed notation on plot to be more correct.
 # 08.05.2014: Implemented 'checkDataset'.
-# 18.02.2014: Implemented conserative T estimate.
-# 18.02.2014: Removed erroneously implemented prediction interval for T.
-# 27.01.2014: Fixed bug not checking required columns upon selection of dataset.
-# 20.01.2014: Changed 'saveImage_gui' for 'ggsave_gui'.
-# 16.01.2014: Changed according to new column names in 'calculateDropout' res.
-# 13.11.2013: Implemented 'Hosmer-Lemeshow test'.
 
 #' @title Model And Plot Drop-out Events
 #'
@@ -39,7 +39,7 @@
 #' (2) by reference to the high molecular weight allele (Method2),
 #' (3) by reference to a random allele (MethodX), and
 #' (4) by reference to the locus (MethodL).
-#' Options 1-3 are recommended by the DNA commision (see reference),
+#' Options 1-3 are recommended by the DNA commission (see reference),
 #' while option 4 is included for experimental purposes.
 #' Options 1-3 may discard many dropout events while option 4 catches all
 #' drop-out events. On the other hand options 1-3 can score events below
@@ -53,7 +53,7 @@
 #' separate column.
 #' 
 #' Using the scored drop-out events and the peak heights of the surviving
-#' alleles the probability of drop-out can be modelled by logistic regression
+#' alleles the probability of drop-out can be modeled by logistic regression
 #' as described in Appendix B in reference [1].
 #' P(dropout|H) = B0 + B1*H, where 'H' is the peak height or log(peak height).
 #' This produces a plot with the predicted probabilities for a range of peak heights.
@@ -64,7 +64,7 @@
 #' from the prediction interval: the risk of observing a drop-out probability
 #' greater than the specified threshold limit, at the conservative peak height,
 #' is less than a specified value (e.g. 1-0.95=0.05). By default the gender
-#' marker is excluded from the dataset used for modelling, and the peak height
+#' marker is excluded from the dataset used for modeling, and the peak height
 #' is used as explanatory variable. The logarithm of the average peak height 'H'
 #' can be used instead of the allele/locus peak height [3]. To evaluate the
 #' goodness of fit for the logistic regression the Hosmer-Lemeshow test is
@@ -73,7 +73,7 @@
 #' 
 #' Explanation of the result:
 #' Dropout - all alleles are scored according to the limit of detection threshold (LDT).
-#' This is the observations and is not used for modelling.
+#' This is the observations and is not used for modeling.
 #' Rfu - peak height of the surviving allele.
 #' MethodX - a random reference allele is selected and drop-out is scored in
 #' relation to the the partner allele.
@@ -82,10 +82,10 @@
 #' Method2 - the high molecular weight allele is selected and drop-out is
 #' scored if the low molecular weight allele is missing.
 #' MethodL - drop-out is scored per locus i.e. drop-out if any allele is missing.
-#' MethodL.Ph - peak height of the surviving allele if one allele has droped out,
+#' MethodL.Ph - peak height of the surviving allele if one allele has dropped out,
 #' or the average peak height if no drop-out.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -108,7 +108,7 @@
 #' @references
 #' [3] Torben Tvedebrink, Poul Svante Eriksen, Helle Smidt Mogensen, Niels Morling,
 #'  Estimating the probability of allelic drop-out of STR alleles in forensic genetics,
-#'  Forensic Science International: Genetetics, Volume 3, Issue 4, September 2009,
+#'  Forensic Science International: Genetics, Volume 3, Issue 4, September 2009,
 #'  Pages 222-226, ISSN 1872-4973, 10.1016/j.fsigen.2009.02.002.
 #'  \url{http://www.sciencedirect.com/science/article/pii/S1872497309000398}
 #' @references
@@ -197,19 +197,21 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   
   glabel(text="Select dataset:", container=f0)
   
-  dataset_drp <- gdroplist(items=c("<Select dataset>",
+  dataset_drp <- gcombobox(items=c("<Select dataset>",
                                    listObjects(env=env,
                                                obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
-                           container = f0) 
+                           container = f0,
+                           ellipsize = "none") 
   
   glabel(text=" and the kit used:", container=f0)
   
-  kit_drp <- gdroplist(items=getKit(), 
+  kit_drp <- gcombobox(items=getKit(), 
                        selected = 1,
                        editable = FALSE,
-                       container = f0) 
+                       container = f0,
+                       ellipsize = "none") 
 
   addHandlerChanged(dataset_drp, handler = function (h, ...) {
     
@@ -356,19 +358,28 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   
   f7g1 <- glayout(container = f7)
   
-  f7g1[1,1] <- f7_plot_drop_btn <- gbutton(text="Plot predicted drop-out probability",
-                                           border=TRUE,
+  f7g1[1,1] <- f7_plot_drop_btn <- gbutton(text="Plot predicted drop-out probability", 
                                            container=f7g1) 
   
   
   addHandlerChanged(f7_plot_drop_btn, handler = function(h, ...) {
     
     if(!is.null(.gData)){
+      
       enabled(f7_plot_drop_btn) <- FALSE
+      
+      blockHandlers(f7_plot_drop_btn)
       svalue(f7_plot_drop_btn) <- "Processing..."
+      unblockHandlers(f7_plot_drop_btn)
+
       .plotDrop()
+      
+      blockHandlers(f7_plot_drop_btn)
       svalue(f7_plot_drop_btn) <- "Plot predicted drop-out probability"
+      unblockHandlers(f7_plot_drop_btn)
+      
       enabled(f7_plot_drop_btn) <- TRUE
+      
     } else {
       message <- paste("Select a drop-out dataset")
       
@@ -391,20 +402,18 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   
   f5_save_edt <- gedit(text = "", expand = TRUE, container = f5)
 
-  f5_save_btn <- gbutton(text = "Save as object",
-                         border = TRUE,
-                         container = f5)
+  f5_save_btn <- gbutton(text = "Save as object", container = f5)
   
-  f5_ggsave_btn <- gbutton(text = "Save as image",
-                               border=TRUE,
-                               container = f5) 
+  f5_ggsave_btn <- gbutton(text = "Save as image", container = f5) 
   
   addHandlerChanged(f5_save_btn, handler = function(h, ...) {
     
     val_name <- svalue(f5_save_edt)
     
     # Change button.
+    blockHandlers(f5_save_btn)
     svalue(f5_save_btn) <- "Processing..."
+    unblockHandlers(f5_save_btn)
     enabled(f5_save_btn) <- FALSE
     
     # Save data.
@@ -412,7 +421,9 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
                parent=w, env=env, debug=debug)
     
     # Change button.
+    blockHandlers(f5_save_btn)
     svalue(f5_save_btn) <- "Object saved"
+    unblockHandlers(f5_save_btn)
     
   } )
   
@@ -434,6 +445,9 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   e1 <- gexpandgroup(text="Drop-out prediction and threshold",
                      horizontal=FALSE,
                      container = f1)
+  
+  # Start collapsed.
+  visible(e1) <- FALSE
   
   # FRAME 1 -------------------------------------------------------------------
   # DROPOUT THRESHOLD
@@ -458,15 +472,17 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   
   glabel("Line type", container = e1f1g3)
   
-  e1f1_t_linetype_drp <- gdroplist(items=e1_linetypes,
-                                     selected=2,
-                                     container = e1f1g3)
+  e1f1_t_linetype_drp <- gcombobox(items=e1_linetypes,
+                                   selected=2,
+                                   container = e1f1g3,
+                                   ellipsize = "none")
   
   glabel("Line colour", container = e1f1g3) 
   
-  e1f1_t_linecolor_drp <- gdroplist(items=palette(),
+  e1f1_t_linecolor_drp <- gcombobox(items=palette(),
                                 selected=2,
-                                container = e1f1g3)
+                                container = e1f1g3,
+                                ellipsize = "none")
   
   # Group 4.
   e1f1g4 <- ggroup(horizontal = TRUE, spacing = 5,  container = e1f1)
@@ -511,16 +527,20 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
                                                      container=e1f2g3)
   
   glabel("Fill colour", container = e1f2g3) 
-  e1f2_interval_drp <- gdroplist(items=palette(),
-                                             selected=2,
-                                             container = e1f2g3)
+  e1f2_interval_drp <- gcombobox(items=palette(),
+                                 selected=2,
+                                 container = e1f2g3,
+                                 ellipsize = "none")
   
   # EXPAND 2 ##################################################################
   
   e2 <- gexpandgroup(text="Data points",
                      horizontal=FALSE,
                      container = f1)
-  
+
+  # Start collapsed.
+  visible(e2) <- FALSE
+
   e2f1 <- gframe(text = "", horizontal = FALSE, container = e2) 
   
   e2g1 <- glayout(container = e2f1)
@@ -548,6 +568,9 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
                      horizontal=FALSE,
                      container = f1)
   
+  # Start collapsed.
+  visible(e3) <- FALSE
+  
   e3f1 <- gframe(text = "", horizontal = FALSE, container = e3) 
 
   glabel(text="NB! Must provide both min and max value.",
@@ -567,6 +590,9 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   e4 <- gexpandgroup(text="X labels",
                      horizontal=FALSE,
                      container = f1)
+  
+  # Start collapsed.
+  visible(e4) <- FALSE
   
   e4f1 <- gframe(text = "", horizontal = FALSE, container = e4) 
 
@@ -767,7 +793,7 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
     xplot <- seq(val_pred_xmin, val_pred_xmax)
     predRange <- data.frame(Exp=xplot)
     
-    # Create data for modelling.
+    # Create data for modeling.
     modData <- obsData
     # Convert to log values.
     if(logModel){
@@ -1077,7 +1103,7 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
       
     } else {
       
-      gmessage(message="Data frame is NULL or NA!",
+      gmessage(msg="Data frame is NULL or NA!",
                title="Error",
                icon = "error")      
       
@@ -1100,7 +1126,7 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
       enabled(f7_plot_drop_btn) <- TRUE
       svalue(f7_plot_drop_btn) <- "Plot predicted drop-out probability"
 
-      # Check available modelling columns.
+      # Check available modeling columns.
       if(val_h){
         requiredCol <- c("H")
         if(!all(requiredCol %in% colnames(.gData))){
@@ -1108,7 +1134,7 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
         }
       }
         
-      # Check available modelling columns and enable/select.
+      # Check available modeling columns and enable/select.
       if(val_col == 1){
         
         requiredCol <- c("MethodX")
@@ -1154,7 +1180,7 @@ modelDropout_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
         message <- paste("Dataset is ok for drop-out analysis.\n",
                         "However, additional columns are required for this analysis:\n",
                          paste(missingCol, collapse="\n"),
-                         "\n\nPlease try modelling using another scoring method.",
+                         "\n\nPlease try modeling using another scoring method.",
                          sep="")
         
         gmessage(message, title="message",

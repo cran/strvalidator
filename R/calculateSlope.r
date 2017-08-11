@@ -7,6 +7,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
 # 11.05.2016: Changed from 'Peaks' to 'Peaks - 2' degrees of freedom.
 # 25.04.2016: First version.
 
@@ -18,10 +19,10 @@
 #' @details
 #' Calculates the profile slope for each sample. The slope is calculated as a
 #' linear model specified by the response (natural logarithm of peak height) by
-#' the term size (in basepair). If 'Size' is not present in the dataset, one or
+#' the term size (in base pair). If 'Size' is not present in the dataset, one or
 #' multiple kit names can be given as argument 'kit'. The specified kits will
 #' be used to estimate the size of each allele. If 'kit' is NULL the kit(s)
-#' will be autodetected, and the 'Size' will be calculated.
+#' will be automatically detected, and the 'Size' will be calculated.
 #' 
 #' The column 'Group' can be used to separate datasets to be compared, and if
 #' so 'kit' must be a vector of equal length as the number of groups, and in
@@ -164,7 +165,7 @@ calculateSlope <-  function(data, ref, conf = 0.975, kit = NULL, debug=FALSE, ..
       # Loop over groups.        
       for(g in seq(along=group)){
         
-        # Autodetect kit. If multiple matches, use the first.
+        # Auto detect kit. If multiple matches, use the first.
         kit[g] <- detectKit(data = data[data$Group==group[g],],
                             debug = debug)[1]
         
@@ -190,7 +191,7 @@ calculateSlope <-  function(data, ref, conf = 0.975, kit = NULL, debug=FALSE, ..
       # Get kit information.
       kitData <- getKit(kit = kit[g])
       
-      # Add size in basepair.
+      # Add size in base pair.
       data.tmp <- addSize(data = data[data$Group==group[g],],
                           kit = kitData, debug = debug)
       
@@ -261,14 +262,11 @@ calculateSlope <-  function(data, ref, conf = 0.975, kit = NULL, debug=FALSE, ..
   res <- as.data.frame(DT)
   
   # Add attributes to result.
-  attr(res, which="calculateSlope, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
-  attr(res, which="calculateSlope, call") <- match.call()
-  attr(res, which="calculateSlope, date") <- date()
-  attr(res, which="calculateSlope, data") <- attr_data
-  attr(res, which="calculateSlope, ref") <- attr_ref
-  attr(res, which="calculateSlope, conf") <- conf
-  attr(res, which="calculateSlope, kit") <- paste(kit, collapse = ", ")
+  attr(data, which="kit") <- kit
   
+  # Update audit trail.
+  res <- auditTrail(obj = res, f.call = match.call(), package = "strvalidator")
+
   return(res)
   
 }

@@ -4,6 +4,11 @@
 
 ###############################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 18.09.2016: Added attributes to result.
 # 29.04.2016: 'Save as' textbox expandable.
 # 28.08.2015: Added importFrom.
@@ -23,7 +28,7 @@
 #' @details Simplifies the use of \code{\link{calculateResultType}} by providing a 
 #' graphical user interface.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -99,21 +104,23 @@ calculateResultType_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[1,1] <- glabel(text="Select dataset:", container=g0)
 
-  g0[1,2] <- g0_dataset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[1,2] <- g0_dataset_drp <- gcombobox(items=c("<Select dataset>",
                                    listObjects(env=env,
                                                obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
-                           container = g0)
+                           container = g0,
+                           ellipsize = "none")
   
   g0[1,3] <- g0_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
   g0[2,1] <- glabel(text=" and the kit used:", container=g0)
   
-  g0[2,2] <- f0_kit_drp <- gdroplist(items=getKit(),
+  g0[2,2] <- f0_kit_drp <- gcombobox(items=getKit(),
                                   selected = 1,
                                   editable = FALSE,
-                                  container = g0) 
+                                  container = g0,
+                                  ellipsize = "none") 
   
   
   addHandlerChanged(g0_dataset_drp, handler = function (h, ...) {
@@ -182,10 +189,11 @@ calculateResultType_gui <- function(env=parent.frame(), savegui=NULL,
   glabel(text="Define subtypes of partial profiles by kit:",
          container=f1, anchor=c(-1 ,0))
   
-  f1_kit_drp <- gdroplist(items=c("<Select kit>",getKit()),
+  f1_kit_drp <- gcombobox(items=c("<Select kit>",getKit()),
                           selected = 1,
                           editable = FALSE,
-                          container = f1)
+                          container = f1,
+                          ellipsize = "none")
   
   # FRAME 2 ###################################################################
   
@@ -201,11 +209,9 @@ calculateResultType_gui <- function(env=parent.frame(), savegui=NULL,
   # BUTTON ####################################################################
   
   
-  calculate_btn <- gbutton(text="Calculate",
-                        border=TRUE,
-                        container=gv)
+  calculate_btn <- gbutton(text="Calculate", container=gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     val_data <- .gData
     val_name_data <- .gDataName
@@ -295,7 +301,9 @@ calculateResultType_gui <- function(env=parent.frame(), savegui=NULL,
     if(!is.null(val_data)){
       
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
   
       datanew <- calculateResultType(data=val_data,
@@ -308,16 +316,21 @@ calculateResultType_gui <- function(env=parent.frame(), savegui=NULL,
                                      marker.subset=val_marker,
                                      debug=debug)
       
-      # Add attributes.
+      # Add attributes to result.
       attr(datanew, which="kit") <- val_kit
-      attr(datanew, which="calculateResultType_gui, data") <- val_name_data
-      attr(datanew, which="calculateResultType_gui, add.missing.marker") <- val_add
-      attr(datanew, which="calculateResultType_gui, threshold") <- val_threshold
-      attr(datanew, which="calculateResultType_gui, mixture.limits") <- val_mix
-      attr(datanew, which="calculateResultType_gui, partial.limits") <- val_par
-      attr(datanew, which="calculateResultType_gui, subset.name") <- val_subkit
-      attr(datanew, which="calculateResultType_gui, marker.subset") <- val_marker
-
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "add.missing.marker", "threshold", "mixture.limits",
+                   "partial.limits", "subset.name", "marker.subset")
+      
+      values <- list(val_name_data, val_add, val_threshold, val_mix,
+                     val_par, val_subkit, val_marker)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateResultType_gui",
+                            arguments = FALSE, package = "strvalidator")
+      
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
       

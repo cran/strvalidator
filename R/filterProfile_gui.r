@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 17.09.2016: Updated to pass 'kit' option. Dropdown always active.
 # 07.09.2016: Updated to include new filterProfile options.
 # 28.04.2016: 'Save as' textbox expandable.
@@ -19,11 +24,6 @@
 # 15.12.2013: Fixed filter by kit bins.
 # 09.12.2013: Added 'filter by' option.
 # 09.12.2013: Added check subset button.
-# 18.07.2013: Check before overwrite object.
-# 15.07.2013: Added save GUI settings.
-# 11.06.2013: Added 'inherits=FALSE' to 'exists'.
-# 04.06.2013: Fixed bug in 'missingCol'.
-# 24.05.2013: Improved error message for missing columns.
 
 #' @title Filter Profile
 #'
@@ -36,7 +36,7 @@
 #' Useful for filtering stutters and artifacts from raw typing data or
 #' to identify drop-ins.
 #' 
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -112,12 +112,13 @@ filterProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
   
   g0[1,1] <- glabel(text="Select dataset:", container=g0)
 
-  g0[1,2] <- g0_dataset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[1,2] <- g0_dataset_drp <- gcombobox(items=c("<Select dataset>",
                                    listObjects(env=env,
                                                obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
-                           container = g0)
+                           container = g0,
+                           ellipsize = "none")
   
   g0[1,3] <- g0_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
@@ -159,12 +160,13 @@ filterProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
   
   g0[2,1] <- g0_refset_lbl <- glabel(text="Select reference:", container=g0)
   
-  g0[2,2] <- g0_refset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[2,2] <- g0_refset_drp <- gcombobox(items=c("<Select dataset>",
                                    listObjects(env=env,
                                                obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
-                           container = g0) 
+                           container = g0,
+                           ellipsize = "none") 
   
   g0[2,3] <- g0_ref_lbl <- glabel(text=" 0 references", container=g0)
   
@@ -199,9 +201,7 @@ filterProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
   
   # CHECK ---------------------------------------------------------------------
   
-  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting",
-                                         border=TRUE,
-                                         container=g0)
+  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting", container=g0)
   
   addHandlerChanged(g0_check_btn, handler = function(h, ...) {
     
@@ -233,7 +233,7 @@ filterProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      
@@ -246,10 +246,11 @@ filterProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
   
   g0[4,1] <- g0_kit_lbl <- glabel(text="Select kit:", container=g0)
   
-  g0[4,2] <- g0_kit_drp <- gdroplist(items=getKit(),
+  g0[4,2] <- g0_kit_drp <- gcombobox(items=getKit(),
                                      selected = 1,
                                      editable = FALSE,
-                                     container = g0) 
+                                     container = g0,
+                                     ellipsize = "none") 
   
   g0[4,3] <- g0_kit_chk <- gcheckbox(text="Exclude virtual bins.",
                                          checked=TRUE,
@@ -328,11 +329,9 @@ filterProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
   # BUTTON ####################################################################
   
   
-  filter_btn <- gbutton(text="Filter profile",
-                        border=TRUE,
-                        container=gv)
+  filter_btn <- gbutton(text="Filter profile", container=gv)
   
-  addHandlerChanged(filter_btn, handler = function(h, ...) {
+  addHandlerClicked(filter_btn, handler = function(h, ...) {
     
     val_data <- .gData
     val_name_data <- .gDataName
@@ -367,7 +366,9 @@ filterProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
     if(!is.null(val_data) & !is.null(val_ref)){
       
       # Change button.
+      blockHandlers(filter_btn)
       svalue(filter_btn) <- "Processing..."
+      unblockHandlers(filter_btn)
       enabled(filter_btn) <- FALSE
   
       datanew <- filterProfile(data = val_data,
@@ -383,18 +384,23 @@ filterProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, par
                                kit = val_kit,
                                debug = debug)
 
-      # Add attributes.
-      attr(datanew, which="filterProfile_gui, data") <- val_name_data
-      attr(datanew, which="filterProfile_gui, ref") <- val_name_ref
-      attr(datanew, which="filterProfile_gui, add.missing.loci") <- val_add_missing_loci
-      attr(datanew, which="filterProfile_gui, keep.na") <- val_keep_na
-      attr(datanew, which="filterProfile_gui, ignore.case") <- val_ignore_case
-      attr(datanew, which="filterProfile_gui, exact") <- val_exact
-      attr(datanew, which="filterProfile_gui, word") <- val_word
-      attr(datanew, which="filterProfile_gui, invert") <- val_invert
-      attr(datanew, which="filterProfile_gui, sex") <- val_sex
-      attr(datanew, which="filterProfile_gui, qs") <- val_qs
+      # Add attributes to result.
+      attr(datanew, which="kit") <- val_kit
       
+      # Create key-value pairs to log.
+      keys <- list("data", "ref", "add.missing.loci",
+                   "keep.na", "ignore.case", "exact", "word",
+                   "invert", "sex", "qs", "kit")
+      
+      values <- list(val_name_data, val_name_ref, val_add_missing_loci,
+                     val_keep_na, val_ignore_case, val_exact, val_word,
+                     val_invert, val_sex, val_qs, val_kit)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "filterProfile_gui", arguments = FALSE,
+                            package = "strvalidator")
+
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
       

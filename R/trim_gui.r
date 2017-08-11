@@ -5,6 +5,12 @@
 # NB! Can't handle Sample.Names as factors?
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
+# 07.07.2017: Replaced gWidgets:: with gWidgets2::
 # 24.06.2016: 'Save as' textbox expandable.
 # 09.01.2016: Added attributes to result.
 # 29.08.2015: Added importFrom.
@@ -19,15 +25,6 @@
 # 27.10.2013: Fixed bug when 'samples'=NULL and 'invertS'=TRUE.
 # 06.08.2013: Added rows and columns to info.
 # 18.07.2013: Check before overwrite object.
-# 16.07.2013: Added save GUI settings.
-# 11.06.2013: Added 'inherits=FALSE' to 'exists'.
-# 06.06.2013: Set initial table height to 200.
-# 04.06.2013: Fixed bug in 'missingCol'.
-# 24.05.2013: Fixed option 'replace missing values' "NA" -> NA.
-# 24.05.2013: Fixed option label for 'replace missing values'.
-# 24.05.2013: Improved error message for missing columns.
-# 17.05.2013: listDataFrames() -> listObjects()
-# 09.05.2013: .result removed, added save as group.
 
 #' @title Trim Data
 #'
@@ -38,7 +35,7 @@
 #' Simplifies the use of the \code{\link{trim}} function by providing a graphical 
 #' user interface to it.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -140,12 +137,13 @@ trim_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[1,1] <- glabel(text="Select dataset:", container=g0)
   
-  g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
-                                                 listObjects(env=env,
-                                                             obj.class="data.frame")),
-                                         selected = 1,
-                                         editable = FALSE,
-                                         container = g0)
+  g0[1,2] <- dataset_drp <- gcombobox(items=c("<Select dataset>",
+                                              listObjects(env=env,
+                                                          obj.class="data.frame")),
+                                      selected = 1,
+                                      editable = FALSE,
+                                      container = g0,
+                                      ellipsize = "none")
   
   g0[1,3] <- g0_samples_lbl <- glabel(text=" 0 samples,", container=g0)
   g0[1,4] <- g0_columns_lbl <- glabel(text=" 0 columns,", container=g0)
@@ -239,7 +237,7 @@ trim_gui <- function(env=parent.frame(), savegui=NULL,
     df_items <- data.frame(Samples=unique(.gData[sampleCol]),
                            stringsAsFactors=FALSE)
   }
-  sample_tbl <- gWidgets::gtable(items=df_items, container=sample_f, expand=TRUE)
+  sample_tbl <- gWidgets2::gtable(items=df_items, container=sample_f, expand=TRUE)
   
   # Set initial size (only height is important here).
   size(sample_tbl) <- c(100,200)
@@ -288,7 +286,7 @@ trim_gui <- function(env=parent.frame(), savegui=NULL,
                       container=column_f)
   
   
-  column_tbl <- gWidgets::gtable(items=names(.gData), 
+  column_tbl <- gWidgets2::gtable(items=names(.gData), 
                        container=column_f,
                        expand=TRUE)
 
@@ -365,9 +363,7 @@ trim_gui <- function(env=parent.frame(), savegui=NULL,
     print("BUTTON")
   }  
   
-  trim_btn <- gbutton(text="Trim dataset",
-                      border=TRUE,
-                      container=g2)
+  trim_btn <- gbutton(text="Trim dataset", container=g2)
   
   addHandlerChanged(trim_btn, handler = function(h, ...) {
     
@@ -428,25 +424,29 @@ trim_gui <- function(env=parent.frame(), savegui=NULL,
       }
   
       # Change button.
+      blockHandlers(trim_btn)
       svalue(trim_btn) <- "Processing..."
+      unblockHandlers(trim_btn)
       enabled(trim_btn) <- FALSE
       
       datanew <- trim(data=val_data, samples=sample_val, columns=column_val, 
                    word=word_val, ignore.case=case_val, invert.s=sample_opt_val, invert.c=column_opt_val,
                    rm.na.col=na_val, rm.empty.col=empty_val, missing=na_edt_val, debug=debug)
       
-      # Add attributes.
-      attr(datanew, which="trim_gui, data") <- val_data_name
-      attr(datanew, which="trim_gui, samples") <- sample_val
-      attr(datanew, which="trim_gui, columns") <- column_val
-      attr(datanew, which="trim_gui, word") <- word_val
-      attr(datanew, which="trim_gui, ignore.case") <- case_val
-      attr(datanew, which="trim_gui, invert.s") <- sample_opt_val
-      attr(datanew, which="trim_gui, invert.c") <- column_opt_val
-      attr(datanew, which="trim_gui, rm.na.col") <- na_val
-      attr(datanew, which="trim_gui, rm.empty.col") <- empty_val
-      attr(datanew, which="trim_gui, missing") <- na_edt_val
+      # Create key-value pairs to log.
+      keys <- list("data", "samples", "columns", "word", "ignore.case",
+                   "invert.s", "invert.c", "rm.na.col", "rm.empty.col",
+                   "missing")
       
+      values <- list(val_data_name, sample_val, column_val, word_val, case_val,
+                     sample_opt_val, column_opt_val, na_val, empty_val,
+                     na_edt_val)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "trim_gui", arguments = FALSE,
+                            package = "strvalidator")
+
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
       
@@ -489,7 +489,7 @@ trim_gui <- function(env=parent.frame(), savegui=NULL,
       }
       
       # ...creating a new table.
-      sample_tbl <<- gWidgets::gtable(items=df_items, container=sample_f, expand=TRUE)
+      sample_tbl <<- gWidgets2::gtable(items=df_items, container=sample_f, expand=TRUE)
       
       addDropSource(sample_tbl, handler=function(h,...) svalue(h$obj))
       
@@ -529,7 +529,7 @@ trim_gui <- function(env=parent.frame(), savegui=NULL,
     delete(column_f, column_tbl)
     
     # ...creating a new table.
-    column_tbl <<- gWidgets::gtable(items=names(.gData), 
+    column_tbl <<- gWidgets2::gtable(items=names(.gData), 
                          container=column_f,
                          expand=TRUE)
     

@@ -4,6 +4,12 @@
 
 ################################################################################
 # CHANGE LOG
+# 07.08.2017: Added audit trail.
+# 26.07.2017: Added expand=TRUE to save name text field.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 08.05.2014: Implemented 'checkDataset'.
@@ -18,7 +24,6 @@
 # 21.05.2013: Fixed name on save as.
 # 17.05.2013: listDataFrames() -> listObjects()
 # 09.05.2013: .result removed, added save as group.
-# 04.05.2013: First version.
 
 
 #' @title Guess Profile
@@ -30,7 +35,7 @@
 #' Simplifies the use of the \code{\link{guessProfile}} function by providing
 #' a graphical user interface to it.
 #' 
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -45,6 +50,7 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   
   # Global variables.
   .gData <- NULL
+  .gDataName <- NULL
   
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -98,12 +104,13 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   
   f0g0[1,1] <- glabel(text="Select dataset:", container=f0g0)
   
-  f0g0[1,2] <- f0g0_dataset_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[1,2] <- f0g0_dataset_drp <- gcombobox(items=c("<Select dataset>",
                                                  listObjects(env=env,
                                                              obj.class="data.frame")),
                                          selected = 1,
                                          editable = FALSE,
-                                         container = f0g0)
+                                         container = f0g0,
+                                         ellipsize = "none")
   
   f0g0[1,3] <- f0g0_samples_lbl <- glabel(text=" 0 samples",
                                               container=f0g0)
@@ -121,6 +128,7 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
       
       # Load or change components.
       .gData <<- get(val_obj, envir=env)
+      .gDataName <<- val_obj
       samples <- length(unique(.gData$Sample.Name))
       svalue(f0g0_samples_lbl) <- paste(" ", samples, "samples")
       svalue(f2_save_edt) <- paste(val_obj, "_profile", sep="")
@@ -129,6 +137,7 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
 
       # Reset components.
       .gData <<- data.frame(No.Data=NA)
+      .gDataName <<- NULL
       svalue(f0g0_samples_lbl) <- " 0 samples"
       svalue(f2_save_edt) <- ""
       svalue(f0g0_dataset_drp, index=TRUE) <- 1
@@ -173,7 +182,7 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
   
   glabel(text="Name for result:", container=f2)
   
-  f2_save_edt <- gedit(text="", width=25, container=f2)
+  f2_save_edt <- gedit(text="", width=25, expand=TRUE, container=f2)
 
   # BUTTON ####################################################################
 
@@ -181,14 +190,13 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
     print("BUTTON")
   }  
   
-  check_btn <- gbutton(text="Guess",
-                      border=TRUE,
-                      container=gv)
+  check_btn <- gbutton(text="Guess", container=gv)
   
-  addHandlerChanged(check_btn, handler = function(h, ...) {
+  addHandlerClicked(check_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
+    val_name_data <- .gDataName
     val_ratio <- as.numeric(svalue(f1g1_ratio_spb))
     val_height <- as.numeric(svalue(f1g1_height_edt))
     val_NA <- svalue(f1g1_na_chk)
@@ -202,7 +210,9 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
     if (!is.null(.gData)){
       
       # Change button.
+      blockHandlers(check_btn)
       svalue(check_btn) <- "Processing..."
+      unblockHandlers(check_btn)
       enabled(check_btn) <- FALSE
       
       datanew <- guessProfile(data=val_data,
@@ -212,6 +222,16 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
                               ol.rm=val_OL,
                               debug=debug)
       
+      # Create key-value pairs to log.
+      keys <- list("data", "ratio", "height", "na.rm", "ol.rm")
+      
+      values <- list(val_name_data, val_ratio, val_height, val_NA, val_OL)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "guessProfile_gui", arguments = FALSE,
+                            package = "strvalidator")
+
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
       
@@ -225,7 +245,7 @@ guessProfile_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pare
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      

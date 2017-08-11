@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 20.07.2016: Added attributes to result.
 # 20.07.2016: Added new option 'list.all' to include missing samples in result.
 # 28.08.2015: Added importFrom
@@ -20,7 +25,7 @@
 #' Simplifies the use of the \code{\link{calculateConcordance}} function by
 #' providing a graphical user interface.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -102,17 +107,19 @@ calculateConcordance_gui <- function(env=parent.frame(), savegui=NULL,
   
   f0_list <- c("<Select dataset>", listObjects(env=env, obj.class="data.frame"))
   
-  f0g0[1,2] <- dataset_drp <- gdroplist(items=f0_list, selected = 1,
-                                        editable = FALSE, container = f0g0) 
+  f0g0[1,2] <- dataset_drp <- gcombobox(items=f0_list, selected = 1,
+                                        editable = FALSE, container = f0g0,
+                                        ellipsize = "none") 
   
   f0g0[1,3] <- f0_samples_lbl <- glabel(text=" (0 samples)", container=f0g0)
   
   f0g0[2,1] <- glabel(text="Kit:", container=f0g0)
   
-  f0g0[2,2] <- kit_drp <- gdroplist(items=getKit(), selected = 1,
-                                    editable = FALSE, container = f0g0) 
+  f0g0[2,2] <- kit_drp <- gcombobox(items=getKit(), selected = 1,
+                                    editable = FALSE, container = f0g0,
+                                    ellipsize = "none") 
   
-  f0g0[3,1:3] <- f0_add_btn <- gbutton(text="Add", border=TRUE, container=f0g0)
+  f0g0[3,1:3] <- f0_add_btn <- gbutton(text="Add", container=f0g0)
 
   # HANDLERS ------------------------------------------------------------------
   
@@ -181,7 +188,7 @@ calculateConcordance_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset",
                title="Error",
                icon = "error")      
@@ -263,11 +270,9 @@ calculateConcordance_gui <- function(env=parent.frame(), savegui=NULL,
     print("BUTTON")
   }  
   
-  calculate_btn <- gbutton(text="Calculate",
-                      border=TRUE,
-                      container=gv)
+  calculate_btn <- gbutton(text="Calculate", container=gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     # Get values.
     val_datasets <- svalue(f3_dataset_edt)
@@ -330,7 +335,9 @@ calculateConcordance_gui <- function(env=parent.frame(), savegui=NULL,
       }
       
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
       
       datanew <- calculateConcordance(data=val_list,
@@ -341,21 +348,22 @@ calculateConcordance_gui <- function(env=parent.frame(), savegui=NULL,
                                       list.all = val_all,
                                       debug=debug)
 
-      # Add attributes.
-      attr(datanew[[1]], which="calculateConcordance_gui, data") <- val_datasets
-      attr(datanew[[1]], which="calculateConcordance_gui, kit.name") <- val_kits
-      attr(datanew[[1]], which="calculateConcordance_gui, no.sample") <- val_nosample
-      attr(datanew[[1]], which="calculateConcordance_gui, no.marker") <- val_nomarker
-      attr(datanew[[1]], which="calculateConcordance_gui, delimeter") <- val_del
-      attr(datanew[[1]], which="calculateConcordance_gui, list.all") <- val_all
-
-      attr(datanew[[2]], which="calculateConcordance_gui, data") <- val_datasets
-      attr(datanew[[2]], which="calculateConcordance_gui, kit.name") <- val_kits
-      attr(datanew[[2]], which="calculateConcordance_gui, no.sample") <- val_nosample
-      attr(datanew[[2]], which="calculateConcordance_gui, no.marker") <- val_nomarker
-      attr(datanew[[2]], which="calculateConcordance_gui, delimeter") <- val_del
-      attr(datanew[[2]], which="calculateConcordance_gui, list.all") <- val_all
+      # Create key-value pairs to log.
+      keys <- list("data", "kit.name", "no.sample", "no.marker",
+                   "delimeter", "list.all")
       
+      values <- list(val_datasets, val_kits, val_nosample, val_nomarker, 
+                     val_del, val_all)
+      
+      # Update audit trail.
+      datanew[[1]] <- auditTrail(obj = datanew[[1]], key = keys, value = values,
+                                 label = "calculateConcordance_gui",
+                                 arguments = FALSE, package = "strvalidator")
+      
+      datanew[[2]] <- auditTrail(obj = datanew[[2]], key = keys, value = values,
+                                 label = "calculateConcordance_gui",
+                                 arguments = FALSE, package = "strvalidator")
+
       # Save data.
       saveObject(name=val_name1, object=datanew[[1]], parent=w, env=env)
       saveObject(name=val_name2, object=datanew[[2]], parent=w, env=env)

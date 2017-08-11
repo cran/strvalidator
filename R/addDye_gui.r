@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 09.02.2017: New options to add color, r.color, and marker order.
 # 27.06.2016: Added expand=TRUE to save as field.
 # 09.01.2016: Added attributes to result.
@@ -19,10 +24,6 @@
 # 18.07.2013: Check before overwrite object.
 # 11.06.2013: Added 'inherits=FALSE' to 'exists'.
 # 04.06.2013: Fixed bug in 'missingCol'.
-# 24.05.2013: Improved error message for missing columns.
-# 17.05.2013: listDataFrames() -> listObjects()
-# 09.05.2013: .result removed, added save as group.
-# 27.04.2013: First version.
 
 #' @title Add Dye Information
 #'
@@ -40,7 +41,7 @@
 #' 'Order' is the marker order in the selected kit.
 #' NB! Existing columns will be overwritten.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -114,12 +115,13 @@ addDye_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
   
   f0g0[1,1] <- glabel(text="Select dataset:", container=f0g0)
   
-  f0g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
-                                                 listObjects(env=env,
-                                                             obj.class="data.frame")),
-                                         selected = 1,
-                                         editable = FALSE,
-                                         container = f0g0)
+  f0g0[1,2] <- dataset_drp <- gcombobox(items=c("<Select dataset>",
+                                                listObjects(env=env,
+                                                            obj.class="data.frame")),
+                                        selected = 1,
+                                        editable = FALSE,
+                                        container = f0g0,
+                                        ellipsize = "none")
   
   f0g0[1,3] <- dataset_samples_lbl <- glabel(text=" 0 samples",
                                               container=f0g0)
@@ -165,10 +167,11 @@ addDye_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
   
   f0g0[2,1] <- glabel(text="Kit:", container=f0g0)
   
-  kit_drp <- gdroplist(items=getKit(),
-                           selected = 1,
-                           editable = FALSE,
-                           container = f0g0)
+  kit_drp <- gcombobox(items=getKit(),
+                       selected = 1,
+                       editable = FALSE,
+                       container = f0g0,
+                       ellipsize = "none")
   
   f0g0[2,2] <- kit_drp
   
@@ -205,11 +208,9 @@ addDye_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
     print("BUTTON")
   }  
   
-  add_btn <- gbutton(text="Add dye",
-                      border=TRUE,
-                      container=gv)
+  add_btn <- gbutton(text="Add", container=gv)
   
-  addHandlerChanged(add_btn, handler = function(h, ...) {
+  addHandlerClicked(add_btn, handler = function(h, ...) {
     
     # Get values.
     val_kit <- svalue(kit_drp)
@@ -252,7 +253,9 @@ addDye_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
     }
 
     # Change button.
+    blockHandlers(add_btn)
     svalue(add_btn) <- "Processing..."
+    unblockHandlers(add_btn)
     enabled(add_btn) <- FALSE
     
     if(!is.null(need)){
@@ -273,16 +276,24 @@ addDye_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NUL
       
     }
     
-    # Add attributes.
+    # Save to new variable.
     datanew <- val_data
-    attr(datanew, which="addDye_gui, data") <- val_data_name
-    attr(datanew, which="addDye_gui, kit") <- val_kit
-    attr(datanew, which="addDye_gui, ignore.case") <- val_ignore
-    attr(datanew, which="addDye_gui, dye") <- val_dye
-    attr(datanew, which="addDye_gui, color") <- val_color
-    attr(datanew, which="addDye_gui, r.color") <- val_r
-    attr(datanew, which="addDye_gui, order") <- val_order
+
+    # Add attributes to result.
+    attr(datanew, which="kit") <- val_kit
+
+    # Create key-value pairs to log.
+    keys <- list("data", "kit", "ignore.case", "dye", "color",
+                 "r.color", "order")
     
+    values <- list(val_data_name, val_kit, val_ignore, val_dye, val_color,
+                   val_r, val_order)
+    
+    # Update audit trail.
+    datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                          label = "addDye_gui", arguments = FALSE,
+                          package = "strvalidator")
+
     # Save data.
     saveObject(name=val_name, object=datanew, parent=w, env=env)
     

@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 28.08.2015: Added importFrom
 # 11.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
@@ -24,10 +29,10 @@
 #' frequency of the corresponding allele. If no frequence exist for that allele
 #' a frequency of 5/2N will be used. X and Y alleles is given the frequency 1.
 #' A scoring matrix can be supplied to reduce the effect by spectral distance, 
-#' meaning that overlap with the neighbouring dye can be counted in full (100%)
-#' while a non neighbour dye get its overlap reduced (to e.g. 10%).
+#' meaning that overlap with the neighboring dye can be counted in full (100%)
+#' while a non neighbor dye get its overlap reduced (to e.g. 10%).
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -213,7 +218,8 @@ calculateOverlap_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, p
   
   f1_db_names <- getDb()
   
-  f1_db_drp <- gdroplist(items=f1_db_names, fill=FALSE, selected = 1, container=f1)
+  f1_db_drp <- gcombobox(items=f1_db_names, fill=FALSE, selected = 1,
+                         container=f1, ellipsize = "none")
 
   f1_virtual_chk <- gcheckbox(text="Include virtual bins in analysis",
                               checked=TRUE,
@@ -256,7 +262,7 @@ calculateOverlap_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, p
                spacing = 5,
                container = gv)
   
-  glabel(text="Define penalty by the distance between dye channels  (1st neighbour to 5th neighbour)",
+  glabel(text="Define penalty by the distance between dye channels  (1st neighbor to 5th neighbor)",
                container=f2)
 
   f2g1 <- ggroup(horizontal=TRUE,
@@ -297,11 +303,9 @@ calculateOverlap_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, p
   # BUTTON ####################################################################
   
   
-  analyse_btn <- gbutton(text="Analyse",
-                         border=TRUE,
-                         container=gv)
+  analyse_btn <- gbutton(text="Analyse", container=gv)
   
-  addHandlerChanged(analyse_btn, handler = function(h, ...) {
+  addHandlerClicked(analyse_btn, handler = function(h, ...) {
     
     val_name <- svalue(f5_save_edt)
     val_kits <- svalue(kit_checkbox_group)
@@ -316,7 +320,9 @@ calculateOverlap_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, p
     if(length(val_kits) >0){
     
       # Change button.
+      blockHandlers(analyse_btn)
       svalue(analyse_btn) <- "Processing..."
+      unblockHandlers(analyse_btn)
       enabled(analyse_btn) <- FALSE
       
       # Get kits.
@@ -373,6 +379,18 @@ calculateOverlap_gui <- function(env=parent.frame(), savegui=NULL, debug=TRUE, p
                               penalty=val_penalty,
                               virtual=val_virtual,
                              debug=debug)
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "db", "penalty", "virtual")
+      
+      values <- list(val_kits, val_db_selected, val_penalty, val_virtual)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateOverlap_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
+      
   
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)

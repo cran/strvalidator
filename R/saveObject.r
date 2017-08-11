@@ -5,7 +5,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
-# 29.04.2016:   Fixed object not saved if an object existed and the new object is renamed.
+# 29.04.2016: Fixed object not saved if an object existed and the new object is renamed.
 # 18.07.2014: Added syntactically valid name check.
 # 18.07.2014: Added 'remove' and 'suggested' parameter.
 # 20.01.2014: Added 'debug' parameter.
@@ -27,7 +27,7 @@
 #' @param object object to save.
 #' @param parent object specifying the parent GUI object to center the message box.
 #' @param suggest character string for a suggested name for the object to save/re-name.
-#' @param env environment in wich to save and search for existing objects.
+#' @param env environment in which to save and search for existing objects.
 #' @param remove character string for a named object to remove (e.g. the original object if re-naming).
 #' @param debug logical indicating printing debug information.
 #' 
@@ -54,7 +54,7 @@ saveObject <- function(name=NULL, object, parent=NULL, suggest="",
   if(is.null(name)){
 
     # Show dialogue.
-    name <- ginput(message="Enter name", text=suggest,
+    name <- ginput(msg="Enter name", text=suggest,
                    title="Input", icon = "info", parent=parent)
     
     if(is.na(name)){
@@ -88,7 +88,7 @@ saveObject <- function(name=NULL, object, parent=NULL, suggest="",
                    "The object will be saved as:", name)
       
       # Show message.
-      gmessage(message=txt, title="Invalid name",
+      gmessage(msg=txt, title="Invalid name",
                icon = "warning",
                parent = parent)
       
@@ -123,7 +123,7 @@ saveObject <- function(name=NULL, object, parent=NULL, suggest="",
     } else {
       
       # Ask for new name.
-      name <- ginput(message="New name", text=name, title="Input", 
+      name <- ginput(msg="New name", text=name, title="Input", 
                      icon = "info", parent=parent)
       
       # Exit if cancel.

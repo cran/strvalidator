@@ -4,6 +4,10 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 02.05.2016: Added attributes.
 # 12.10.2015: First version.
 
@@ -17,7 +21,7 @@
 #' Simplifies the use of the \code{\link{removeSpike}} function by providing a
 #'  graphical user interface to it.
 #'
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -92,12 +96,13 @@ removeSpike_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
 
   f0g0[1,1] <- glabel(text="Select dataset:", container=f0g0)
 
-  f0g0[1,2] <- f0g0_data_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[1,2] <- f0g0_data_drp <- gcombobox(items=c("<Select dataset>",
                                                  listObjects(env=env,
                                                              obj.class="data.frame")),
                                          selected = 1,
                                          editable = FALSE,
-                                         container = f0g0)
+                                         container = f0g0,
+                                         ellipsize = "none")
 
   f0g0[1,3] <- f0g0_data_col_lbl <- glabel(text=" 0 rows",
                                               container=f0g0)
@@ -133,12 +138,13 @@ removeSpike_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
 
   f0g0[2,1] <- glabel(text="Select spike list:", container=f0g0)
   
-  f0g0[2,2] <- f0g0_spike_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[2,2] <- f0g0_spike_drp <- gcombobox(items=c("<Select dataset>",
                                                    listObjects(env=env,
                                                                obj.class="data.frame")),
                                            selected = 1,
                                            editable = FALSE,
-                                           container = f0g0)
+                                           container = f0g0,
+                                           ellipsize = "none")
   
   f0g0[2,3] <- f0g0_spike_col_lbl <- glabel(text=" 0 samples",
                                            container=f0g0)
@@ -195,7 +201,7 @@ removeSpike_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
     print("BUTTON")
   }
 
-  remove_btn <- gbutton(text="Remove", border=TRUE, container=gv)
+  remove_btn <- gbutton(text="Remove", container=gv)
 
   addHandlerChanged(remove_btn, handler = function(h, ...) {
 
@@ -212,11 +218,16 @@ removeSpike_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
       datanew <- removeSpike(data = val_data, spike = val_spike,
                              invert = val_invert, debug=debug)
       
-      # Add attributes.
-      attr(datanew, which="removeSpike_gui, data") <- .gDataName
-      attr(datanew, which="removeSpike_gui, spike") <- .gSpikeName
-      attr(datanew, which="removeSpike_gui, invert") <- val_invert
-
+      # Create key-value pairs to log.
+      keys <- list("data", "spike", "invert")
+      
+      values <- list(val_name_data, val_name_spike, val_invert)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "removeSpike_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
 
@@ -230,7 +241,7 @@ removeSpike_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, paren
 
     } else {
 
-      gmessage(message="Select a datasets!",
+      gmessage(msg="Select a datasets!",
                title="Error",
                icon = "error")
 

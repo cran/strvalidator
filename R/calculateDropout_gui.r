@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 15.08.2016: Implemented new calculateHeight, removed calculateHeterozygous.
 # 29.06.2016: Added option to remove sex markers and quality sensor.
 # 16.06.2016: 'Save as' textbox expandable.
@@ -19,12 +24,6 @@
 # 13.11.2013: Removed 'allele' argument in call.
 # 07.11.2013: Fixed suggested LDT (as.numeric)
 # 27.10.2013: Fixed option 'ignore case' not passed to 'check subset'.
-# 19.10.2013: Added support for arguments 'allele' and 'threshold'.
-# 26.07.2013: Changed parameter 'fixed' to 'word' for 'checkSubset' function.
-# 18.07.2013: Check before overwrite object.
-# 11.07.2013: Added save GUI settings.
-# 11.06.2013: Added 'inherits=FALSE' to 'exists'.
-# 04.06.2013: Fixed bug in 'missingCol'.
 
 #' @title Calculate Dropout Events
 #'
@@ -32,7 +31,7 @@
 #' GUI wrapper for the \code{\link{calculateDropout}} function.
 #'
 #' @details Scores dropouts for a dataset.
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -109,12 +108,13 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[1,1] <- glabel(text="Select dataset:", container=g0)
 
-  g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[1,2] <- dataset_drp <- gcombobox(items=c("<Select dataset>",
                                    listObjects(env=env,
                                                obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
-                           container = g0)
+                           container = g0,
+                           ellipsize = "none")
   
   g0[1,3] <- g0_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
@@ -158,12 +158,13 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[2,1] <- glabel(text="Select reference dataset:", container=g0)
   
-  g0[2,2] <- refset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[2,2] <- refset_drp <- gcombobox(items=c("<Select dataset>",
                                    listObjects(env=env,
                                                obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
-                           container = g0) 
+                           container = g0,
+                           ellipsize = "none") 
   
   g0[2,3] <- g0_ref_lbl <- glabel(text=" 0 references", container=g0)
   
@@ -200,9 +201,7 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
     print("CHECK")
   }  
   
-  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting",
-                       border=TRUE,
-                       container=g0)
+  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting", container=g0)
   
   addHandlerChanged(g0_check_btn, handler = function(h, ...) {
     
@@ -231,7 +230,7 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      
@@ -244,8 +243,9 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
   
   g0[4,1] <- glabel(text="Select the kit used:", container=g0)
   
-  g0[4,2] <- kit_drp <- gdroplist(items = getKit(), selected = 1,
-                                  editable = FALSE, container = g0) 
+  g0[4,2] <- kit_drp <- gcombobox(items = getKit(), selected = 1,
+                                  editable = FALSE, container = g0,
+                                  ellipsize = "none") 
 
   # FRAME 1 ###################################################################
   
@@ -302,14 +302,14 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
   # BUTTON ####################################################################
   
   
-  dropout_btn <- gbutton(text="Calculate dropout",
-                        border=TRUE,
-                        container=gv)
+  dropout_btn <- gbutton(text="Calculate dropout", container=gv)
   
-  addHandlerChanged(dropout_btn, handler = function(h, ...) {
+  addHandlerClicked(dropout_btn, handler = function(h, ...) {
     
     val_data <- .gData
     val_ref <- .gRef
+    val_name_data <- svalue(dataset_drp)
+    val_name_ref <- svalue(refset_drp)
     val_ignore_case <- svalue(f1_ignore_case_chk)
     val_h <- svalue(f1_h_chk)
     val_threshold <- as.numeric(svalue(f1g1_ldt_edt))
@@ -367,7 +367,9 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
     if(!is.null(val_data) & !is.null(val_ref)){
       
       # Change button.
+      blockHandlers(dropout_btn)
       svalue(dropout_btn) <- "Processing..."
+      unblockHandlers(dropout_btn)
       enabled(dropout_btn) <- FALSE
   
       datanew <- calculateDropout(data=val_data,
@@ -382,14 +384,18 @@ calculateDropout_gui <- function(env=parent.frame(), savegui=NULL,
       
       # Add attributes to result.
       attr(datanew, which="kit") <- val_kit
-      attr(datanew, which="calculateDropout_gui, data") <- svalue(dataset_drp)
-      attr(datanew, which="calculateDropout_gui, ref") <- svalue(refset_drp)
-      attr(datanew, which="calculateDropout_gui, threshold") <- val_threshold
-      attr(datanew, which="calculateDropout_gui, method") <- val_method
-      attr(datanew, which="calculateDropout_gui, ignore.case") <- val_ignore_case
-      attr(datanew, which="calculateDropout_gui, sex.rm") <- val_sex
-      attr(datanew, which="calculateDropout_gui, qs.rm") <- val_qs
-      attr(datanew, which="calculateDropout_gui, calculate.h") <- val_h
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "ref", "threshold", "method",
+                   "ignore.case", "sex.rm", "qs.rm", "kit", "calculate.h")
+      
+      values <- list(val_name_data, val_name_ref, val_threshold, val_method,
+                     val_ignore_case, val_sex, val_qs, val_kit, val_h)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateDropout_gui", arguments = FALSE,
+                            package = "strvalidator")
       
       # Calculate and add average peak height.
       if(val_h){

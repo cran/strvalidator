@@ -5,6 +5,8 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 05.08.2017: Prefix now works as intended (contains -> prefix).
 # 09.01.2016: Added more attributes to result.
 # 15.12.2015: Removed "0" from the default 'na.strings'.
 # 04.12.2015: Added parameter 'na.strings'.
@@ -23,10 +25,6 @@
 # 15.01.2014: Added message to show progress.
 # 13.01.2014: Added parameter 'na.strings = c("NA","")' to 'read.table'.
 # 13.01.2014: Fixed bug when no matching files in folder.
-# 10.12.2013: Changed names on parameters 'resultFiles' -> 'file.name'
-#              and 'resultFolder' -> 'folder.name'.
-# 12.11.2013: Changed 'rbind' to 'rbind.fill' from package 'plyr'.
-# 13.06.2013: Added parameter 'debug'. Fixed regexbug when importing from folder.
 
 #' @title Import Data
 #'
@@ -62,8 +60,7 @@
 #' to multiple file import option.
 #' @param auto.trim logical indicating if dataset should be trimmed.
 #' @param trim.samples character vector with sample names to trim.
-#' @param trim.invert logical indicating if samples should be keept (TRUE) or
-#'  removed (FALSE).
+#' @param trim.invert logical to keep (TRUE) or remove (FALSE) samples.
 #' @param auto.slim logical indicating if dataset should be slimmed.
 #' @param slim.na logical indicating if rows without data should remain.
 #' @param na.strings character vector with strings to be replaced by NA.
@@ -142,7 +139,7 @@ import <- function (folder = TRUE, extension="txt",
       # Create file filter.
       fileFilter <- paste(".*", sep="")
       if (!is.na(prefix) && nchar(prefix) > 0) {
-        fileFilter <- paste(prefix, fileFilter, sep="") 
+        fileFilter <- paste("^", prefix, fileFilter, sep="") 
         if(debug){
           print("prefix added:")
           print(fileFilter)
@@ -270,29 +267,12 @@ import <- function (folder = TRUE, extension="txt",
     
   }
 
+  # Update audit trail.
+  res <- auditTrail(obj = res, f.call = match.call(), package = "strvalidator")
+
   # Convert common known numeric columns.
   res <- colConvert(data=res)
-    
-  # Add attributes.
-  attr(res, which="import, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
-  attr(res, which="import, call") <- match.call()
-  attr(res, which="import, date") <- date()
-  attr(res, which="import, folder") <- folder
-  attr(res, which="import, extension") <- extension
-  attr(res, which="import, suffix") <- suffix
-  attr(res, which="import, prefix") <- prefix
-  attr(res, which="import, import.file") <- import.file
-  attr(res, which="import, folder.name") <- folder.name
-  attr(res, which="import, file.name") <- time.stamp
-  attr(res, which="import, separator") <- separator
-  attr(res, which="import, ignore.case") <- ignore.case
-  attr(res, which="import, auto.trim") <- auto.trim
-  attr(res, which="import, trim.samples") <- trim.samples
-  attr(res, which="import, trim.invert") <- trim.invert
-  attr(res, which="import, auto.slim") <- auto.slim
-  attr(res, which="import, slim.na") <- slim.na
-  attr(res, which="import, na.strings") <- na.strings
-
+  
   return(res)
   
 }

@@ -8,6 +8,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
 # 21.10.2016: calculateHeterozygous sex.rm and qs.rm set to FALSE.
 # 15.08.2016: Implemented new calculateHeight, removed calculateHeterozygous.
 # 30.11.2015: Added 'NB!' in the description.
@@ -28,7 +29,7 @@
 #'
 #' @details
 #' Calculate the analytical threshold (AT) according to method 6 as
-#' outlined in the reference. In short serial dilutions are analysed
+#' outlined in the reference. In short serial dilutions are analyzed
 #' and the average peak height is calculated. Linear regression or
 #' Weighted linear regression with amount of DNA as the predictor for
 #' the peak height is performed.
@@ -298,6 +299,9 @@ calculateAT6 <- function(data, ref, amount=NULL, weighted=TRUE, alpha=0.05,
     print("tail(res)")
     print(tail(res))
   }
+  
+  # Update audit trail.
+  res <- auditTrail(obj = res, f.call = match.call(), package = "strvalidator")
 
   if(debug){
     print(paste("EXIT:", match.call()[[1]]))

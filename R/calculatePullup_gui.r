@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 10.05.2016: Added new option 'limit' to remove high ratios from the result.
 # 10.05.2016: Added attributes to result.
 # 10.05.2016: 'Save as' textbox expandable.
@@ -21,7 +26,7 @@
 #' Simplifies the use of the \code{\link{calculatePullup}} function by
 #' providing a graphical user interface.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -113,10 +118,11 @@ calculatePullup_gui <- function(env=parent.frame(), savegui=NULL,
   
   dfs <- c("<Select a dataset>", listObjects(env=env, obj.class="data.frame"))
   
-  g0[1,2] <- g0_data_drp <- gdroplist(items=dfs, 
+  g0[1,2] <- g0_data_drp <- gcombobox(items=dfs, 
                                       selected = 1,
                                       editable = FALSE,
-                                      container = g0)
+                                      container = g0,
+                                      ellipsize = "none")
   g0[1,3] <- g0_data_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
   addHandlerChanged(g0_data_drp, handler = function (h, ...) {
@@ -164,10 +170,11 @@ calculatePullup_gui <- function(env=parent.frame(), savegui=NULL,
   g0[2,1] <- glabel(text="Select reference dataset:", container=g0)
   
   # NB! dfs defined in previous section.
-  g0[2,2] <- g0_ref_drp <- gdroplist(items=dfs, 
+  g0[2,2] <- g0_ref_drp <- gcombobox(items=dfs, 
                                      selected = 1,
                                      editable = FALSE,
-                                     container = g0)
+                                     container = g0,
+                                     ellipsize = "none")
   
   g0[2,3] <- g0_ref_samples_lbl <- glabel(text=" 0 references", container=g0)
   
@@ -206,9 +213,7 @@ calculatePullup_gui <- function(env=parent.frame(), savegui=NULL,
     print("CHECK")
   }  
   
-  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting",
-                                     border=TRUE,
-                                     container=g0)
+  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting", container=g0)
   
   addHandlerChanged(g0_check_btn, handler = function(h, ...) {
     
@@ -238,7 +243,7 @@ calculatePullup_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      
@@ -304,8 +309,8 @@ calculatePullup_gui <- function(env=parent.frame(), savegui=NULL,
 
   glabel(text=" Kit attribute:", container=f4)
   
-  f4_kit_drp <- gdroplist(items=getKit(), selected = 1,
-                          editable = FALSE, container = f4) 
+  f4_kit_drp <- gcombobox(items=getKit(), selected = 1,
+                          editable = FALSE, container = f4, ellipsize = "none") 
   
   # BUTTON ####################################################################
 
@@ -313,11 +318,9 @@ calculatePullup_gui <- function(env=parent.frame(), savegui=NULL,
     print("BUTTON")
   }  
   
-  calculate_btn <- gbutton(text="Calculate",
-                      border=TRUE,
-                      container=gv)
+  calculate_btn <- gbutton(text="Calculate", container=gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
@@ -363,7 +366,9 @@ calculatePullup_gui <- function(env=parent.frame(), savegui=NULL,
       if(!any(is.na(.gData$Dye))){
         
         # Change button.
+        blockHandlers(calculate_btn)
         svalue(calculate_btn) <- "Processing..."
+        unblockHandlers(calculate_btn)
         enabled(calculate_btn) <- FALSE
         
         datanew <- calculatePullup(data=val_data,
@@ -377,18 +382,20 @@ calculatePullup_gui <- function(env=parent.frame(), savegui=NULL,
                                    limit=val_limit,
                                    debug=debug)
         
-        # Add attributes.
+        # Add attributes to result.
         attr(datanew, which="kit") <- val_kit
-        attr(datanew, which="calculatePullup_gui, data") <- val_name_data
-        attr(datanew, which="calculatePullup_gui, ref") <- val_name_ref
-        attr(datanew, which="calculatePullup_gui, pullup.range") <- val_pullup
-        attr(datanew, which="calculatePullup_gui, block.range") <- val_block
-        attr(datanew, which="calculatePullup_gui, ol.rm") <- val_ol
-        attr(datanew, which="calculatePullup_gui, ignore.case") <- val_ignore
-        attr(datanew, which="calculatePullup_gui, word") <- val_word
-        attr(datanew, which="calculatePullup_gui, discard") <- val_discard
-        attr(datanew, which="calculatePullup_gui, limit") <- val_limit
         
+        # Create key-value pairs to log.
+        keys <- list("data", "ref", "pullup.range", "block.range", "ol.rm",
+                     "ignore.case", "word", "discard", "limit")
+        
+        values <- list(val_name_data, val_name_ref, val_pullup, val_block, val_ol,
+                       val_ignore, val_word, val_discard, val_limit)
+        
+        # Update audit trail.
+        datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                              label = "calculatePullup_gui", arguments = FALSE,
+                              package = "strvalidator")
         
         # Save data.
         saveObject(name=val_name, object=datanew, parent=w, env=env)

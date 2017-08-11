@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
 # 08.02.2017: First version.
 
 #' @title Add Marker Order.
@@ -20,7 +21,7 @@
 #' 
 #' @param data data frame or vector.
 #' @param kit string representing the forensic STR kit used.
-#' Default is NULL and autodetection of kit will be attempted.
+#' Default is NULL and automatic detection of kit will be attempted.
 #' @param overwrite logical if TRUE and column exist it will be overwritten.
 #' @param ignore.case logical if TRUE case in marker names will be ignored.
 #' @param debug logical indicating printing debug information.
@@ -92,7 +93,7 @@ addOrder <- function(data, kit=NULL, overwrite=FALSE, ignore.case=FALSE,
   if(ok){
     # Go ahead and add marker order.
 
-    # Check kit and autodetect if not provided. 
+    # Check kit and auto detect if not provided. 
     if(is.null(kit)){
       kit <- detectKit(data = data)[1]
       message("No kit provided. Detected: ", kit)
@@ -123,13 +124,10 @@ addOrder <- function(data, kit=NULL, overwrite=FALSE, ignore.case=FALSE,
     
     # Add attributes to result.
     attr(data, which="kit") <- kit
-    attr(data, which="addOrder, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
-    attr(data, which="addOrder, call") <- match.call()
-    attr(data, which="addOrder, date") <- date()
-    attr(data, which="addOrder, data") <- attr_data
-    attr(data, which="addOrder, overwrite") <- overwrite
-    attr(data, which="addOrder, ignore.case") <- ignore.case
     
+    # Update audit trail.
+    data <- auditTrail(obj = data, f.call = match.call(), package = "strvalidator")
+
   }
 
   if(debug){

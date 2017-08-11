@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
 # 29.08.2015: Added importFrom.
 # 23.02.2014: Added option 'ol.rm'.
 # 20.04.2013: first version.
@@ -21,7 +22,7 @@
 #' 
 #' @param data a data frame containing at least 'Sample.Name', 'Marker', 'Allele', Height'.
 #' @param ratio numeric giving the peak height ratio threshold.
-#' @param height numeric giving the minumum peak height.
+#' @param height numeric giving the minimum peak height.
 #' @param na.rm logical indicating if rows with no peak should be discarded.
 #' @param ol.rm logical indicating if off-ladder alleles should be discarded.
 #' @param debug logical indicating printing debug information.
@@ -193,10 +194,16 @@ guessProfile <- function(data, ratio=0.6, height=50,
     }
   }
   
+  # Extract profiles.
+  data <- data[keepRows, ]
+  
+  # Update audit trail.
+  data <- auditTrail(obj = data, f.call = match.call(), package = "strvalidator")
+
   if(debug){
     print(paste("EXIT:", match.call()[[1]]))
   }
   
-  return(data[keepRows, ])
+  return(data)
   
 }

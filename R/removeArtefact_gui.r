@@ -4,6 +4,10 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 02.05.2016: First version.
 
 
@@ -16,7 +20,7 @@
 #' Simplifies the use of the \code{\link{removeArtefact}} function by providing a
 #'  graphical user interface to it.
 #'
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -91,12 +95,13 @@ removeArtefact_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pa
 
   f0g0[1,1] <- glabel(text="Select dataset:", container=f0g0)
 
-  f0g0[1,2] <- f0g0_data_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[1,2] <- f0g0_data_drp <- gcombobox(items=c("<Select dataset>",
                                                  listObjects(env=env,
                                                              obj.class="data.frame")),
                                          selected = 1,
                                          editable = FALSE,
-                                         container = f0g0)
+                                         container = f0g0,
+                                         ellipsize = "none")
 
   f0g0[1,3] <- f0g0_data_col_lbl <- glabel(text=" 0 rows",
                                               container=f0g0)
@@ -132,12 +137,13 @@ removeArtefact_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pa
 
   f0g0[2,1] <- glabel(text="Select artefact list:", container=f0g0)
   
-  f0g0[2,2] <- f0g0_spike_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[2,2] <- f0g0_spike_drp <- gcombobox(items=c("<Select dataset>",
                                                    listObjects(env=env,
                                                                obj.class="data.frame")),
                                            selected = 1,
                                            editable = FALSE,
-                                           container = f0g0)
+                                           container = f0g0,
+                                           ellipsize = "none")
   
   f0g0[2,3] <- f0g0_spike_col_lbl <- glabel(text=" 0 rows",
                                            container=f0g0)
@@ -198,7 +204,7 @@ removeArtefact_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pa
     print("BUTTON")
   }
 
-  remove_btn <- gbutton(text="Remove", border=TRUE, container=gv)
+  remove_btn <- gbutton(text="Remove", container=gv)
 
   addHandlerChanged(remove_btn, handler = function(h, ...) {
 
@@ -217,12 +223,16 @@ removeArtefact_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pa
                              na.rm = val_na, threshold = val_threshold,
                              debug=debug)
       
-      # Add attributes.
-      attr(datanew, which="removeArtefact_gui, data") <- .gDataName
-      attr(datanew, which="removeArtefact_gui, artefact") <- .gArtefactName
-      attr(datanew, which="removeArtefact_gui, na.rm") <- val_na
-      attr(datanew, which="removeArtefact_gui, threshold") <- val_threshold
-
+      # Create key-value pairs to log.
+      keys <- list("data", "artefact", "na.rm", "threshold")
+      
+      values <- list(val_name_data, val_name_spike, val_na, val_threshold)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "removeArtefact_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
 
@@ -236,7 +246,7 @@ removeArtefact_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, pa
 
     } else {
 
-      gmessage(message="Select a datasets!",
+      gmessage(msg="Select a datasets!",
                title="Error",
                icon = "error")
 

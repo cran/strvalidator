@@ -7,6 +7,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 27.06.2016: Added kit drop-down to fix hardcoded kit in mask plot.
 # 27.06.2016: Removed check for reference sample if masking is selected (no harm).
 # 16.06.2016: Fixed bug in plot sample masking range.
@@ -31,7 +36,7 @@
 #'  \code{\link{calculateAT}} function by providing a graphical user interface.
 #'  In addition there are integrated control functions.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -126,10 +131,11 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
   
   dfs <- c("<Select a dataset>", listObjects(env=env, obj.class="data.frame"))
   
-  g0[1,2] <- g0_data_drp <- gdroplist(items=dfs, 
+  g0[1,2] <- g0_data_drp <- gcombobox(items = dfs, 
                                       selected = 1,
                                       editable = FALSE,
-                                      container = g0)
+                                      container = g0,
+                                      ellipsize = "none")
   g0[1,3] <- g0_data_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
   addHandlerChanged(g0_data_drp, handler = function (h, ...) {
@@ -184,10 +190,11 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
   g0[2,1] <- glabel(text="Select reference dataset:", container=g0)
   
   # NB! dfs defined in previous section.
-  g0[2,2] <- g0_ref_drp <- gdroplist(items=dfs, 
+  g0[2,2] <- g0_ref_drp <- gcombobox(items=dfs, 
                                      selected = 1,
                                      editable = FALSE,
-                                     container = g0)
+                                     container = g0,
+                                     ellipsize = "none")
   
   g0[2,3] <- g0_ref_samples_lbl <- glabel(text=" 0 references", container=g0)
   
@@ -225,9 +232,7 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
     print("CHECK")
   }  
   
-  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting",
-                                     border=TRUE,
-                                     container=g0)
+  g0[3,2] <- g0_check_btn <- gbutton(text="Check subsetting", container=g0)
   
   addHandlerChanged(g0_check_btn, handler = function(h, ...) {
     
@@ -257,7 +262,7 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      
@@ -271,10 +276,11 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
   g0[4,1] <- glabel(text="Select the kit used:", container=g0)
   
   # NB! dfs defined in previous section.
-  g0[4,2] <- g0_kit_drp <- gdroplist(items = getKit(), 
+  g0[4,2] <- g0_kit_drp <- gcombobox(items = getKit(), 
                                      selected = 1,
                                      editable = FALSE,
-                                     container = g0)
+                                     container = g0,
+                                     ellipsize = "none")
   tooltip(g0_kit_drp) <- "Only used to shad masked ranges in plot."
 
   # FRAME 1 ###################################################################
@@ -368,15 +374,14 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
                spacing = 5,
                container = gv) 
   
-  mask_btn <- gbutton(text="Prepare and mask", border=TRUE,
-                       container=f3)
+  mask_btn <- gbutton(text="Prepare and mask", container=f3)
   
-  f3_sample_drp <- gdroplist(items="<Select sample>", selected=1,
-                             editable=FALSE, container=f3)
+  f3_sample_drp <- gcombobox(items="<Select sample>", selected=1,
+                             editable=FALSE, container=f3, ellipsize = "none")
   
-  save_btn <- gbutton(text="Save plot", border=TRUE, container=f3)
+  save_btn <- gbutton(text="Save plot", container=f3)
   
-  addHandlerChanged(mask_btn, handler = function(h, ...) {
+  addHandlerClicked(mask_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
@@ -414,7 +419,9 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
     }
     
     # Change button.
+    blockHandlers(mask_btn)
     svalue(mask_btn) <- "Processing..."
+    unblockHandlers(mask_btn)
     enabled(mask_btn) <- FALSE
     enabled(f3_sample_drp) <- FALSE
     
@@ -432,7 +439,9 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
                            debug=debug)
     
     # Change button.
+    blockHandlers(mask_btn)
     svalue(mask_btn) <- "Prepare and mask"
+    unblockHandlers(mask_btn)
     enabled(mask_btn) <- TRUE
     enabled(f3_sample_drp) <- TRUE
     
@@ -684,11 +693,9 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
     print("BUTTON")
   }  
   
-  calculate_btn <- gbutton(text="Calculate",
-                           border=TRUE,
-                           container=gv)
+  calculate_btn <- gbutton(text="Calculate", container=gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     # Get values.
     if(is.null(.gDataPrep)){
@@ -697,6 +704,8 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
       val_data <- .gDataPrep
     }
     val_ref <- .gRef
+    val_name_data <- svalue(g0_data_drp)
+    val_name_ref <- svalue(g0_ref_drp)
     val_ignore <- svalue(f1_ignore_chk)
     val_word <- svalue(f1_word_chk)
     val_mask_h <- svalue(f1_mask_h_chk)
@@ -753,7 +762,9 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
     if(!is.null(val_data)){
       
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
       
       datanew <- calculateAT(data=val_data,
@@ -773,47 +784,29 @@ calculateAT_gui <- function(env=parent.frame(), savegui=NULL,
                              debug=debug)
       
 
-      # Add attributes.
-      attr(datanew[[1]], which="calculateAT_gui, data") <- svalue(g0_data_drp)
-      attr(datanew[[1]], which="calculateAT_gui, ref") <- svalue(g0_ref_drp)
-      attr(datanew[[1]], which="calculateAT_gui, k") <- val_k
-      attr(datanew[[1]], which="calculateAT_gui, rank.t") <- val_t
-      attr(datanew[[1]], which="calculateAT_gui, alpha") <- val_a
-      attr(datanew[[1]], which="calculateAT_gui, mask.height") <- val_mask_h
-      attr(datanew[[1]], which="calculateAT_gui, height") <- val_height
-      attr(datanew[[1]], which="calculateAT_gui, mask") <- val_mask
-      attr(datanew[[1]], which="calculateAT_gui, range.sample") <- val_range
-      attr(datanew[[1]], which="calculateAT_gui, mask.ils") <- val_mask_ils
-      attr(datanew[[1]], which="calculateAT_gui, range.ils") <- val_range_ils
-      attr(datanew[[1]], which="calculateAT_gui, per.dye") <- val_mask_d
-      attr(datanew[[1]], which="calculateAT_gui, ignore.case") <- val_ignore
-      attr(datanew[[1]], which="calculateAT_gui, word") <- val_word
+      # Create key-value pairs to log.
+      keys <- list("data", "ref", "k", "rank.t", "alpha",
+                   "mask.height", "height", "mask", "range.sample",
+                   "mask.ils", "range.ils", "per.dye", "ignore.case",
+                   "word")
       
-      attr(datanew[[2]], which="calculateAT_gui, data") <- svalue(g0_data_drp)
-      attr(datanew[[2]], which="calculateAT_gui, ref") <- svalue(g0_ref_drp)
-      attr(datanew[[2]], which="calculateAT_gui, rank.t") <- val_t
-      attr(datanew[[2]], which="calculateAT_gui, mask.height") <- val_mask_h
-      attr(datanew[[2]], which="calculateAT_gui, height") <- val_height
-      attr(datanew[[2]], which="calculateAT_gui, mask") <- val_mask
-      attr(datanew[[2]], which="calculateAT_gui, range.sample") <- val_range
-      attr(datanew[[2]], which="calculateAT_gui, mask.ils") <- val_mask_ils
-      attr(datanew[[2]], which="calculateAT_gui, range.ils") <- val_range_ils
-      attr(datanew[[2]], which="calculateAT_gui, per.dye") <- val_mask_d
-      attr(datanew[[2]], which="calculateAT_gui, ignore.case") <- val_ignore
-      attr(datanew[[2]], which="calculateAT_gui, word") <- val_word
+      values <- list(val_name_data, val_name_ref, val_k, val_t,
+                     val_a, val_mask_h, val_height, val_mask, val_range, 
+                     val_mask_ils, val_range_ils, val_mask_d, val_ignore,
+                     val_word)
+      
+      # Update audit trail.
+      datanew[[1]] <- auditTrail(obj = datanew[[1]], key = keys, value = values,
+                                label = "calculateAT_gui", arguments = FALSE,
+                                package = "strvalidator")
 
-      attr(datanew[[3]], which="calculateAT_gui, data") <- svalue(g0_data_drp)
-      attr(datanew[[3]], which="calculateAT_gui, ref") <- svalue(g0_ref_drp)
-      attr(datanew[[3]], which="calculateAT_gui, rank.t") <- val_t
-      attr(datanew[[3]], which="calculateAT_gui, mask.height") <- val_mask_h
-      attr(datanew[[3]], which="calculateAT_gui, height") <- val_height
-      attr(datanew[[3]], which="calculateAT_gui, mask") <- val_mask
-      attr(datanew[[3]], which="calculateAT_gui, range.sample") <- val_range
-      attr(datanew[[3]], which="calculateAT_gui, mask.ils") <- val_mask_ils
-      attr(datanew[[3]], which="calculateAT_gui, range.ils") <- val_range_ils
-      attr(datanew[[3]], which="calculateAT_gui, per.dye") <- val_mask_d
-      attr(datanew[[3]], which="calculateAT_gui, ignore.case") <- val_ignore
-      attr(datanew[[3]], which="calculateAT_gui, word") <- val_word
+      datanew[[2]] <- auditTrail(obj = datanew[[2]], key = keys, value = values,
+                                 label = "calculateAT_gui", arguments = FALSE,
+                                 package = "strvalidator")
+      
+      datanew[[3]] <- auditTrail(obj = datanew[[3]], key = keys, value = values,
+                                 label = "calculateAT_gui", arguments = FALSE,
+                                 package = "strvalidator")
       
       # Save data.
       saveObject(name=val_name1, object=datanew[[1]], parent=w, env=env)

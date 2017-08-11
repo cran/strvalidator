@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 15.08.2016: Implemented new calculateHeight, selection of reference, and check subsetting.
 # 08.07.2016: Fixed options 'sex.rm' and 'qs.rm' not saved.
 # 29.06.2016: Implement 'checkDataset'.
@@ -19,8 +24,6 @@
 # 18.07.2013: Check before overwrite object.
 # 11.06.2013: Added 'inherits=FALSE' to 'exists'.
 # 04.06.2013: Fixed bug in 'missingCol'.
-# 24.05.2013: Improved error message for missing columns.
-# 20.05.2013: First version.
 
 
 #' @title Calculate Peak Height
@@ -32,7 +35,7 @@
 #' Simplifies the use of the \code{\link{calculateHeight}} function by providing a graphical 
 #' user interface to it.
 #' 
-#' @param env environment in wich to search for data frames and save result.
+#' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -117,11 +120,12 @@ calculateHeight_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, p
   
   f0g0[1,1] <- glabel(text="Select dataset:", container=f0g0)
   
-  f0g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[1,2] <- dataset_drp <- gcombobox(items=c("<Select dataset>",
                                                 listObjects(env=env,
                                                             obj.class="data.frame")),
                                         selected = 1, editable = FALSE,
-                                        container = f0g0)
+                                        container = f0g0,
+                                        ellipsize = "none")
   
   f0g0[1,3] <- f0g0_samples_lbl <- glabel(text=" 0 samples", container=f0g0)
   
@@ -165,11 +169,12 @@ calculateHeight_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, p
   
   f0g0[2,1] <- glabel(text="Select reference:", container=f0g0)
   
-  f0g0[2,2] <- refset_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[2,2] <- refset_drp <- gcombobox(items=c("<Select dataset>",
                                                listObjects(env=env,
                                                            obj.class="data.frame")),
                                        selected = 1, editable = FALSE,
-                                       container = f0g0) 
+                                       container = f0g0,
+                                       ellipsize = "none") 
   
   f0g0[2,3] <- f0g0_ref_lbl <- glabel(text=" 0 references", container=f0g0)
   
@@ -204,8 +209,7 @@ calculateHeight_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, p
   
   # CHECK ---------------------------------------------------------------------
   
-  f0g0[3,2] <- check_btn <- gbutton(text="Check subsetting",
-                                    border=TRUE, container=f0g0)
+  f0g0[3,2] <- check_btn <- gbutton(text="Check subsetting", container=f0g0)
   
   addHandlerChanged(check_btn, handler = function(h, ...) {
     
@@ -237,7 +241,7 @@ calculateHeight_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, p
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      
@@ -250,8 +254,9 @@ calculateHeight_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, p
   
   f0g0[4,1] <- glabel(text="Select the kit used:", container=f0g0)
   
-  f0g0[4,2] <- kit_drp <- gdroplist(items = getKit(), selected = 1,
-                                  editable = FALSE, container = f0g0) 
+  f0g0[4,2] <- kit_drp <- gcombobox(items = getKit(), selected = 1,
+                                  editable = FALSE, container = f0g0,
+                                  ellipsize = "none") 
   
   # FRAME 1 ###################################################################
   
@@ -322,11 +327,9 @@ calculateHeight_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, p
   # BUTTON ####################################################################
   
   
-  calculate_btn <- gbutton(text="Calculate",
-                        border=TRUE,
-                        container=gv)
+  calculate_btn <- gbutton(text="Calculate", container=gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     val_data <- .gData
     val_data_name <- .gDataName
@@ -360,7 +363,9 @@ calculateHeight_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, p
     if(!is.null(val_data)){
       
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
       
       datanew <- calculateHeight(data=val_data, ref=val_ref, na.replace=val_na,
@@ -369,16 +374,21 @@ calculateHeight_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, p
                                  ignore.case=val_ignore, exact=val_exact,
                                  debug=debug)
 
-      # Add attributes.
+      # Add attributes to result.
       attr(datanew, which="kit") <- val_kit
-      attr(datanew, which="calculateHeight_gui, data") <- val_data_name
-      attr(datanew, which="calculateHeight_gui, na") <- val_na
-      attr(datanew, which="calculateHeight_gui, add") <- val_add
-      attr(datanew, which="calculateHeight_gui, exclude") <- val_ex
-      attr(datanew, which="calculateHeight_gui, sex.rm") <- val_sex
-      attr(datanew, which="calculateHeight_gui, qs.rm") <- val_qs
-      attr(datanew, which="calculateHeight_gui, ignore.case") <- val_ignore
-      attr(datanew, which="calculateHeight_gui, exact") <- val_exact
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "ref", "na.replace", "add", "sex.rm",
+                   "qs.rm", "kit", "exclude", "ignore.case", "exact")
+      
+      values <- list(val_data_name, val_ref_name, val_na, val_add, val_sex,
+                     val_qs, val_kit, val_ex, val_ignore, val_exact)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateHeight_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)

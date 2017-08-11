@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 19.05.2016: Implemented more accurat method and parameter 'quick'.
 # 18.05.2016: Changed default of 'Round to nearest (bp)' from 1 to 1.5.
 #             Also changed min from 1 to 0 and step by from 1 to 0.1.
@@ -16,7 +21,7 @@
 #'
 #' @details Simplifies the use of the \code{\link{calculateSpike}} function
 #' by providing a graphical user interface.
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -86,21 +91,23 @@ calculateSpike_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
   
   g0[1,1] <- glabel(text = "Select dataset:", container = g0)
   
-  g0[1,2] <- g0_dataset_drp <- gdroplist(items = c("<Select dataset>",
+  g0[1,2] <- g0_dataset_drp <- gcombobox(items = c("<Select dataset>",
                                                  listObjects(env = env,
                                                              obj.class = "data.frame")), 
                                          selected = 1,
                                          editable = FALSE,
-                                         container = g0)
+                                         container = g0,
+                                         ellipsize = "none")
   
   g0[1,3] <- g0_samples_lbl <- glabel(text = " 0 samples", container = g0)
   
   g0[1,4] <- glabel(text = " and the kit used:", container = g0)
   
-  g0[1,5] <- kit_drp <- gdroplist(items = getKit(), 
+  g0[1,5] <- kit_drp <- gcombobox(items = getKit(), 
                        selected = 1,
                        editable = FALSE,
-                       container = g0) 
+                       container = g0,
+                       ellipsize = "none") 
   
   addHandlerChanged(g0_dataset_drp, handler = function (h, ...) {
     
@@ -130,6 +137,7 @@ calculateSpike_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
       
       # Reset components.
       .gData <<- NULL
+      .gDataName <<- NULL
       svalue(g0_dataset_drp, index = TRUE) <- 1
       svalue(g0_samples_lbl) <- " 0 samples"
       svalue(f2_save_edt) <- ""
@@ -173,12 +181,13 @@ calculateSpike_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
   # BUTTON ####################################################################
   
   
-  calculate_btn <- gbutton(text = "Detect", border = TRUE, container = gv)
+  calculate_btn <- gbutton(text = "Detect", container = gv)
   
-  addHandlerChanged(calculate_btn, handler = function(h, ...) {
+  addHandlerClicked(calculate_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
+    val_name_data <- .gDataName
     val_threshold <- svalue(f1_threshold_spn)
     val_tolerance <- svalue(f1_tolerance_spn)
     val_kit <- svalue(kit_drp)
@@ -188,7 +197,9 @@ calculateSpike_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
     if(!is.null(val_data)){
       
       # Change button.
+      blockHandlers(calculate_btn)
       svalue(calculate_btn) <- "Processing..."
+      unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
       
       datanew <- calculateSpike(data=val_data,
@@ -199,12 +210,20 @@ calculateSpike_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
                                 debug=debug)
       
       # Add attributes to result.
-      attr(datanew, which="calculateSpike_gui, data") <- svalue(g0_dataset_drp)
-      attr(datanew, which="calculateSpike_gui, threshold") <- val_threshold
-      attr(datanew, which="calculateSpike_gui, tolerance") <- val_tolerance
-      attr(datanew, which="calculateSpike_gui, quick") <- val_quick
-      attr(datanew, which="calculateSpike_gui, kit") <- val_kit
-
+      attr(datanew, which="kit") <- val_kit
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "threshold", "tolerance", 
+                   "quick", "kit")
+      
+      values <- list(val_name_data, val_threshold, val_tolerance, 
+                     val_quick, val_kit)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "calculateSpike_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       # Save data.
       saveObject(name = val_name, object = datanew, parent = w, env = env)
       

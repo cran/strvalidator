@@ -4,6 +4,13 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.08.2017: Added audit trail.
+# 01.08.2017: Added attributes to result.
+# 31.07.2017: Save name text field added expand=TRUE.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 29.08.2015: Added importFrom.
 # 07.10.2014: Added 'focus', added 'parent' parameter.
 # 28.06.2014: Added help button and moved save gui checkbox.
@@ -17,9 +24,6 @@
 # 24.05.2013: Improved error message for missing columns.
 # 21.05.2013: Fixed name on save as.
 # 17.05.2013: listDataFrames() -> listObjects()
-# 09.05.2013: .result removed, added save as group.
-# 04.05.2013: First version.
-
 
 #' @title Table Stutter
 #'
@@ -30,7 +34,7 @@
 #' Simplifies the use of the \code{\link{tableStutter}} function by providing a graphical 
 #' user interface to it.
 #' 
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -104,12 +108,13 @@ tableStutter_gui <- function(env=parent.frame(), savegui=NULL,
   
   f0g0[1,1] <- glabel(text="Select dataset:", container=f0g0)
   
-  f0g0[1,2] <- f0g0_dataset_drp <- gdroplist(items=c("<Select dataset>",
+  f0g0[1,2] <- f0g0_dataset_drp <- gcombobox(items=c("<Select dataset>",
                                                      listObjects(env=env,
                                                                  obj.class="data.frame")),
                                              selected = 1,
                                              editable = FALSE,
-                                             container = f0g0)
+                                             container = f0g0,
+                                             ellipsize = "none")
   
   f0g0[1,3] <- f0g0_samples_lbl <- glabel(text=" 0 samples",
                                               container=f0g0)
@@ -188,7 +193,7 @@ tableStutter_gui <- function(env=parent.frame(), savegui=NULL,
   
   glabel(text="Name for result:", container=f2)
   
-  f2_save_edt <- gedit(text="", width=45, container=f2)
+  f2_save_edt <- gedit(text="", expand=TRUE, container=f2)
 
   # BUTTON ####################################################################
 
@@ -196,27 +201,42 @@ tableStutter_gui <- function(env=parent.frame(), savegui=NULL,
     print("BUTTON")
   }  
   
-  run_btn <- gbutton(text="Summarize",
-                      border=TRUE,
-                      container=gv)
+  run_btn <- gbutton(text="Summarize", container=gv)
   
-  addHandlerChanged(run_btn, handler = function(h, ...) {
+  addHandlerClicked(run_btn, handler = function(h, ...) {
     
     # Get values.
     val_data <- .gData
-    val_ratio <- as.numeric(svalue(f1g1_quant_spb))
+    val_data_name <- .gDataName
+    val_quant <- as.numeric(svalue(f1g1_quant_spb))
     val_scope <- svalue(f1g1_scope_opt)
     val_name <- svalue(f2_save_edt)
+    val_kit <-  attr(x=.gData, which="kit", exact = TRUE)
     
     if (!is.null(.gData)){
       
       # Change button.
+      blockHandlers(run_btn)
       svalue(run_btn) <- "Processing..."
+      unblockHandlers(run_btn)
       enabled(run_btn) <- FALSE
       
       datanew <- tableStutter(data=val_data,
-                   quant=val_ratio,
+                   quant=val_quant,
                    scope=val_scope)
+      
+      # Add attributes to result.
+      attr(datanew, which="kit") <- val_kit
+      
+      # Create key-value pairs to log.
+      keys <- list("data", "quant", "scope")
+      
+      values <- list(val_data_name, val_quant, val_scope)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "tableStutter_gui", arguments = FALSE,
+                            package = "strvalidator")
       
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
@@ -231,7 +251,7 @@ tableStutter_gui <- function(env=parent.frame(), savegui=NULL,
       
     } else {
       
-      gmessage(message="Data frame is NULL!\n\n
+      gmessage(msg="Data frame is NULL!\n\n
                Make sure to select a dataset and a reference set",
                title="Error",
                icon = "error")      

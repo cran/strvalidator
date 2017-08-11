@@ -4,6 +4,11 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
+# 13.07.2017: Fixed issue with button handlers.
+# 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
+# 07.07.2017: Replaced 'droplist' with 'gcombobox'.
+# 07.07.2017: Removed argument 'border' for 'gbutton'.
 # 30.11.2015: Added attributes to result.
 # 30.11.2015: Added new option for columns to add.
 # 28.08.2015: Added importFrom
@@ -26,7 +31,7 @@
 #' @details
 #' Simplifies the use of the \code{\link{addData}} function by providing a graphical 
 #' user interface to it.
-#' @param env environment in wich to search for data frames.
+#' @param env environment in which to search for data frames.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
 #' @param parent widget to get focus when finished.
@@ -104,12 +109,13 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   g0[1,1] <- glabel(text="Select destination dataset:", container=g0)
 
-  g0[1,2] <- dataset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[1,2] <- dataset_drp <- gcombobox(items=c("<Select dataset>",
                                    listObjects(env=env,
                                                obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
-                           container = g0)
+                           container = g0,
+                           ellipsize = "none")
   
   g0[1,3] <- g0_samples_lbl <- glabel(text=" 0 samples", container=g0)
   
@@ -150,12 +156,13 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   g0[2,1] <- glabel(text="Select source dataset:", container=g0)
   
-  g0[2,2] <- refset_drp <- gdroplist(items=c("<Select dataset>",
+  g0[2,2] <- refset_drp <- gcombobox(items=c("<Select dataset>",
                                    listObjects(env=env,
                                                obj.class="data.frame")), 
                            selected = 1,
                            editable = FALSE,
-                           container = g0) 
+                           container = g0,
+                           ellipsize = "none") 
   
   g0[2,3] <- g0_ref_lbl <- glabel(text=" 0 samples", container=g0)
   
@@ -212,22 +219,25 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   enabled(f1_ignore_chk) <- !svalue(f1_exact_chk)
   
   glabel(text="Select key column:", container = f1, anchor=c(-1 ,0))
-  f1_key_drp <- gdroplist(items=.gDefaultDrp,
+  f1_key_drp <- gcombobox(items=.gDefaultDrp,
                           selected = 1,
                           editable = FALSE,
-                          container = f1)
+                          container = f1,
+                          ellipsize = "none")
   
   glabel(text="Select second key column:", container = f1, anchor=c(-1 ,0))
-  f1_key2_drp <- gdroplist(items=.gDefaultDrp,
+  f1_key2_drp <- gcombobox(items=.gDefaultDrp,
                           selected = 1,
                           editable = FALSE,
-                          container = f1)
+                          container = f1,
+                          ellipsize = "none")
 
   glabel(text="Select columns to add to the new dataset:", container = f1, anchor=c(-1 ,0))
-  f1_col_drp <- gdroplist(items=.gDefaultDrp,
+  f1_col_drp <- gcombobox(items=.gDefaultDrp,
                            selected = 1,
                            editable = FALSE,
-                           container = f1)
+                           container = f1,
+                          ellipsize = "none")
 
   f1_col_edt <- gedit(text="", initial.msg="Default is all columns",
                       container = f1)
@@ -275,11 +285,9 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   # BUTTON ####################################################################
   
   
-  add_btn <- gbutton(text="Add new data",
-                        border=TRUE,
-                        container=gv)
+  add_btn <- gbutton(text="Add new data", container=gv)
   
-  addHandlerChanged(add_btn, handler = function(h, ...) {
+  addHandlerClicked(add_btn, handler = function(h, ...) {
     
     # Get values.
     val_destination <- svalue(dataset_drp)
@@ -333,7 +341,9 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
     if(!is.null(.gDataDest) & !is.null(.gDataSource) & !is.null(val_key)){
       
       # Change button.
+      blockHandlers(add_btn)
       svalue(add_btn) <- "Processing..."
+      unblockHandlers(add_btn)
       enabled(add_btn) <- FALSE
   
       datanew <- addData(data=.gDataDest,
@@ -344,15 +354,18 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
                          what=val_what,
                          ignore.case=val_ignore)
       
-      # Add attributes.
-      attr(datanew, which="addData_gui, data") <- val_destination
-      attr(datanew, which="addData_gui, new.data") <- val_source
-      attr(datanew, which="addData_gui, exact") <- val_exact
-      attr(datanew, which="addData_gui, by.col") <- val_key
-      attr(datanew, which="addData_gui, then.by.col") <- val_key2
-      attr(datanew, which="addData_gui, what") <- val_what
-      attr(datanew, which="addData_gui, ignore.case") <- val_ignore
-
+      # Create key-value pairs to log.
+      keys <- list("data", "new.data", "exact", "by.col", "then.by.col",
+                   "what", "ignore.case")
+      
+      values <- list(val_destination, val_source, val_exact, val_key, val_key2,
+                     val_what, val_ignore)
+      
+      # Update audit trail.
+      datanew <- auditTrail(obj = datanew, key = keys, value = values,
+                            label = "addData_gui", arguments = FALSE,
+                            package = "strvalidator")
+      
       # Save data.
       saveObject(name=val_name, object=datanew, parent=w, env=env)
       

@@ -4,6 +4,7 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 06.08.2017: Added audit trail.
 # 18.09.2016: Implemented data.table and added attributes, and factors to result.
 # 28.08.2015: Added importFrom.
 # 01.06.2015: Changed column name 'File' to 'File.Name'.
@@ -18,7 +19,7 @@
 #'
 #' @details
 #' Count the number of peaks in a sample profile based on values in the 
-#' 'Height' column. Each sample is labelled according to custom labels
+#' 'Height' column. Each sample is labeled according to custom labels
 #' defined by the number of peaks. Peaks can be counted by sample or by
 #' marker within a sample.
 #' There is an option to discard off-ladder peaks ('OL').
@@ -221,17 +222,9 @@ calculatePeaks <- function(data, bins=c(0,2,3), labels=NULL,
   # Add factors to plot in correct order.
   data$Group <- factor(data$Group, levels = labels)
   
+  # Update audit trail.
+  data <- auditTrail(obj = data, f.call = match.call(), package = "strvalidator")
   
-  # Add attributes to result.
-  attr(data, which="calculatePeaks, strvalidator") <- as.character(utils::packageVersion("strvalidator"))
-  attr(data, which="calculatePeaks, call") <- match.call()
-  attr(data, which="calculatePeaks, date") <- date()
-  attr(data, which="calculatePeaks, data") <- attr_data
-  attr(data, which="calculatePeaks, bins") <- bins
-  attr(data, which="calculatePeaks, labels") <- labels
-  attr(data, which="calculatePeaks, ol.rm") <- ol.rm
-  attr(data, which="calculatePeaks, by.marker") <- by.marker
-
   if(debug){
     print("data:")
     print(str(data))
