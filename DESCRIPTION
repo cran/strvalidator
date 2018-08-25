@@ -1,8 +1,8 @@
 Package: strvalidator
 Type: Package
 Title: Process Control and Internal Validation of Forensic STR Kits
-Version: 2.0.0
-Date: 2017-08-11
+Version: 2.1.0
+Date: 2018-08-25
 Author: Oskar Hansson
 Maintainer: Oskar Hansson <oskhan@ous-hf.no>
 URL: https://sites.google.com/site/forensicapps/strvalidator
@@ -22,8 +22,8 @@ Description: An open source platform for validation and process control.
     More information about each function can be found in the
     respective help documentation.
 License: GPL-2
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 NeedsCompilation: no
-Packaged: 2017-08-11 07:00:56 UTC; oskar
+Packaged: 2018-08-25 06:04:07 UTC; oskar
 Repository: CRAN
-Date/Publication: 2017-08-11 22:14:43 UTC
+Date/Publication: 2018-08-25 10:30:03 UTC

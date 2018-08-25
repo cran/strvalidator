@@ -4,6 +4,8 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 24.08.2018: Removed unused variables.
+# 19.07.2018: Changed 'warning' to 'message' for better visibility.
 # 06.08.2017: Added audit trail.
 # 06.02.2017: Fixed data saved as attributes (new.data).
 # 15.08.2016: Fixed check for data.table.
@@ -56,10 +58,6 @@
 
 addData <- function(data, new.data, by.col, then.by.col=NULL, exact=TRUE,
                     ignore.case=TRUE, what=NULL, debug=FALSE){
-  
-  # Parameters that are changed by the function must be saved first.
-  attr_data <- substitute(data)
-  attr_newdata <- substitute(new.data)
   
   if(debug){
     print(paste("IN:", match.call()[[1]]))
@@ -163,9 +161,8 @@ addData <- function(data, new.data, by.col, then.by.col=NULL, exact=TRUE,
                 # Add new data.
                 data[selectedData , colNamesNew[c]] <- uniqueNewData
               } else {
-                warning(paste("Ambiguous data could not be added at key",
-                              keys[k]),
-                        call. = TRUE)
+                message("Ambiguous data could not be added at key ", 
+                        keys[k], ".")
               }
             }
           }
@@ -245,9 +242,8 @@ addData <- function(data, new.data, by.col, then.by.col=NULL, exact=TRUE,
                   data[selectedData2 , colNamesNew[c2]] <- uniqueNewData
                   
                 } else {
-                  warning(paste("Ambiguous data could not be added at key",
-                                keys[k],"sub key:", keys2[k2]),
-                       call. = TRUE)
+                  message("Ambiguous data could not be added at key ", keys[k],
+                          " sub key: ", keys2[k2], ".")
                 }
               }
             }

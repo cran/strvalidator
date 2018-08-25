@@ -37,6 +37,8 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 18.07.2018: Added button to plot groups in 'Result' tab.
+# 17.07.2018: Added button to calculate stochastic thresholds in 'Dropout' tab.
 # 02.08.2017: Allow multiple objects to be removed from workspace.
 # 31.07.2017: Fixed error when pressing 'New' project.
 # 19.07.2017: Updated the export_gui call with new argument 'obj' and logic.
@@ -55,9 +57,6 @@
 # 15.08.2016: Removed calculateHeterozygous, added calculateCopies in the 'Edit' tab.
 # 04.08.2016: Added button to plot contamination in the 'Result' tab.
 # 27.06.2016: Added button to create new project in the 'Workspace' tab.
-# 02.05.2016: Added button to the function 'removeArtefact' in the 'Result' tab.
-# 29.04.2016: Added button to the function 'calculateAllele' in the 'Result' tab.
-# 29.04.2016: Activated button to new function 'removeSpike' in the 'Result' tab.
 
 #' @title Graphical User Interface For The STR-validator Package
 #'
@@ -1884,17 +1883,17 @@ strvalidator <- function(debug=FALSE){
     
   } )
   
-  # CALCULATE -----------------------------------------------------------------
+  # SCORE -----------------------------------------------------------------.---
   
-  drop_grid[2,1] <- drop_calculate_btn <- gbutton(text="Calculate", 
+  drop_grid[2,1] <- drop_score_btn <- gbutton(text="Score", 
                                                   container = drop_grid) 
   
-  drop_grid[2,2] <- glabel(text="Calculate dropouts for a dataset.",
+  drop_grid[2,2] <- glabel(text="Score dropouts for a dataset.",
                            container=drop_grid,
                            anchor=c(-1 ,0))
   
   
-  addHandlerChanged(drop_calculate_btn, handler = function(h, ...) {
+  addHandlerChanged(drop_score_btn, handler = function(h, ...) {
     
     # Open GUI.
     calculateDropout_gui(env=.strvalidator_env, savegui=.save_gui, 
@@ -1902,12 +1901,32 @@ strvalidator <- function(debug=FALSE){
     
   } )
   
+  # CALCULATE ------------------------------------------------------------------
+  
+  drop_grid[3,1] <- drop_calculate_btn <- gbutton(text="Calculate", 
+                                                  container = drop_grid) 
+  
+  drop_grid[3,2] <- glabel(text="Calculate stochastic thresholds.",
+                           container=drop_grid,
+                           anchor=c(-1 ,0))
+  
+  
+  addHandlerChanged(drop_calculate_btn, handler = function(h, ...) {
+    
+    # Open GUI.
+    calculateAllT_gui(env=.strvalidator_env, savegui=.save_gui, 
+                         debug=debug, parent=w)
+    
+  } )
+  
+  
+  
   # LOGISTIC REGRESSION -------------------------------------------------------
   
-  drop_grid[3,1] <- drop_model_btn <- gbutton(text="Model", 
+  drop_grid[4,1] <- drop_model_btn <- gbutton(text="Model", 
                                               container = drop_grid) 
   
-  drop_grid[3,2] <- glabel(text="Model dropout risk",
+  drop_grid[4,2] <- glabel(text="Model and plot dropout risk",
                            container=drop_grid)
   
   addHandlerChanged(drop_model_btn, handler = function(h, ...) {
@@ -1920,10 +1939,10 @@ strvalidator <- function(debug=FALSE){
   
   # PLOT DROPOUT --------------------------------------------------------------
   
-  drop_grid[4,1] <- drop_plot_btn <- gbutton(text="Plot", 
+  drop_grid[5,1] <- drop_plot_btn <- gbutton(text="Plot", 
                                              container = drop_grid) 
   
-  drop_grid[4,2] <- glabel(text="Create plots for analysed data",
+  drop_grid[5,2] <- glabel(text="Create plots for analysed data.",
                            container=drop_grid)
   
   addHandlerChanged(drop_plot_btn, handler = function(h, ...) {
@@ -2136,7 +2155,23 @@ strvalidator <- function(debug=FALSE){
     
   } )
 
+  # PLOT GROUPS ---------------------------------------------------------------
+  
+  result_g4[1,3] <- result_g4_group_btn <- gbutton(text="Plot", 
+                                                  container = result_g4) 
+  
+  result_g4[1,4] <- glabel(text="Plot cumulative distribution for multiple groups",
+                           container=result_g4)
+  
+  addHandlerChanged(result_g4_group_btn, handler = function(h, ...) {
     
+    # Open GUI.
+    plotGroups_gui(env=.strvalidator_env, savegui=.save_gui, 
+                         debug=debug, parent=w)
+    
+  } )
+  
+  
   # DROPIN ====================================================================
   
   result_f5 <- gframe(text = "Drop-in tools",

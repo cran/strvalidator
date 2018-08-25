@@ -4,6 +4,9 @@
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 19.07.2018: Minor changes to some labels (clarity).
+# 11.07.2018: 'Save as' textbox expandable.
+# 10.07.2018: Fixed blank drop-down menues after selecting a dataset.
 # 06.08.2017: Added audit trail.
 # 13.07.2017: Fixed issue with button handlers.
 # 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
@@ -21,7 +24,6 @@
 # 11.06.2013: Added 'inherits=FALSE' to 'exists'.
 # 17.05.2013: listDataFrames() -> listObjects()
 # 09.05.2013: .result removed, added save as group.
-# 25.04.2013: First version.
 
 #' @title Add Data
 #'
@@ -137,19 +139,34 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
       samples <- length(unique(.gDataDest$Sample.Name))
       svalue(g0_samples_lbl) <- paste(" ", samples, "samples")
       svalue(f2_save_edt) <- paste(.gDataDestName, "_new", sep="")
+      
+      # Update dropdown menues.
       f1_key_drp[] <- c(.gDefaultDrp,
                         intersect(.gDataDestColumns,.gDataSourceColumns))
       f1_key2_drp[] <- c(.gDefaultDrp,
                         intersect(.gDataDestColumns,.gDataSourceColumns))
       
+      # Select default value.
+      svalue(f1_key_drp, index=TRUE) <- 1
+      svalue(f1_key2_drp, index=TRUE) <- 1
+      
+      
     } else {
       
+      # Reset components.
       .gDataDest <<- NULL
       svalue(dataset_drp, index=TRUE) <- 1
       svalue(g0_samples_lbl) <- " 0 samples"
       svalue(f2_save_edt) <- ""
+      
+      # Update dropdown menues.
       f1_key_drp[] <- .gDefaultDrp
       f1_key2_drp[] <- .gDefaultDrp
+      
+      # Select default value.
+      svalue(f1_key_drp, index=TRUE) <- 1
+      svalue(f1_key2_drp, index=TRUE) <- 1
+      
     }
     
   } )  
@@ -182,6 +199,7 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
       ref <- length(unique(.gDataSource$Sample.Name))
       svalue(g0_ref_lbl) <- paste(" ", ref, "samples")
       
+      # Update dropdown menues.
       f1_key_drp[] <- c(.gDefaultDrp,
                         intersect(.gDataDestColumns,.gDataSourceColumns))
         
@@ -190,15 +208,27 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
       
       f1_col_drp[] <- c(.gDefaultDrp, .gDataSourceColumns)
       
+      # Select default value.
+      svalue(f1_key_drp, index=TRUE) <- 1
+      svalue(f1_key2_drp, index=TRUE) <- 1
+      svalue(f1_col_drp, index=TRUE) <- 1
+      
     } else {
       
       .gDataSource <<- NULL
       svalue(refset_drp, index=TRUE) <- 1
       svalue(g0_ref_lbl) <- " 0 samples"
+      
+      # Update dropdown menues.
       f1_key_drp[] <- .gDefaultDrp
       f1_key2_drp[] <- .gDefaultDrp
       f1_col_drp[] <- .gDefaultDrp
-      
+
+      # Select default value.
+      svalue(f1_key_drp, index=TRUE) <- 1
+      svalue(f1_key2_drp, index=TRUE) <- 1
+      svalue(f1_col_drp, index=TRUE) <- 1
+
     }
     
   } )  
@@ -218,21 +248,23 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   enabled(f1_ignore_chk) <- !svalue(f1_exact_chk)
   
-  glabel(text="Select key column:", container = f1, anchor=c(-1 ,0))
+  glabel(text="Select primary key column:", container = f1, anchor=c(-1 ,0))
   f1_key_drp <- gcombobox(items=.gDefaultDrp,
                           selected = 1,
                           editable = FALSE,
                           container = f1,
                           ellipsize = "none")
   
-  glabel(text="Select second key column:", container = f1, anchor=c(-1 ,0))
+  glabel(text="Select secondary key column (optional):", container = f1,
+         anchor=c(-1 ,0))
   f1_key2_drp <- gcombobox(items=.gDefaultDrp,
                           selected = 1,
                           editable = FALSE,
                           container = f1,
                           ellipsize = "none")
 
-  glabel(text="Select columns to add to the new dataset:", container = f1, anchor=c(-1 ,0))
+  glabel(text="Select columns to add to the new dataset:", container = f1,
+         anchor=c(-1 ,0))
   f1_col_drp <- gcombobox(items=.gDefaultDrp,
                            selected = 1,
                            editable = FALSE,
@@ -280,7 +312,7 @@ addData_gui <- function(env=parent.frame(), savegui=NULL, debug=FALSE, parent=NU
   
   glabel(text="Name for result:", container=f2)
   
-  f2_save_edt <- gedit(text="", container=f2)
+  f2_save_edt <- gedit(text="", container=f2, expand = TRUE)
 
   # BUTTON ####################################################################
   
