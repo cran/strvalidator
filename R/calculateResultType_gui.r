@@ -1,5 +1,7 @@
 ###############################################################################
 # CHANGE LOG (last 20 changes)
+# 07.03.2020: Added language support.
+# 23.03.2019: Fixed Error in paste(parent$ID, parent$env$num.subwin... (tcltk)
 # 17.02.2019: Fixed Error in if (svalue(savegui_chk)) { : argument is of length zero (tcltk)
 # 07.08.2017: Added audit trail.
 # 13.07.2017: Fixed issue with button handlers.
@@ -45,12 +47,141 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
   .gData <- NULL
   .gDataName <- NULL
 
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
+
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
+    print(paste("IN:", fnc))
   }
 
+  # Default strings.
+  strWinTitle <- "Calculate result type"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Dataset and kit"
+  strLblDataset <- "Sample dataset:"
+  strDrpDataset <- "<Select dataset>"
+  strLblSamples <- "samples"
+  strLblKit <- "Kit:"
+  strFrmOptions <- "Options"
+  strLblNB <- "NB! All markers must be present in each sample for correct results."
+  strLblPre <- "Pre-processing:"
+  strChkMissing <- "Add missing markers (can be slow on large datasets)"
+  strLblMethod <- "Calculate result type:"
+  strLblHeight <- "Define subtypes of complete profiles by all peaks > peak height threshold (RFU):"
+  strTipHeight <- "Complete >[RFU]"
+  strLblMarker <- "Define subtypes of mixtures by number of markers with > 2 detected peaks:"
+  strTipMarker <- "Mixture >[markers]"
+  strLblPeak <- "Define subtypes of partial profiles by number of detected peaks:"
+  strTipPeak <- "Partial >[peaks]"
+  strLblFullKit <- "Define subtypes of partial profiles by kit:"
+  strDrpKit <- "<Select kit>"
+  strTipFullKit <- "Partial Complete [kit]"
+  strFrmSave <- "Save as"
+  strLblSave <- "Name for result:"
+  strBtnCalculate <- "Calculate"
+  strBtnProcessing <- "Processing..."
+  strMsgDataset <- "A sample dataset must be selected."
+  strMsgTitleDataset <- "Dataset not selected"
+
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+
+    strtmp <- dtStrings["strWinTitle"]$value
+    strWinTitle <- ifelse(is.na(strtmp), strWinTitle, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataset"]$value
+    strLblDataset <- ifelse(is.na(strtmp), strLblDataset, strtmp)
+
+    strtmp <- dtStrings["strDrpDataset"]$value
+    strDrpDataset <- ifelse(is.na(strtmp), strDrpDataset, strtmp)
+
+    strtmp <- dtStrings["strLblSamples"]$value
+    strLblSamples <- ifelse(is.na(strtmp), strLblSamples, strtmp)
+
+    strtmp <- dtStrings["strLblKit"]$value
+    strLblKit <- ifelse(is.na(strtmp), strLblKit, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strLblNB"]$value
+    strLblNB <- ifelse(is.na(strtmp), strLblNB, strtmp)
+
+    strtmp <- dtStrings["strLblPre"]$value
+    strLblPre <- ifelse(is.na(strtmp), strLblPre, strtmp)
+
+    strtmp <- dtStrings["strChkMissing"]$value
+    strChkMissing <- ifelse(is.na(strtmp), strChkMissing, strtmp)
+
+    strtmp <- dtStrings["strLblMethod"]$value
+    strLblMethod <- ifelse(is.na(strtmp), strLblMethod, strtmp)
+
+    strtmp <- dtStrings["strLblHeight"]$value
+    strLblHeight <- ifelse(is.na(strtmp), strLblHeight, strtmp)
+
+    strtmp <- dtStrings["strTipHeight"]$value
+    strTipHeight <- ifelse(is.na(strtmp), strTipHeight, strtmp)
+
+    strtmp <- dtStrings["strLblMarker"]$value
+    strLblMarker <- ifelse(is.na(strtmp), strLblMarker, strtmp)
+
+    strtmp <- dtStrings["strTipMarker"]$value
+    strTipMarker <- ifelse(is.na(strtmp), strTipMarker, strtmp)
+
+    strtmp <- dtStrings["strLblPeak"]$value
+    strLblPeak <- ifelse(is.na(strtmp), strLblPeak, strtmp)
+
+    strtmp <- dtStrings["strTipPeak"]$value
+    strTipPeak <- ifelse(is.na(strtmp), strTipPeak, strtmp)
+
+    strtmp <- dtStrings["strLblFullKit"]$value
+    strLblFullKit <- ifelse(is.na(strtmp), strLblFullKit, strtmp)
+
+    strtmp <- dtStrings["strTipFullKit"]$value
+    strTipFullKit <- ifelse(is.na(strtmp), strTipFullKit, strtmp)
+
+    strtmp <- dtStrings["strDrpKit"]$value
+    strDrpKit <- ifelse(is.na(strtmp), strDrpKit, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblSave"]$value
+    strLblSave <- ifelse(is.na(strtmp), strLblSave, strtmp)
+
+    strtmp <- dtStrings["strBtnCalculate"]$value
+    strBtnCalculate <- ifelse(is.na(strtmp), strBtnCalculate, strtmp)
+
+    strtmp <- dtStrings["strBtnProcessing"]$value
+    strBtnProcessing <- ifelse(is.na(strtmp), strBtnProcessing, strtmp)
+
+    strtmp <- dtStrings["strMsgDataset"]$value
+    strMsgDataset <- ifelse(is.na(strtmp), strMsgDataset, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleDataset"]$value
+    strMsgTitleDataset <- ifelse(is.na(strtmp), strMsgTitleDataset, strtmp)
+  }
+
+  # WINDOW ####################################################################
+
   # Main window.
-  w <- gwindow(title = "Calculate result type", visible = FALSE)
+  w <- gwindow(title = strWinTitle, visible = FALSE)
 
   # Runs when window is closed.
   addHandlerUnrealize(w, handler = function(h, ...) {
@@ -94,22 +225,22 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("calculateResultType_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # FRAME 0 ###################################################################
 
   f0 <- gframe(
-    text = "Dataset and kit",
+    text = strFrmDataset,
     horizontal = TRUE,
     spacing = 5,
     container = gv
@@ -119,11 +250,11 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
 
   # Datasets ------------------------------------------------------------------
 
-  g0[1, 1] <- glabel(text = "Select dataset:", container = g0)
+  g0[1, 1] <- glabel(text = strLblDataset, container = g0)
 
   g0[1, 2] <- g0_dataset_drp <- gcombobox(
     items = c(
-      "<Select dataset>",
+      strDrpDataset,
       listObjects(
         env = env,
         obj.class = "data.frame"
@@ -135,9 +266,12 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
     ellipsize = "none"
   )
 
-  g0[1, 3] <- g0_samples_lbl <- glabel(text = " 0 samples", container = g0)
+  g0[1, 3] <- g0_samples_lbl <- glabel(
+    text = paste(" 0", strLblSamples),
+    container = g0
+  )
 
-  g0[2, 1] <- glabel(text = " and the kit used:", container = g0)
+  g0[2, 1] <- glabel(text = strLblKit, container = g0)
 
   g0[2, 2] <- f0_kit_drp <- gcombobox(
     items = getKit(),
@@ -164,8 +298,8 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
       .gData <<- get(val_obj, envir = env)
       .gDataName <<- val_obj
       samples <- length(unique(.gData$Sample.Name))
-      svalue(g0_samples_lbl) <- paste("", samples, "samples")
-      svalue(f2_save_edt) <- paste(val_obj, "_type", sep = "")
+      svalue(g0_samples_lbl) <- paste("", samples, strLblSamples)
+      svalue(save_edt) <- paste(val_obj, "_type", sep = "")
 
       # Detect kit.
       kitIndex <- detectKit(.gData, index = TRUE)
@@ -177,78 +311,65 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
       .gData <<- NULL
       .gDataName <<- NULL
       svalue(g0_dataset_drp, index = TRUE) <- 1
-      svalue(g0_samples_lbl) <- " 0 samples"
-      svalue(f2_save_edt) <- ""
+      svalue(g0_samples_lbl) <- paste(" 0", strLblSamples)
+      svalue(save_edt) <- ""
     }
   })
 
   # FRAME 1 ###################################################################
 
   f1 <- gframe(
-    text = "Options",
+    text = strFrmOptions,
     horizontal = FALSE,
     spacing = 5,
     container = gv
   )
 
-  f1_add_chk <- gcheckbox(
-    text = "Add missing markers (can be slow on large datasets)",
-    checked = TRUE, container = f1
-  )
+  glabel(text = strLblNB, container = f1, anchor = c(-1, 0))
 
-  glabel(text = "NB! All markers must be present in each sample for correct results.")
+  glabel(text = strLblPre, container = f1, anchor = c(-1, 0))
 
-  glabel(
-    text = "Peak height threshold (RFU):",
-    container = f1, anchor = c(-1, 0)
-  )
+  f1_add_chk <- gcheckbox(text = strChkMissing, checked = TRUE, container = f1)
+
+  glabel(text = strLblMethod, container = f1, anchor = c(-1, 0))
+
+  glabel(text = strLblHeight, container = f1, anchor = c(-1, 0))
 
   f1_rfu_edt <- gedit(text = "", width = 6, container = f1)
+  tooltip(f1_rfu_edt) <- strTipHeight
 
-  glabel(
-    text = "Define subtypes of mixtures by number of markers with >2 detected peaks:",
-    container = f1, anchor = c(-1, 0)
-  )
+  glabel(text = strLblMarker, container = f1, anchor = c(-1, 0))
 
   f1_mix_edt <- gedit(text = "", width = 6, container = f1)
+  tooltip(f1_mix_edt) <- strTipMarker
 
-  glabel(
-    text = "Define subtypes of partial profiles by number of detected peaks:",
-    container = f1, anchor = c(-1, 0)
-  )
+  glabel(text = strLblPeak, container = f1, anchor = c(-1, 0))
 
   f1_par_edt <- gedit(text = "", width = 6, container = f1)
+  tooltip(f1_par_edt) <- strTipPeak
 
-  glabel(
-    text = "Define subtypes of partial profiles by kit:",
-    container = f1, anchor = c(-1, 0)
-  )
+  glabel(text = strLblFullKit, container = f1, anchor = c(-1, 0))
 
   f1_kit_drp <- gcombobox(
-    items = c("<Select kit>", getKit()),
+    items = c(strDrpKit, getKit()),
     selected = 1,
     editable = FALSE,
     container = f1,
     ellipsize = "none"
   )
 
-  # FRAME 2 ###################################################################
+  # SAVE ######################################################################
 
-  f2 <- gframe(
-    text = "Save as",
-    horizontal = TRUE,
-    spacing = 5,
-    container = gv
-  )
+  save_frame <- gframe(text = strFrmSave, container = gv)
 
-  glabel(text = "Name for result:", container = f2)
+  glabel(text = strLblSave, container = save_frame)
 
-  f2_save_edt <- gedit(text = "", container = f2, expand = TRUE, fill = TRUE)
+  save_edt <- gedit(expand = TRUE, fill = TRUE, container = save_frame)
 
   # BUTTON ####################################################################
 
 
-  calculate_btn <- gbutton(text = "Calculate", container = gv)
+  calculate_btn <- gbutton(text = strBtnCalculate, container = gv)
 
   addHandlerClicked(calculate_btn, handler = function(h, ...) {
     val_data <- .gData
@@ -257,7 +378,7 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
     val_mix <- svalue(f1_mix_edt)
     val_par <- svalue(f1_par_edt)
     val_subkit <- svalue(f1_kit_drp)
-    val_name <- svalue(f2_save_edt)
+    val_name <- svalue(save_edt)
     val_marker <- NULL
     val_kit <- svalue(f0_kit_drp)
     val_add <- svalue(f1_add_chk)
@@ -340,7 +461,7 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
 
       # Change button.
       blockHandlers(calculate_btn)
-      svalue(calculate_btn) <- "Processing..."
+      svalue(calculate_btn) <- strBtnProcessing
       unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
 
@@ -373,7 +494,7 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
       # Update audit trail.
       datanew <- auditTrail(
         obj = datanew, key = keys, value = values,
-        label = "calculateResultType_gui",
+        label = fnc,
         arguments = FALSE, package = "strvalidator"
       )
 
@@ -381,17 +502,16 @@ calculateResultType_gui <- function(env = parent.frame(), savegui = NULL,
       saveObject(name = val_name, object = datanew, parent = w, env = env)
 
       if (debug) {
-        print(paste("EXIT:", match.call()[[1]]))
+        print(paste("EXIT:", fnc))
       }
 
       # Close GUI.
       .saveSettings()
       dispose(w)
     } else {
-      message <- "A dataset and a reference dataset have to be selected."
-
-      gmessage(message,
-        title = "Datasets not selected",
+      gmessage(
+        msg = strMsgDataset,
+        title = strMsgTitleDataset,
         icon = "error",
         parent = w
       )

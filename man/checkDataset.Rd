@@ -4,9 +4,17 @@
 \alias{checkDataset}
 \title{Check Dataset}
 \usage{
-checkDataset(name, reqcol = NULL, slim = FALSE, slimcol = NULL,
-  string = NULL, stringcol = NULL, env = parent.frame(),
-  parent = NULL, debug = FALSE)
+checkDataset(
+  name,
+  reqcol = NULL,
+  slim = FALSE,
+  slimcol = NULL,
+  string = NULL,
+  stringcol = NULL,
+  env = parent.frame(),
+  parent = NULL,
+  debug = FALSE
+)
 }
 \arguments{
 \item{name}{character name of data.frame.}
@@ -28,7 +36,7 @@ checkDataset(name, reqcol = NULL, slim = FALSE, slimcol = NULL,
 \item{debug}{logical indicating printing debug information.}
 }
 \description{
-Internal function to check a data.frame before analysis.
+Check a data.frame before analysis.
 }
 \details{
 Check that the object exist, there are rows, the required columns exist,

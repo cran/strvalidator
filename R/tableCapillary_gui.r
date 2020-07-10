@@ -1,5 +1,7 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.06.2020: Added .Deprecated("calculateStatistics_gui")
+# 03.05.2020: Added language support.
 # 17.02.2019: Fixed Error in if (svalue(savegui_chk)) { : argument is of length zero (tcltk)
 # 07.08.2017: Added audit trail.
 # 13.07.2017: Fixed issue with button handlers.
@@ -37,17 +39,115 @@
 #' @seealso \code{\link{tableCapillary}}
 
 tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, parent = NULL) {
+  .Deprecated("calculateStatistics_gui")
 
   # Global variables.
   .gData <- NULL
   .gDataName <- NULL
 
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
+
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
+    print(paste("IN:", fnc))
   }
 
+  # Default strings.
+  strWinTitle <- "Calculate summary statistics for capillary balance"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Dataset"
+  strLblDataset <- "Dataset:"
+  strDrpDataset <- "<Select dataset>"
+  strLblRows <- "rows"
+  strFrmOptions <- "Options"
+  strLblBy <- "Statistics to calculate"
+  strRadCapillary <- "capillary"
+  strRadInjection <- "injection"
+  strRadRow <- "plate row"
+  strRadRun <- "run"
+  strRadInstrument <- "instrument"
+  strFrmSave <- "Save as"
+  strLblSave <- "Name for result:"
+  strBtnCalculate <- "Calculate"
+  strBtnProcessing <- "Processing..."
+  strMsgNull <- "Data frame is NULL or NA!"
+  strMsgTitleError <- "Error"
+
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+
+    strtmp <- dtStrings["strWinTitle"]$value
+    strWinTitle <- ifelse(is.na(strtmp), strWinTitle, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataset"]$value
+    strLblDataset <- ifelse(is.na(strtmp), strLblDataset, strtmp)
+
+    strtmp <- dtStrings["strDrpDataset"]$value
+    strDrpDataset <- ifelse(is.na(strtmp), strDrpDataset, strtmp)
+
+    strtmp <- dtStrings["strLblRows"]$value
+    strLblRows <- ifelse(is.na(strtmp), strLblRows, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strLblBy"]$value
+    strLblBy <- ifelse(is.na(strtmp), strLblBy, strtmp)
+
+    strtmp <- dtStrings["strRadCapillary"]$value
+    strRadCapillary <- ifelse(is.na(strtmp), strRadCapillary, strtmp)
+
+    strtmp <- dtStrings["strRadInjection"]$value
+    strRadInjection <- ifelse(is.na(strtmp), strRadInjection, strtmp)
+
+    strtmp <- dtStrings["strRadRow"]$value
+    strRadRow <- ifelse(is.na(strtmp), strRadRow, strtmp)
+
+    strtmp <- dtStrings["strRadRun"]$value
+    strRadRun <- ifelse(is.na(strtmp), strRadRun, strtmp)
+
+    strtmp <- dtStrings["strRadInstrument"]$value
+    strRadInstrument <- ifelse(is.na(strtmp), strRadInstrument, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblSave"]$value
+    strLblSave <- ifelse(is.na(strtmp), strLblSave, strtmp)
+
+    strtmp <- dtStrings["strBtnCalculate"]$value
+    strBtnCalculate <- ifelse(is.na(strtmp), strBtnCalculate, strtmp)
+
+    strtmp <- dtStrings["strBtnProcessing"]$value
+    strBtnProcessing <- ifelse(is.na(strtmp), strBtnProcessing, strtmp)
+
+    strtmp <- dtStrings["strMsgNull"]$value
+    strMsgNull <- ifelse(is.na(strtmp), strMsgNull, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleError"]$value
+    strMsgTitleError <- ifelse(is.na(strtmp), strMsgTitleError, strtmp)
+  }
+
+  # WINDOW ####################################################################
+
   # Main window.
-  w <- gwindow(title = "Make capillary balance table", visible = FALSE)
+  w <- gwindow(title = strWinTitle, visible = FALSE)
 
   # Runs when window is closed.
   addHandlerUnrealize(w, handler = function(h, ...) {
@@ -91,22 +191,22 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("tableCapillary_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # FRAME 0 ###################################################################
 
   f0 <- gframe(
-    text = "Datasets",
+    text = strFrmDataset,
     horizontal = FALSE,
     spacing = 10,
     container = gv
@@ -114,11 +214,11 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
 
   f0g0 <- glayout(container = f0, spacing = 1)
 
-  f0g0[1, 1] <- glabel(text = "Select dataset:", container = f0g0)
+  f0g0[1, 1] <- glabel(text = strLblDataset, container = f0g0)
 
   f0g0[1, 2] <- f0g0_dataset_drp <- gcombobox(
     items = c(
-      "<Select dataset>",
+      strDrpDataset,
       listObjects(
         env = env,
         obj.class = "data.frame"
@@ -131,7 +231,7 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
   )
 
   f0g0[1, 3] <- f0g0_samples_lbl <- glabel(
-    text = " 0 rows",
+    text = paste(" 0", strLblRows),
     container = f0g0
   )
 
@@ -150,9 +250,9 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
       # Load or change components.
       .gData <<- get(val_obj, envir = env)
       .gDataName <<- val_obj
-      svalue(f0g0_samples_lbl) <- paste(" ", nrow(.gData), "rows")
-      svalue(f2_save_edt) <- paste(.gDataName,
-        "_table_",
+      svalue(f0g0_samples_lbl) <- paste("", nrow(.gData), strLblRows)
+      svalue(save_edt) <- paste(.gDataName,
+        "_stat_",
         svalue(f1g1_scope_opt),
         sep = ""
       )
@@ -161,8 +261,8 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
       # Reset components.
       .gData <<- data.frame(No.Data = NA)
       .gDataName <<- NULL
-      svalue(f0g0_samples_lbl) <- " 0 rows"
-      svalue(f2_save_edt) <- ""
+      svalue(f0g0_samples_lbl) <- paste(" 0", strLblRows)
+      svalue(save_edt) <- ""
       svalue(f0g0_dataset_drp, index = TRUE) <- 1
     }
   })
@@ -170,7 +270,7 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
   # FRAME 1 ###################################################################
 
   f1 <- gframe(
-    text = "Options",
+    text = strFrmOptions,
     horizontal = FALSE,
     spacing = 20,
     container = gv
@@ -178,13 +278,12 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
 
   f1g1 <- glayout(container = f1, spacing = 5)
 
-  f1g1[1, 1] <- glabel(text = "Make table by:", container = f1g1)
+  f1g1[1, 1] <- glabel(text = strLblBy, container = f1g1)
 
   f1g1[2, 1] <- f1g1_scope_opt <- gradio(
     items = c(
-      "capillary", "injection",
-      "plate row", "run",
-      "instrument"
+      strRadCapillary, strRadInjection, strRadRow,
+      strRadRun, strRadInstrument
     ),
     selected = 1,
     horizontal = FALSE,
@@ -192,52 +291,43 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
   )
 
   addHandlerChanged(f1g1_scope_opt, handler = function(h, ...) {
-    svalue(f2_save_edt) <- paste(.gDataName,
-      "_table_",
+    svalue(save_edt) <- paste(.gDataName,
+      "_stat_",
       svalue(f1g1_scope_opt),
       sep = ""
     )
   })
 
-  # FRAME 2 ###################################################################
+  # SAVE ######################################################################
 
-  f2 <- gframe(
-    text = "Save as",
-    horizontal = TRUE,
-    spacing = 5,
-    container = gv
-  )
+  save_frame <- gframe(text = strFrmSave, container = gv)
 
-  glabel(text = "Name for result:", container = f2)
+  glabel(text = strLblSave, container = save_frame)
 
-  f2_save_edt <- gedit(text = "", expand = TRUE, container = f2, fill = TRUE)
+  save_edt <- gedit(expand = TRUE, fill = TRUE, container = save_frame)
 
   # BUTTON ####################################################################
 
-  if (debug) {
-    print("BUTTON")
-  }
-
-  run_btn <- gbutton(text = "Make table", container = gv)
+  run_btn <- gbutton(text = strBtnCalculate, container = gv)
 
   addHandlerClicked(run_btn, handler = function(h, ...) {
 
     # Get values.
     val_data <- .gData
     val_name_data <- .gDataName
-    val_scope <- svalue(f1g1_scope_opt)
-    val_name <- svalue(f2_save_edt)
+    val_scope <- svalue(f1g1_scope_opt, index = TRUE)
+    val_name <- svalue(save_edt)
 
     # Translate into valid scope strings.
-    if (val_scope == "capillary") {
+    if (val_scope == 1) {
       val_scope <- "cap"
-    } else if (val_scope == "injection") {
+    } else if (val_scope == 2) {
       val_scope <- "inj"
-    } else if (val_scope == "plate row") {
+    } else if (val_scope == 3) {
       val_scope <- "row"
-    } else if (val_scope == "run") {
+    } else if (val_scope == 4) {
       val_scope <- "run"
-    } else if (val_scope == "instrument") {
+    } else if (val_scope == 5) {
       val_scope <- "instr"
     }
 
@@ -245,7 +335,7 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
 
       # Change button.
       blockHandlers(run_btn)
-      svalue(run_btn) <- "Processing..."
+      svalue(run_btn) <- strBtnProcessing
       unblockHandlers(run_btn)
       enabled(run_btn) <- FALSE
 
@@ -263,7 +353,7 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
       # Update audit trail.
       datanew <- auditTrail(
         obj = datanew, key = keys, value = values,
-        label = "tableCapillary_gui", arguments = FALSE,
+        label = fnc, arguments = FALSE,
         package = "strvalidator"
       )
 
@@ -272,7 +362,7 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
 
       if (debug) {
         print(datanew)
-        print(paste("EXIT:", match.call()[[1]]))
+        print(paste("EXIT:", fnc))
       }
 
       # Close GUI.
@@ -280,9 +370,8 @@ tableCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FAL
       dispose(w)
     } else {
       gmessage(
-        msg = "Data frame is NULL!\n\n
-               Make sure to select a dataset and a reference set",
-        title = "Error",
+        msg = strMsgNull,
+        title = strMsgTitleError,
         icon = "error"
       )
     }

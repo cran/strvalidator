@@ -4,9 +4,17 @@
 \alias{calculateDropout}
 \title{Calculate Drop-out Events}
 \usage{
-calculateDropout(data, ref, threshold = NULL, method = c("1", "2", "X",
-  "L"), ignore.case = TRUE, sex.rm = FALSE, qs.rm = TRUE,
-  kit = NULL, debug = FALSE)
+calculateDropout(
+  data,
+  ref,
+  threshold = NULL,
+  method = c("1", "2", "X", "L"),
+  ignore.case = TRUE,
+  sex.rm = FALSE,
+  qs.rm = TRUE,
+  kit = NULL,
+  debug = FALSE
+)
 }
 \arguments{
 \item{data}{data frame in GeneMapper format containing at least a column 'Allele'.}
@@ -59,7 +67,7 @@ commission (see Appendix B in ref 1). However, an alternative method is to
 consider the whole locus and score drop-out if any allele is missing.
 
 Explanation of the methods:
-Dropout - all alleles are scored according to LDT. This is pure observations
+Dropout - all alleles are scored according to AT. This is pure observations
 and is not used for modeling.
 MethodX - a random reference allele is selected and drop-out is scored in
 relation to the the partner allele.

@@ -1,5 +1,7 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 02.05.2020: Added language support.
+# 07.09.2019: Added option to override labels and titles.
 # 24.02.2019: Compacted and tweaked gui for tcltk.
 # 17.02.2019: Fixed Error in if (svalue(savegui_chk)) { : argument is of length zero (tcltk)
 # 13.07.2017: Fixed issue with button handlers.
@@ -18,9 +20,6 @@
 # 05.01.2015: 'Save as object' now disabled when complex plot.
 # 14.12.2014: Option to drop sex markers.
 # 14.12.2014: Updated to handle gender -> sex.marker option in getKit.
-# 11.10.2014: Added 'focus', added 'parent' parameter.
-# 28.06.2014: Added help button and moved save gui checkbox.
-# 06.05.2014: Implemented 'checkDataset'.
 
 #' @title Plot Stutter
 #'
@@ -56,7 +55,7 @@
 #'  theme_void
 #' @importFrom  data.table data.table
 #'
-#' @seealso \url{http://docs.ggplot2.org/current/} for details on plot settings.
+#' @seealso \url{https://ggplot2.tidyverse.org/} for details on plot settings.
 
 plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, parent = NULL) {
 
@@ -64,13 +63,249 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   .gData <- NULL
   .gDataName <- NULL
   .gPlot <- NULL
+  .theme <- c(
+    "theme_grey()", "theme_bw()", "theme_linedraw()",
+    "theme_light()", "theme_dark()", "theme_minimal()",
+    "theme_classic()", "theme_void()"
+  )
+  .scales <- c("fixed", "free_x", "free_y", "free")
+
+
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
 
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
+    print(paste("IN:", fnc))
   }
 
+  # Default strings.
+  strWinTitle <- "Plot stutter ratios"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Dataset and kit"
+  strLblDataset <- "Stutter dataset:"
+  strDrpDataset <- "<Select dataset>"
+  strLblSamples <- "samples"
+  strLblKit <- "and the kit used:"
+  strFrmOptions <- "Options"
+  strChkOverride <- "Override automatic titles"
+  strExpTitles <- "Titles"
+  strLblTitlePlot <- "Plot title:"
+  strLblTitleX <- "X title:"
+  strLblTitleY <- "Y title:"
+  strLblNB <- "NB! Title size, angle, vjust, and hjust does not always work as expected with different number of facets per row."
+  strLblTitleSettings <- "Main title size, angle, vjust, hjust:"
+  strLblXTitleSettings <- "X title size, angle, vjust, hjust:"
+  strLblYTitleSettings <- "Y title size, angle, vjust, hjust:"
+  strLblTheme <- "Plot theme:"
+  strChkSex <- "Exclude sex markers"
+  strChkMarker <- "Exclude markers with no data"
+  strExpPoints <- "Data points"
+  strLblShape <- "Shape:"
+  strLblAlpha <- "Alpha:"
+  strLblJitter <- "Jitter (width):"
+  strExpAxes <- "Axes"
+  strLblLimitY <- "Limit Y axis (min-max)"
+  strLblLimitX <- "Limit X axis (min-max)"
+  strLblScales <- "Scales:"
+  strChkOverrideLabels <- "Override default x/y/facet labels"
+  strExpXLabels <- "X labels"
+  strLblSize <- "Text size (pts):"
+  strLblAngle <- "Angle:"
+  strLblJustification <- "Justification (v/h):"
+  strExpYLabels <- "Y labels"
+  strExpFacets <- "Facets"
+  strLblSizeX <- "Text size X (pts):"
+  strLblSizeY <- "Text size Y (pts):"
+  strFrmPlot <- "Plot stutter data"
+  strBtnAllele <- "Ratio vs. Allele"
+  strBtnHeight <- "Ratio vs. Height"
+  strBtnProcessing <- "Processing..."
+  strFrmSave <- "Save as"
+  strLblSave <- "Name for result:"
+  strBtnSaveObject <- "Save as object"
+  strBtnSaveImage <- "Save as image"
+  strBtnObjectSaved <- "Object saved"
+  strLblMainTitle <- "Stutter ratios"
+  strLblXTitleAllele <- "True allele"
+  strLblXTitleHeight <- "True allele (RFU)"
+  strLblYTitleRatio <- "Ratio"
+  strMsgNull <- "Data frame is NULL or NA!"
+  strMsgTitleError <- "Error"
+
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+
+    strtmp <- dtStrings["strWinTitle"]$value
+    strWinTitle <- ifelse(is.na(strtmp), strWinTitle, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataset"]$value
+    strLblDataset <- ifelse(is.na(strtmp), strLblDataset, strtmp)
+
+    strtmp <- dtStrings["strDrpDataset"]$value
+    strDrpDataset <- ifelse(is.na(strtmp), strDrpDataset, strtmp)
+
+    strtmp <- dtStrings["strLblSamples"]$value
+    strLblSamples <- ifelse(is.na(strtmp), strLblSamples, strtmp)
+
+    strtmp <- dtStrings["strLblKit"]$value
+    strLblKit <- ifelse(is.na(strtmp), strLblKit, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strChkOverride"]$value
+    strChkOverride <- ifelse(is.na(strtmp), strChkOverride, strtmp)
+
+    strtmp <- dtStrings["strExpTitles"]$value
+    strExpTitles <- ifelse(is.na(strtmp), strExpTitles, strtmp)
+
+    strtmp <- dtStrings["strLblTitlePlot"]$value
+    strLblTitlePlot <- ifelse(is.na(strtmp), strLblTitlePlot, strtmp)
+
+    strtmp <- dtStrings["strLblTitleX"]$value
+    strLblTitleX <- ifelse(is.na(strtmp), strLblTitleX, strtmp)
+
+    strtmp <- dtStrings["strLblTitleY"]$value
+    strLblTitleY <- ifelse(is.na(strtmp), strLblTitleY, strtmp)
+
+    strtmp <- dtStrings["strLblNB"]$value
+    strLblNB <- ifelse(is.na(strtmp), strLblNB, strtmp)
+
+    strtmp <- dtStrings["strLblTitleSettings"]$value
+    strLblTitleSettings <- ifelse(is.na(strtmp), strLblTitleSettings, strtmp)
+
+    strtmp <- dtStrings["strLblXTitleSettings"]$value
+    strLblXTitleSettings <- ifelse(is.na(strtmp), strLblXTitleSettings, strtmp)
+
+    strtmp <- dtStrings["strLblYTitleSettings"]$value
+    strLblYTitleSettings <- ifelse(is.na(strtmp), strLblYTitleSettings, strtmp)
+
+    strtmp <- dtStrings["strLblTheme"]$value
+    strLblTheme <- ifelse(is.na(strtmp), strLblTheme, strtmp)
+
+    strtmp <- dtStrings["strChkSex"]$value
+    strChkSex <- ifelse(is.na(strtmp), strChkSex, strtmp)
+
+    strtmp <- dtStrings["strChkMarker"]$value
+    strChkMarker <- ifelse(is.na(strtmp), strChkMarker, strtmp)
+
+    strtmp <- dtStrings["strExpPoints"]$value
+    strExpPoints <- ifelse(is.na(strtmp), strExpPoints, strtmp)
+
+    strtmp <- dtStrings["strLblShape"]$value
+    strLblShape <- ifelse(is.na(strtmp), strLblShape, strtmp)
+
+    strtmp <- dtStrings["strLblAlpha"]$value
+    strLblAlpha <- ifelse(is.na(strtmp), strLblAlpha, strtmp)
+
+    strtmp <- dtStrings["strLblJitter"]$value
+    strLblJitter <- ifelse(is.na(strtmp), strLblJitter, strtmp)
+
+    strtmp <- dtStrings["strExpAxes"]$value
+    strExpAxes <- ifelse(is.na(strtmp), strExpAxes, strtmp)
+
+    strtmp <- dtStrings["strLblLimitY"]$value
+    strLblLimitY <- ifelse(is.na(strtmp), strLblLimitY, strtmp)
+
+    strtmp <- dtStrings["strLblLimitX"]$value
+    strLblLimitX <- ifelse(is.na(strtmp), strLblLimitX, strtmp)
+
+    strtmp <- dtStrings["strLblScales"]$value
+    strLblScales <- ifelse(is.na(strtmp), strLblScales, strtmp)
+
+    strtmp <- dtStrings["strChkOverrideLabels"]$value
+    strChkOverrideLabels <- ifelse(is.na(strtmp), strChkOverrideLabels, strtmp)
+
+    strtmp <- dtStrings["strExpXLabels"]$value
+    strExpXLabels <- ifelse(is.na(strtmp), strExpXLabels, strtmp)
+
+    strtmp <- dtStrings["strLblSize"]$value
+    strLblSize <- ifelse(is.na(strtmp), strLblSize, strtmp)
+
+    strtmp <- dtStrings["strLblAngle"]$value
+    strLblAngle <- ifelse(is.na(strtmp), strLblAngle, strtmp)
+
+    strtmp <- dtStrings["strLblJustification"]$value
+    strLblJustification <- ifelse(is.na(strtmp), strLblJustification, strtmp)
+
+    strtmp <- dtStrings["strExpYLabels"]$value
+    strExpYLabels <- ifelse(is.na(strtmp), strExpYLabels, strtmp)
+
+    strtmp <- dtStrings["strExpFacets"]$value
+    strExpFacets <- ifelse(is.na(strtmp), strExpFacets, strtmp)
+
+    strtmp <- dtStrings["strLblSizeX"]$value
+    strLblSizeX <- ifelse(is.na(strtmp), strLblSizeX, strtmp)
+
+    strtmp <- dtStrings["strLblSizeY"]$value
+    strLblSizeY <- ifelse(is.na(strtmp), strLblSizeY, strtmp)
+
+    strtmp <- dtStrings["strFrmPlot"]$value
+    strFrmPlot <- ifelse(is.na(strtmp), strFrmPlot, strtmp)
+
+    strtmp <- dtStrings["strBtnAllele"]$value
+    strBtnAllele <- ifelse(is.na(strtmp), strBtnAllele, strtmp)
+
+    strtmp <- dtStrings["strBtnHeight"]$value
+    strBtnHeight <- ifelse(is.na(strtmp), strBtnHeight, strtmp)
+
+    strtmp <- dtStrings["strBtnProcessing"]$value
+    strBtnProcessing <- ifelse(is.na(strtmp), strBtnProcessing, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblSave"]$value
+    strLblSave <- ifelse(is.na(strtmp), strLblSave, strtmp)
+
+    strtmp <- dtStrings["strBtnSaveObject"]$value
+    strBtnSaveObject <- ifelse(is.na(strtmp), strBtnSaveObject, strtmp)
+
+    strtmp <- dtStrings["strBtnSaveImage"]$value
+    strBtnSaveImage <- ifelse(is.na(strtmp), strBtnSaveImage, strtmp)
+
+    strtmp <- dtStrings["strBtnObjectSaved"]$value
+    strBtnObjectSaved <- ifelse(is.na(strtmp), strBtnObjectSaved, strtmp)
+
+    strtmp <- dtStrings["strLblMainTitle"]$value
+    strLblMainTitle <- ifelse(is.na(strtmp), strLblMainTitle, strtmp)
+
+    strtmp <- dtStrings["strLblXTitleAllele"]$value
+    strLblXTitleAllele <- ifelse(is.na(strtmp), strLblXTitleAllele, strtmp)
+
+    strtmp <- dtStrings["strLblXTitleHeight"]$value
+    strLblXTitleHeight <- ifelse(is.na(strtmp), strLblXTitleHeight, strtmp)
+
+    strtmp <- dtStrings["strLblYTitleRatio"]$value
+    strLblYTitleRatio <- ifelse(is.na(strtmp), strLblYTitleRatio, strtmp)
+
+    strtmp <- dtStrings["strMsgNull"]$value
+    strMsgNull <- ifelse(is.na(strtmp), strMsgNull, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleError"]$value
+    strMsgTitleError <- ifelse(is.na(strtmp), strMsgTitleError, strtmp)
+  }
+
+  # WINDOW ####################################################################
+
   # Main window.
-  w <- gwindow(title = "Plot stutter ratios", visible = FALSE)
+  w <- gwindow(title = strWinTitle, visible = FALSE)
 
   # Runs when window is closed.
   addHandlerUnrealize(w, handler = function(h, ...) {
@@ -114,32 +349,32 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("plotStutter_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # FRAME 0 ###################################################################
 
   f0 <- gframe(
-    text = "Dataset and kit",
+    text = strFrmDataset,
     horizontal = TRUE,
     spacing = 2,
     container = gv
   )
 
-  glabel(text = "Select dataset:", container = f0)
+  glabel(text = strLblDataset, container = f0)
 
   dataset_drp <- gcombobox(
     items = c(
-      "<Select dataset>",
+      strDrpDataset,
       listObjects(
         env = env,
         obj.class = "data.frame"
@@ -151,9 +386,12 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
     ellipsize = "none"
   )
 
-  f0_samples_lbl <- glabel(text = " (0 samples)", container = f0)
+  f0_samples_lbl <- glabel(
+    text = paste(" (0 ", strLblSamples, ")", sep = ""),
+    container = f0
+  )
 
-  glabel(text = " and the kit used:", container = f0)
+  glabel(text = strLblKit, container = f0)
 
   kit_drp <- gcombobox(
     items = getKit(),
@@ -184,7 +422,7 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
       svalue(f0_samples_lbl) <- paste(" (",
         length(unique(.gData$Sample.Name)),
-        " samples)",
+        " ", strLblSamples, ")",
         sep = ""
       )
 
@@ -201,67 +439,156 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       .gData <<- NULL
       svalue(f5_save_edt) <- ""
       svalue(dataset_drp, index = TRUE) <- 1
-      svalue(f0_samples_lbl) <- " (0 samples)"
+      svalue(f0_samples_lbl) <- paste(" (0 ", strLblSamples, ")", sep = "")
     }
   })
 
   # FRAME 1 ###################################################################
 
   f1 <- gframe(
-    text = "Options",
+    text = strFrmOptions,
     horizontal = FALSE,
     spacing = 2,
     container = gv
   )
 
   titles_chk <- gcheckbox(
-    text = "Override automatic titles.",
+    text = strChkOverride,
     checked = FALSE, container = f1
   )
-
 
   addHandlerChanged(titles_chk, handler = function(h, ...) {
     .updateGui()
   })
 
-  titles_group <- ggroup(
-    container = f1, spacing = 1, horizontal = FALSE,
-    expand = TRUE, fill = TRUE
+  # Titles --------------------------------------------------------------------
+
+  titles_group <- gexpandgroup(
+    text = strExpTitles,
+    horizontal = FALSE,
+    container = f1
   )
 
-  # Legends
-  glabel(text = "Plot title:", container = titles_group, anchor = c(-1, 0))
+  # Start collapsed.
+  visible(titles_group) <- FALSE
+
+  glabel(text = strLblTitlePlot, container = titles_group, anchor = c(-1, 0))
   title_edt <- gedit(expand = TRUE, fill = TRUE, container = titles_group)
 
-  glabel(text = "X title:", container = titles_group, anchor = c(-1, 0))
+  glabel(text = strLblTitleX, container = titles_group, anchor = c(-1, 0))
   x_title_edt <- gedit(expand = TRUE, fill = TRUE, container = titles_group)
 
-  glabel(text = "Y title:", container = titles_group, anchor = c(-1, 0))
+  glabel(text = strLblTitleY, container = titles_group, anchor = c(-1, 0))
   y_title_edt <- gedit(expand = TRUE, fill = TRUE, container = titles_group)
 
+  glabel(
+    text = strLblNB,
+    anchor = c(-1, 0), container = titles_group
+  )
+
+  titles_layout <- glayout(container = titles_group)
+
+  title_lbl <- glabel(
+    text = strLblTitleSettings,
+    anchor = c(-1, 0), container = titles_layout
+  )
+  title_size_txt <- gedit(
+    text = "14", width = 2,
+    container = titles_layout
+  )
+  title_angle_spb <- gspinbutton(
+    from = 0, to = 360, by = 1, value = 0,
+    container = titles_layout
+  )
+  title_vjust_spb <- gspinbutton(
+    from = 0, to = 1, by = 0.1, value = 0.5,
+    container = titles_layout
+  )
+
+  title_hjust_spb <- gspinbutton(
+    from = 0, to = 1, by = 0.1, value = 0.5,
+    container = titles_layout
+  )
+
+  titles_layout[1, 1] <- title_lbl
+  titles_layout[1, 2] <- title_size_txt
+  titles_layout[1, 3] <- title_angle_spb
+  titles_layout[1, 4] <- title_vjust_spb
+  titles_layout[1, 5] <- title_hjust_spb
+
+  x_title_lbl <- glabel(
+    text = strLblXTitleSettings,
+    anchor = c(-1, 0), container = titles_layout
+  )
+  x_title_size_txt <- gedit(
+    text = "12", width = 2,
+    container = titles_layout
+  )
+  x_title_angle_spb <- gspinbutton(
+    from = 0, to = 360, by = 1, value = 0,
+    container = titles_layout
+  )
+  x_title_vjust_spb <- gspinbutton(
+    from = 0, to = 1, by = 0.1, value = 0.5,
+    container = titles_layout
+  )
+
+  x_title_hjust_spb <- gspinbutton(
+    from = 0, to = 1, by = 0.1, value = 0.5,
+    container = titles_layout
+  )
+  titles_layout[2, 1] <- x_title_lbl
+  titles_layout[2, 2] <- x_title_size_txt
+  titles_layout[2, 3] <- x_title_angle_spb
+  titles_layout[2, 4] <- x_title_vjust_spb
+  titles_layout[2, 5] <- x_title_hjust_spb
+
+  y_title_lbl <- glabel(
+    text = strLblYTitleSettings,
+    anchor = c(-1, 0), container = titles_layout
+  )
+  y_title_size_txt <- gedit(
+    text = "12", width = 2,
+    container = titles_layout
+  )
+  y_title_angle_spb <- gspinbutton(
+    from = 0, to = 360, by = 1, value = 90,
+    container = titles_layout
+  )
+  y_title_vjust_spb <- gspinbutton(
+    from = 0, to = 1, by = 0.1, value = 0.5,
+    container = titles_layout
+  )
+
+  y_title_hjust_spb <- gspinbutton(
+    from = 0, to = 1, by = 0.1, value = 0.5,
+    container = titles_layout
+  )
+  titles_layout[3, 1] <- y_title_lbl
+  titles_layout[3, 2] <- y_title_size_txt
+  titles_layout[3, 3] <- y_title_angle_spb
+  titles_layout[3, 4] <- y_title_vjust_spb
+  titles_layout[3, 5] <- y_title_hjust_spb
+
+  # Theme ---------------------------------------------------------------------
 
   f1g2 <- glayout(container = f1)
-  f1g2[1, 1] <- glabel(text = "Plot theme:", anchor = c(-1, 0), container = f1g2)
-  items_theme <- c(
-    "theme_grey()", "theme_bw()", "theme_linedraw()",
-    "theme_light()", "theme_dark()", "theme_minimal()",
-    "theme_classic()", "theme_void()"
-  )
+  f1g2[1, 1] <- glabel(text = strLblTheme, anchor = c(-1, 0), container = f1g2)
   f1g2[1, 2] <- f1_theme_drp <- gcombobox(
-    items = items_theme,
+    items = .theme,
     selected = 1,
     container = f1g2,
     ellipsize = "none"
   )
 
   f1_drop_chk <- gcheckbox(
-    text = "Drop sex markers",
+    text = strChkSex,
     checked = TRUE,
     container = f1
   )
 
   f1_levels_chk <- gcheckbox(
-    text = "Drop markers with no data",
+    text = strChkMarker,
     checked = FALSE,
     container = f1
   )
@@ -275,14 +602,14 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   # FRAME 7 ###################################################################
 
   f7 <- gframe(
-    text = "Plot stutter data",
+    text = strFrmPlot,
     horizontal = TRUE,
     container = gv
   )
 
-  plot_allele_btn <- gbutton(text = "Ratio vs. Allele", container = f7)
+  plot_allele_btn <- gbutton(text = strBtnAllele, container = f7)
 
-  plot_height_btn <- gbutton(text = "Ratio vs. Height", container = f7)
+  plot_height_btn <- gbutton(text = strBtnHeight, container = f7)
 
   addHandlerChanged(plot_allele_btn, handler = function(h, ...) {
     enabled(plot_allele_btn) <- FALSE
@@ -299,26 +626,26 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   # FRAME 5 ###################################################################
 
   f5 <- gframe(
-    text = "Save as",
+    text = strFrmSave,
     horizontal = TRUE,
     spacing = 2,
     container = gv
   )
 
-  glabel(text = "Name for result:", container = f5)
+  glabel(text = strLblSave, container = f5)
 
   f5_save_edt <- gedit(container = f5, expand = TRUE, fill = TRUE)
 
-  f5_save_btn <- gbutton(text = "Save as object", container = f5)
+  f5_save_btn <- gbutton(text = strBtnSaveObject, container = f5)
 
-  f5_ggsave_btn <- gbutton(text = "Save as image", container = f5)
+  f5_ggsave_btn <- gbutton(text = strBtnSaveImage, container = f5)
 
   addHandlerClicked(f5_save_btn, handler = function(h, ...) {
     val_name <- svalue(f5_save_edt)
 
     # Change button.
     blockHandlers(f5_save_btn)
-    svalue(f5_save_btn) <- "Processing..."
+    svalue(f5_save_btn) <- strBtnProcessing
     unblockHandlers(f5_save_btn)
     enabled(f5_save_btn) <- FALSE
 
@@ -330,7 +657,7 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
     # Change button.
     blockHandlers(f5_save_btn)
-    svalue(f5_save_btn) <- "Object saved"
+    svalue(f5_save_btn) <- strBtnObjectSaved
     unblockHandlers(f5_save_btn)
   })
 
@@ -347,7 +674,7 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   # ADVANCED OPTIONS ##########################################################
 
   e2 <- gexpandgroup(
-    text = "Data points",
+    text = strExpPoints,
     horizontal = FALSE,
     container = f1
   )
@@ -357,27 +684,27 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
   grid2 <- glayout(container = e2)
 
-  grid2[1, 1] <- glabel(text = "Shape:", container = grid2)
+  grid2[1, 1] <- glabel(text = strLblShape, container = grid2)
   grid2[1, 2] <- shape_spb <- gspinbutton(
     from = 0, to = 25,
     by = 1, value = 18,
     container = grid2
   )
 
-  grid2[1, 3] <- glabel(text = "Alpha:", container = grid2)
+  grid2[1, 3] <- glabel(text = strLblAlpha, container = grid2)
   grid2[1, 4] <- alpha_spb <- gspinbutton(
     from = 0, to = 1,
     by = 0.01, value = 0.60,
     container = grid2
   )
 
-  grid2[1, 5] <- glabel(text = "Jitter (width):", container = grid2)
+  grid2[1, 5] <- glabel(text = strLblJitter, container = grid2)
   grid2[1, 6] <- jitter_txt <- gedit(text = "0.1", width = 4, container = grid2)
 
   # FRAME 3 ###################################################################
 
   e3 <- gexpandgroup(
-    text = "Axes",
+    text = strExpAxes,
     horizontal = FALSE,
     container = f1
   )
@@ -387,19 +714,19 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
   grid3 <- glayout(container = e3, spacing = 1)
 
-  grid3[1, 1:2] <- glabel(text = "Limit Y axis (min-max)", container = grid3)
+  grid3[1, 1:2] <- glabel(text = strLblLimitY, container = grid3)
   grid3[2, 1] <- y_min_txt <- gedit(text = "", width = 5, container = grid3)
   grid3[2, 2] <- y_max_txt <- gedit(text = "", width = 5, container = grid3)
 
-  grid3[3, 1:2] <- glabel(text = "Limit X axis (min-max)", container = grid3)
+  grid3[3, 1:2] <- glabel(text = strLblLimitX, container = grid3)
   grid3[4, 1] <- x_min_txt <- gedit(text = "", width = 5, container = grid3)
   grid3[4, 2] <- x_max_txt <- gedit(text = "", width = 5, container = grid3)
 
   grid3[1, 3] <- glabel(text = "    ", container = grid3) # Add some space.
 
-  grid3[1, 4] <- glabel(text = "Scales:", container = grid3)
+  grid3[1, 4] <- glabel(text = strLblScales, container = grid3)
   grid3[2:4, 4] <- scales_opt <- gradio(
-    items = c("fixed", "free_x", "free_y", "free"),
+    items = .scales,
     selected = 2,
     horizontal = FALSE,
     container = grid3
@@ -414,8 +741,20 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
   # FRAME 4 ###################################################################
 
+  labels_chk <- gcheckbox(
+    text = strChkOverrideLabels,
+    checked = FALSE,
+    container = f1
+  )
+
+  addHandlerChanged(labels_chk, handler = function(h, ...) {
+
+    # Enable buttons.
+    .updateGui()
+  })
+
   e4 <- gexpandgroup(
-    text = "X labels",
+    text = strExpXLabels,
     horizontal = FALSE,
     container = f1
   )
@@ -425,17 +764,17 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
   grid4 <- glayout(container = e4)
 
-  grid4[1, 1] <- glabel(text = "Text size (pts):", container = grid4)
+  grid4[1, 1] <- glabel(text = strLblSize, container = grid4)
   grid4[1, 2] <- size_txt <- gedit(text = "8", width = 4, container = grid4)
 
-  grid4[1, 3] <- glabel(text = "Angle:", container = grid4)
+  grid4[1, 3] <- glabel(text = strLblAngle, container = grid4)
   grid4[1, 4] <- angle_spb <- gspinbutton(
     from = 0, to = 360, by = 1,
     value = 270,
     container = grid4
   )
 
-  grid4[2, 1] <- glabel(text = "Justification (v/h):", container = grid4)
+  grid4[2, 1] <- glabel(text = strLblJustification, container = grid4)
   grid4[2, 2] <- vjust_spb <- gspinbutton(
     from = 0, to = 1, by = 0.1,
     value = 0.5,
@@ -448,7 +787,74 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
     container = grid4
   )
 
+  # FRAME 5 ###################################################################
 
+  e5 <- gexpandgroup(
+    text = strExpYLabels,
+    horizontal = FALSE,
+    container = f1
+  )
+
+  # Start collapsed.
+  visible(e5) <- FALSE
+
+  grid5 <- glayout(container = e5)
+
+  grid5[1, 1] <- glabel(text = strLblSize, container = grid5)
+  grid5[1, 2] <- size_txt_y <- gedit(text = "8", width = 4, container = grid5)
+
+  grid5[1, 3] <- glabel(text = strLblAngle, container = grid5)
+  grid5[1, 4] <- angle_spb_y <- gspinbutton(
+    from = 0, to = 360, by = 1,
+    value = 0,
+    container = grid5
+  )
+
+  grid5[2, 1] <- glabel(text = strLblJustification, container = grid5)
+  grid5[2, 2] <- vjust_spb_y <- gspinbutton(
+    from = 0, to = 1, by = 0.1,
+    value = 0.5,
+    container = grid5
+  )
+
+  grid5[2, 3] <- hjust_spb_y <- gspinbutton(
+    from = 0, to = 1, by = 0.1,
+    value = 0,
+    container = grid5
+  )
+
+  # FRAME 6 ###################################################################
+
+  e6 <- gexpandgroup(
+    text = strExpFacets,
+    horizontal = FALSE,
+    container = f1
+  )
+
+  # Start collapsed.
+  visible(e6) <- FALSE
+
+  grid6 <- glayout(container = e6)
+
+  grid6[1, 1] <- glabel(text = strLblSizeX, container = grid6)
+  grid6[1, 2] <- size_txt_sx <- gedit(text = "10", width = 4, container = grid6)
+
+  grid6[1, 3] <- glabel(text = strLblAngle, container = grid6)
+  grid6[1, 4] <- angle_spb_sx <- gspinbutton(
+    from = 0, to = 360, by = 1,
+    value = 0,
+    container = grid6
+  )
+
+  grid6[2, 1] <- glabel(text = strLblSizeY, container = grid6)
+  grid6[2, 2] <- size_txt_sy <- gedit(text = "10", width = 4, container = grid6)
+
+  grid6[2, 3] <- glabel(text = strLblAngle, container = grid6)
+  grid6[2, 4] <- angle_spb_sy <- gspinbutton(
+    from = 0, to = 360, by = 1,
+    value = 0,
+    container = grid6
+  )
 
   # FUNCTIONS #################################################################
 
@@ -458,8 +864,20 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
     # Get values.
     val_titles <- svalue(titles_chk)
     val_title <- svalue(title_edt)
+    val_title_size <- svalue(title_size_txt)
+    val_title_angle <- svalue(title_angle_spb)
+    val_title_vjust <- svalue(title_vjust_spb)
+    val_title_hjust <- svalue(title_hjust_spb)
     val_xtitle <- svalue(x_title_edt)
+    val_xtitle_size <- svalue(x_title_size_txt)
+    val_xtitle_angle <- svalue(x_title_angle_spb)
+    val_xtitle_vjust <- svalue(x_title_vjust_spb)
+    val_xtitle_hjust <- svalue(x_title_hjust_spb)
     val_ytitle <- svalue(y_title_edt)
+    val_ytitle_size <- svalue(y_title_size_txt)
+    val_ytitle_angle <- svalue(y_title_angle_spb)
+    val_ytitle_vjust <- svalue(y_title_vjust_spb)
+    val_ytitle_hjust <- svalue(y_title_hjust_spb)
     val_shape <- as.numeric(svalue(shape_spb))
     val_alpha <- as.numeric(svalue(alpha_spb))
     val_jitter <- as.numeric(svalue(jitter_txt))
@@ -467,10 +885,19 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
     val_ymax <- as.numeric(svalue(y_max_txt))
     val_xmin <- as.numeric(svalue(x_min_txt))
     val_xmax <- as.numeric(svalue(x_max_txt))
+    val_labels <- svalue(labels_chk)
     val_angle <- as.numeric(svalue(angle_spb))
+    val_angle_y <- as.numeric(svalue(angle_spb_y))
+    val_angle_sx <- as.numeric(svalue(angle_spb_sx))
+    val_angle_sy <- as.numeric(svalue(angle_spb_sy))
     val_vjust <- as.numeric(svalue(vjust_spb))
+    val_vjust_y <- as.numeric(svalue(vjust_spb_y))
     val_hjust <- as.numeric(svalue(hjust_spb))
+    val_hjust_y <- as.numeric(svalue(hjust_spb_y))
     val_size <- as.numeric(svalue(size_txt))
+    val_size_y <- as.numeric(svalue(size_txt_y))
+    val_size_sx <- as.numeric(svalue(size_txt_sx))
+    val_size_sy <- as.numeric(svalue(size_txt_sy))
     val_scales <- svalue(scales_opt)
     val_kit <- svalue(kit_drp)
     val_theme <- svalue(f1_theme_drp)
@@ -482,33 +909,6 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
     ymin <- NULL # For complex plots.
 
     if (debug) {
-      print("ARGUMENTS:")
-      print("val_title")
-      print(val_title)
-      print("val_xtitle")
-      print(val_xtitle)
-      print("val_ytitle")
-      print(val_ytitle)
-      print("val_shape")
-      print(val_shape)
-      print("val_alpha")
-      print(val_alpha)
-      print("val_jitter")
-      print(val_jitter)
-      print("val_ymin")
-      print(val_ymin)
-      print("val_ymax")
-      print(val_ymax)
-      print("val_angle")
-      print(val_angle)
-      print("val_vjust")
-      print(val_vjust)
-      print("val_hjust")
-      print(val_hjust)
-      print("val_size")
-      print(val_size)
-      print("val_scales")
-      print(val_scales)
       print("str(.gData)")
       print(str(.gData))
       print("levels(.gData$Allele)")
@@ -517,10 +917,6 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       print(levels(.gData$Stutter))
       print("levels(.gData$Marker)")
       print(levels(.gData$Marker))
-      print("val_theme")
-      print(val_theme)
-      print("val_drop")
-      print(val_drop)
     }
 
     if (!is.na(.gData) && !is.null(.gData)) {
@@ -613,9 +1009,9 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
           xTitle <- val_xtitle
           yTitle <- val_ytitle
         } else {
-          mainTitle <- "Stutter ratios"
-          xTitle <- "True allele"
-          yTitle <- "Ratio"
+          mainTitle <- strLblMainTitle
+          xTitle <- strLblXTitleAllele
+          yTitle <- strLblYTitleRatio
         }
 
         gp <- ggplot(.gData, aes_string(x = "Allele", y = "Ratio", colour = "Type"))
@@ -625,9 +1021,9 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
           xTitle <- val_xtitle
           yTitle <- val_ytitle
         } else {
-          mainTitle <- "Stutter ratios"
-          xTitle <- "True allele (RFU)"
-          yTitle <- "Ratio"
+          mainTitle <- strLblMainTitle
+          xTitle <- strLblXTitleHeight
+          yTitle <- strLblYTitleRatio
         }
 
         gp <- ggplot(.gData, aes_string(x = "HeightA", y = "Ratio", colour = "Type"))
@@ -667,15 +1063,51 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
       # Titles and legends.
       gp <- gp + guides(fill = guide_legend(reverse = TRUE))
-      gp <- gp + theme(axis.text.x = element_text(
-        angle = val_angle,
-        hjust = val_hjust,
-        vjust = val_vjust,
-        size = val_size
-      ))
+
+      # Override default labels.
+      if (val_labels) {
+        gp <- gp + theme(
+          axis.text.x = element_text(
+            angle = val_angle,
+            hjust = val_hjust,
+            vjust = val_vjust,
+            size = val_size
+          ), axis.text.y = element_text(
+            angle = val_angle_y,
+            hjust = val_hjust_y,
+            vjust = val_vjust_y,
+            size = val_size_y
+          ), strip.text.x = element_text(size = val_size_sx, angle = val_angle_sx),
+          strip.text.y = element_text(size = val_size_sy, angle = val_angle_sy)
+        )
+      }
+
+      # Add titles.
       gp <- gp + labs(title = mainTitle)
       gp <- gp + xlab(xTitle)
       gp <- gp + ylab(yTitle)
+
+      # Override default theme for titles.
+      if (val_titles) {
+        gp <- gp + theme(
+          plot.title = element_text(
+            angle = val_title_angle,
+            hjust = val_title_hjust,
+            vjust = val_title_vjust,
+            size = val_title_size
+          ), axis.title.x = element_text(
+            angle = val_xtitle_angle,
+            hjust = val_xtitle_hjust,
+            vjust = val_xtitle_vjust,
+            size = val_xtitle_size
+          ), axis.title.y = element_text(
+            angle = val_ytitle_angle,
+            hjust = val_ytitle_hjust,
+            vjust = val_ytitle_vjust,
+            size = val_ytitle_size
+          )
+        )
+      }
 
       # Check plot type.
       if (length(val_ncol) == 1) {
@@ -717,7 +1149,7 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
         print(gp)
 
         # Change save button.
-        svalue(f5_save_btn) <- "Save as object"
+        svalue(f5_save_btn) <- strBtnSaveObject
         enabled(f5_save_btn) <- TRUE
       } else if (length(val_ncol) > 1) {
         # Complex plot, unequal number of markers per dye.
@@ -767,9 +1199,34 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
         )
 
         # Add titles.
-        g <- gtable::gtable_add_grob(g, grid::textGrob(mainTitle), t = 1, b = 1, l = 2, r = 2)
-        g <- gtable::gtable_add_grob(g, grid::textGrob(xTitle), t = noRows, b = noRows, l = 2, r = 2)
-        g <- gtable::gtable_add_grob(g, grid::textGrob(yTitle, rot = 90), t = 1, b = noRows, l = 1, r = 1)
+        if (val_titles) {
+          g <- gtable::gtable_add_grob(g,
+            grid::textGrob(mainTitle,
+              vjust = val_title_vjust,
+              hjust = val_title_hjust,
+              rot = val_title_angle
+            ),
+            t = 1, b = 1, l = 2, r = 2
+          )
+          g <- gtable::gtable_add_grob(g, grid::textGrob(xTitle,
+            vjust = val_xtitle_vjust,
+            hjust = val_xtitle_hjust,
+            rot = val_xtitle_angle
+          ),
+          t = noRows, b = noRows, l = 2, r = 2
+          )
+          g <- gtable::gtable_add_grob(g, grid::textGrob(yTitle,
+            vjust = val_ytitle_vjust,
+            hjust = val_ytitle_hjust,
+            rot = val_ytitle_angle
+          ), t = 1, b = noRows, l = 1, r = 1)
+        } else {
+          # Add default titles.
+
+          g <- gtable::gtable_add_grob(g, grid::textGrob(mainTitle), t = 1, b = 1, l = 2, r = 2)
+          g <- gtable::gtable_add_grob(g, grid::textGrob(xTitle), t = noRows, b = noRows, l = 2, r = 2)
+          g <- gtable::gtable_add_grob(g, grid::textGrob(yTitle, rot = 90), t = 1, b = noRows, l = 1, r = 1)
+        }
 
         # Add the legend to the table object.
         g <- gtable::gtable_add_grob(g, guide, t = 1, b = noRows, l = 3, r = 3)
@@ -863,15 +1320,32 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
             print(paste("Plot zoomed to xlim:", val_x, "ylim:", val_y))
           }
 
-          # Remove titles, axis labels and legend.
+          # Remove titles, axis labels and legend on current subplot.
           gp <- gp + labs(title = element_blank())
           gp <- gp + theme(axis.title.x = element_blank())
-          gp <- gp + theme(axis.text.x = element_text(
-            angle = val_angle,
-            hjust = val_hjust,
-            vjust = val_vjust,
-            size = val_size
-          ))
+
+          # Override default labels.
+          if (val_labels) {
+            gp <- gp + theme(
+              axis.text.x = element_text(
+                angle = val_angle,
+                hjust = val_hjust,
+                vjust = val_vjust,
+                size = val_size
+              ), axis.text.y = element_text(
+                angle = val_angle_y,
+                hjust = val_hjust_y,
+                vjust = val_vjust_y,
+                size = val_size_y
+              ), strip.text.x = element_text(
+                size = val_size_sx,
+                angle = val_angle_sx
+              ), strip.text.y = element_text(
+                size = val_size_sy,
+                angle = val_angle_sy
+              )
+            )
+          }
 
           gp <- gp + theme(axis.title.y = element_blank())
 
@@ -893,7 +1367,7 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
         gp <- gridExtra::arrangeGrob(g)
 
         # Change save button.
-        svalue(f5_save_btn) <- "Save as object"
+        svalue(f5_save_btn) <- strBtnSaveObject
         enabled(f5_save_btn) <- FALSE
       } else {
         # Not supported!
@@ -905,8 +1379,8 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       .gPlot <<- gp
     } else {
       gmessage(
-        msg = "Data frame is NULL or NA!",
-        title = "Error",
+        msg = strMsgNull,
+        title = strMsgTitleError,
         icon = "error"
       )
     }
@@ -922,6 +1396,18 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       enabled(titles_group) <- TRUE
     } else {
       enabled(titles_group) <- FALSE
+    }
+
+    # Override labels.
+    val <- svalue(labels_chk)
+    if (val) {
+      enabled(e4) <- TRUE
+      enabled(e5) <- TRUE
+      enabled(e6) <- TRUE
+    } else {
+      enabled(e4) <- FALSE
+      enabled(e5) <- FALSE
+      enabled(e6) <- FALSE
     }
   }
 
@@ -960,17 +1446,53 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
     # Then load settings if true.
     if (svalue(savegui_chk)) {
-      if (exists(".strvalidator_plotStutter_gui_title", envir = env, inherits = FALSE)) {
-        svalue(title_edt) <- get(".strvalidator_plotStutter_gui_title", envir = env)
-      }
       if (exists(".strvalidator_plotStutter_gui_title_chk", envir = env, inherits = FALSE)) {
         svalue(titles_chk) <- get(".strvalidator_plotStutter_gui_title_chk", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title", envir = env, inherits = FALSE)) {
+        svalue(title_edt) <- get(".strvalidator_plotStutter_gui_title", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_x_title", envir = env, inherits = FALSE)) {
         svalue(x_title_edt) <- get(".strvalidator_plotStutter_gui_x_title", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_y_title", envir = env, inherits = FALSE)) {
         svalue(y_title_edt) <- get(".strvalidator_plotStutter_gui_y_title", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title_size", envir = env, inherits = FALSE)) {
+        svalue(title_size_txt) <- get(".strvalidator_plotStutter_gui_title_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_x_title_size", envir = env, inherits = FALSE)) {
+        svalue(x_title_size_txt) <- get(".strvalidator_plotStutter_gui_x_title_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_y_title_size", envir = env, inherits = FALSE)) {
+        svalue(y_title_size_txt) <- get(".strvalidator_plotStutter_gui_y_title_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title_angle", envir = env, inherits = FALSE)) {
+        svalue(title_angle_spb) <- get(".strvalidator_plotStutter_gui_title_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_x_title_angle", envir = env, inherits = FALSE)) {
+        svalue(x_title_angle_spb) <- get(".strvalidator_plotStutter_gui_x_title_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_y_title_angle", envir = env, inherits = FALSE)) {
+        svalue(y_title_angle_spb) <- get(".strvalidator_plotStutter_gui_y_title_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title_vjust", envir = env, inherits = FALSE)) {
+        svalue(title_vjust_spb) <- get(".strvalidator_plotStutter_gui_title_vjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_x_title_vjust", envir = env, inherits = FALSE)) {
+        svalue(x_title_vjust_spb) <- get(".strvalidator_plotStutter_gui_x_title_vjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_y_title_vjust", envir = env, inherits = FALSE)) {
+        svalue(y_title_vjust_spb) <- get(".strvalidator_plotStutter_gui_y_title_vjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title_hjust", envir = env, inherits = FALSE)) {
+        svalue(title_hjust_spb) <- get(".strvalidator_plotStutter_gui_title_hjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_x_title_hjust", envir = env, inherits = FALSE)) {
+        svalue(x_title_hjust_spb) <- get(".strvalidator_plotStutter_gui_x_title_hjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_y_title_hjust", envir = env, inherits = FALSE)) {
+        svalue(y_title_hjust_spb) <- get(".strvalidator_plotStutter_gui_y_title_hjust", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_points_shape", envir = env, inherits = FALSE)) {
         svalue(shape_spb) <- get(".strvalidator_plotStutter_gui_points_shape", envir = env)
@@ -996,17 +1518,44 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       if (exists(".strvalidator_plotStutter_gui_axes_scales", envir = env, inherits = FALSE)) {
         svalue(scales_opt) <- get(".strvalidator_plotStutter_gui_axes_scales", envir = env)
       }
+      if (exists(".strvalidator_plotStutter_gui_labels_chk", envir = env, inherits = FALSE)) {
+        svalue(labels_chk) <- get(".strvalidator_plotStutter_gui_labels_chk", envir = env)
+      }
       if (exists(".strvalidator_plotStutter_gui_xlabel_size", envir = env, inherits = FALSE)) {
         svalue(size_txt) <- get(".strvalidator_plotStutter_gui_xlabel_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_ylabel_size", envir = env, inherits = FALSE)) {
+        svalue(size_txt_y) <- get(".strvalidator_plotStutter_gui_ylabel_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_sxlabel_size", envir = env, inherits = FALSE)) {
+        svalue(size_txt_sx) <- get(".strvalidator_plotStutter_gui_sxlabel_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_sylabel_size", envir = env, inherits = FALSE)) {
+        svalue(size_txt_sy) <- get(".strvalidator_plotStutter_gui_sylabel_size", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_xlabel_angle", envir = env, inherits = FALSE)) {
         svalue(angle_spb) <- get(".strvalidator_plotStutter_gui_xlabel_angle", envir = env)
       }
+      if (exists(".strvalidator_plotStutter_gui_ylabel_angle", envir = env, inherits = FALSE)) {
+        svalue(angle_spb_y) <- get(".strvalidator_plotStutter_gui_ylabel_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_sxlabel_angle", envir = env, inherits = FALSE)) {
+        svalue(angle_spb_sx) <- get(".strvalidator_plotStutter_gui_sxlabel_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_sylabel_angle", envir = env, inherits = FALSE)) {
+        svalue(angle_spb_sy) <- get(".strvalidator_plotStutter_gui_sylabel_angle", envir = env)
+      }
       if (exists(".strvalidator_plotStutter_gui_xlabel_justh", envir = env, inherits = FALSE)) {
         svalue(hjust_spb) <- get(".strvalidator_plotStutter_gui_xlabel_justh", envir = env)
       }
+      if (exists(".strvalidator_plotStutter_gui_ylabel_justh", envir = env, inherits = FALSE)) {
+        svalue(hjust_spb_y) <- get(".strvalidator_plotStutter_gui_ylabel_justh", envir = env)
+      }
       if (exists(".strvalidator_plotStutter_gui_xlabel_justv", envir = env, inherits = FALSE)) {
         svalue(vjust_spb) <- get(".strvalidator_plotStutter_gui_xlabel_justv", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_ylabel_justv", envir = env, inherits = FALSE)) {
+        svalue(vjust_spb_y) <- get(".strvalidator_plotStutter_gui_ylabel_justv", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_theme", envir = env, inherits = FALSE)) {
         svalue(f1_theme_drp) <- get(".strvalidator_plotStutter_gui_theme", envir = env)
@@ -1029,10 +1578,22 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
     # Then save settings if true.
     if (svalue(savegui_chk)) {
       assign(x = ".strvalidator_plotStutter_gui_savegui", value = svalue(savegui_chk), envir = env)
-      assign(x = ".strvalidator_plotStutter_gui_title", value = svalue(title_edt), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_title_chk", value = svalue(titles_chk), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_title", value = svalue(title_edt), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_x_title", value = svalue(x_title_edt), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_y_title", value = svalue(y_title_edt), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_title_size", value = svalue(title_size_txt), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_x_title_size", value = svalue(x_title_size_txt), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_y_title_size", value = svalue(y_title_size_txt), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_title_angle", value = svalue(title_angle_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_x_title_angle", value = svalue(x_title_angle_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_y_title_angle", value = svalue(y_title_angle_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_title_vjust", value = svalue(title_vjust_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_x_title_vjust", value = svalue(x_title_vjust_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_y_title_vjust", value = svalue(y_title_vjust_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_title_hjust", value = svalue(title_hjust_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_x_title_hjust", value = svalue(x_title_hjust_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_y_title_hjust", value = svalue(y_title_hjust_spb), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_points_shape", value = svalue(shape_spb), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_points_alpha", value = svalue(alpha_spb), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_points_jitter", value = svalue(jitter_txt), envir = env)
@@ -1041,10 +1602,19 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       assign(x = ".strvalidator_plotStutter_gui_axes_x_min", value = svalue(x_min_txt), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_axes_x_max", value = svalue(x_max_txt), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_axes_scales", value = svalue(scales_opt), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_labels_chk", value = svalue(labels_chk), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_xlabel_size", value = svalue(size_txt), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_ylabel_size", value = svalue(size_txt_y), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_sxlabel_size", value = svalue(size_txt_sx), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_sylabel_size", value = svalue(size_txt_sy), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_xlabel_angle", value = svalue(angle_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_ylabel_angle", value = svalue(angle_spb_y), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_sxlabel_angle", value = svalue(angle_spb_sx), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_sylabel_angle", value = svalue(angle_spb_sy), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_xlabel_justh", value = svalue(hjust_spb), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_xlabel_justv", value = svalue(vjust_spb), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_ylabel_justh", value = svalue(hjust_spb_y), envir = env)
+      assign(x = ".strvalidator_plotStutter_gui_ylabel_justv", value = svalue(vjust_spb_y), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_theme", value = svalue(f1_theme_drp), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_sex", value = svalue(f1_drop_chk), envir = env)
       assign(x = ".strvalidator_plotStutter_gui_levels", value = svalue(f1_levels_chk), envir = env)
@@ -1053,17 +1623,53 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       if (exists(".strvalidator_plotStutter_gui_savegui", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_savegui", envir = env)
       }
-      if (exists(".strvalidator_plotStutter_gui_title", envir = env, inherits = FALSE)) {
-        remove(".strvalidator_plotStutter_gui_title", envir = env)
-      }
       if (exists(".strvalidator_plotStutter_gui_title_chk", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_title_chk", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_title", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_x_title", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_x_title", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_y_title", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_y_title", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title_size", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_title_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_x_title_size", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_x_title_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_y_title_size", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_y_title_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title_angle", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_title_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_x_title_angle", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_x_title_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_y_title_angle", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_y_title_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title_vjust", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_title_vjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_x_title_vjust", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_x_title_vjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_y_title_vjust", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_y_title_vjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_title_hjust", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_title_hjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_x_title_hjust", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_x_title_hjust", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_y_title_hjust", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_y_title_hjust", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_points_shape", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_points_shape", envir = env)
@@ -1089,17 +1695,44 @@ plotStutter_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       if (exists(".strvalidator_plotStutter_gui_axes_scales", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_axes_scales", envir = env)
       }
+      if (exists(".strvalidator_plotStutter_gui_labels_chk", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_labels_chk", envir = env)
+      }
       if (exists(".strvalidator_plotStutter_gui_xlabel_size", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_xlabel_size", envir = env)
       }
+      if (exists(".strvalidator_plotStutter_gui_ylabel_size", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_ylabel_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_sxlabel_size", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_sxlabel_size", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_sylabel_size", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_sylabel_size", envir = env)
+      }
       if (exists(".strvalidator_plotStutter_gui_xlabel_angle", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_xlabel_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_ylabel_angle", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_ylabel_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_sxlabel_angle", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_sxlabel_angle", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_sylabel_angle", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_sylabel_angle", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_xlabel_justh", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_xlabel_justh", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_xlabel_justv", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_xlabel_justv", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_ylabel_justh", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_ylabel_justh", envir = env)
+      }
+      if (exists(".strvalidator_plotStutter_gui_ylabel_justv", envir = env, inherits = FALSE)) {
+        remove(".strvalidator_plotStutter_gui_ylabel_justv", envir = env)
       }
       if (exists(".strvalidator_plotStutter_gui_theme", envir = env, inherits = FALSE)) {
         remove(".strvalidator_plotStutter_gui_theme", envir = env)

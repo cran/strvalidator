@@ -1,5 +1,7 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 03.03.2020: Fixed reference to function name.
+# 23.02.2020: Added language support.
 # 03.03.2019: Compacted and tweaked widgets under tcltk.
 # 17.02.2019: Fixed Error in if (svalue(savegui_chk)) { : argument is of length zero (tcltk)
 # 06.08.2017: Added audit trail.
@@ -18,8 +20,6 @@
 # 23.02.2014: Removed requirement for 'Sample.Name'.
 # 11.02.2014: Pass debug to 'addColor'.
 # 27.11.2013: Added parameter 'overwrite=TRUE'.
-# 18.09.2013: Updated to use 'addColor' insted of removed 'addDye'.
-# 18.07.2013: Check before overwrite object.
 
 #' @title Add Dye Information
 #'
@@ -57,13 +57,100 @@ addDye_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, pare
   .gDataName <- NULL
   .gKit <- 1
 
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
+
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
-    print(head(.gData))
+    print(paste("IN:", fnc))
   }
 
+  # Default strings.
+  strWinTitle <- "Add dye to dataset"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Dataset and kit"
+  strLblDataset <- "Sample dataset:"
+  strDrpDefault <- "<Select dataset>"
+  strLblSamples <- "samples"
+  strLblKit <- "Kit:"
+  strFrmOptions <- "Options"
+  strChkIgnore <- "Ignore case in marker name"
+  strChkDye <- "Add dye information"
+  strChkColor <- "Add color information"
+  strChkR <- "Add R color information"
+  strChkMarker <- "Add marker order"
+  strFrmSave <- "Save as"
+  strLblSave <- "Name for result:"
+  strBtnAdd <- "Add"
+  strBtnProcessing <- "Processing..."
 
-  w <- gwindow(title = "Add dye to dataset", visible = FALSE)
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+
+    strtmp <- dtStrings["strWinTitle"]$value
+    strWinTitle <- ifelse(is.na(strtmp), strWinTitle, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataset"]$value
+    strLblDataset <- ifelse(is.na(strtmp), strLblDataset, strtmp)
+
+    strtmp <- dtStrings["strDrpDefault"]$value
+    strDrpDefault <- ifelse(is.na(strtmp), strDrpDefault, strtmp)
+
+    strtmp <- dtStrings["strLblSamples"]$value
+    strLblSamples <- ifelse(is.na(strtmp), strLblSamples, strtmp)
+
+    strtmp <- dtStrings["strLblKit"]$value
+    strLblKit <- ifelse(is.na(strtmp), strLblKit, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strChkIgnore"]$value
+    strChkIgnore <- ifelse(is.na(strtmp), strChkIgnore, strtmp)
+
+    strtmp <- dtStrings["strChkDye"]$value
+    strChkDye <- ifelse(is.na(strtmp), strChkDye, strtmp)
+
+    strtmp <- dtStrings["strChkColor"]$value
+    strChkColor <- ifelse(is.na(strtmp), strChkColor, strtmp)
+
+    strtmp <- dtStrings["strChkR"]$value
+    strChkR <- ifelse(is.na(strtmp), strChkR, strtmp)
+
+    strtmp <- dtStrings["strChkMarker"]$value
+    strChkMarker <- ifelse(is.na(strtmp), strChkMarker, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblSave"]$value
+    strLblSave <- ifelse(is.na(strtmp), strLblSave, strtmp)
+
+    strtmp <- dtStrings["strBtnAdd"]$value
+    strBtnAdd <- ifelse(is.na(strtmp), strBtnAdd, strtmp)
+
+    strtmp <- dtStrings["strBtnProcessing"]$value
+    strBtnProcessing <- ifelse(is.na(strtmp), strBtnProcessing, strtmp)
+  }
+
+  # ---------------------------------------------------------------------------
+
+  w <- gwindow(title = strWinTitle, visible = FALSE)
 
   # Runs when window is closed.
   addHandlerUnrealize(w, handler = function(h, ...) {
@@ -106,22 +193,22 @@ addDye_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, pare
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("addDye_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # DATASET ###################################################################
 
   f0 <- gframe(
-    text = "Dataset and kit",
+    text = strFrmDataset,
     horizontal = FALSE,
     spacing = 2,
     container = gv
@@ -129,11 +216,11 @@ addDye_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, pare
 
   f0g0 <- glayout(container = f0, spacing = 1)
 
-  f0g0[1, 1] <- glabel(text = "Select dataset:", container = f0g0)
+  f0g0[1, 1] <- glabel(text = strLblDataset, container = f0g0)
 
   f0g0[1, 2] <- dataset_drp <- gcombobox(
     items = c(
-      "<Select dataset>",
+      strDrpDefault,
       listObjects(
         env = env,
         obj.class = "data.frame"
@@ -146,7 +233,7 @@ addDye_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, pare
   )
 
   f0g0[1, 3] <- dataset_samples_lbl <- glabel(
-    text = " 0 samples",
+    text = paste(" 0", strLblSamples),
     container = f0g0
   )
 
@@ -166,28 +253,23 @@ addDye_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, pare
       .gData <<- get(val_obj, envir = env)
       .gDataName <<- val_obj
       samples <- length(unique(.gData$Sample.Name))
-      svalue(dataset_samples_lbl) <- paste(" ", samples, "samples")
+      svalue(dataset_samples_lbl) <- paste(" ", samples, strLblSamples)
       .gKit <<- detectKit(.gData, index = TRUE)
       svalue(kit_drp, index = TRUE) <- .gKit
       svalue(save_edt) <- paste(.gDataName, sep = "")
-
-      if (debug) {
-        print("Detected kit index")
-        print(.gKit)
-      }
     } else {
 
       # Reset components.
       .gData <<- data.frame(No.Data = NA)
       .gDataName <<- NULL
-      svalue(dataset_samples_lbl) <- " 0 samples"
+      svalue(dataset_samples_lbl) <- paste(" 0", strLblSamples)
       svalue(save_edt) <- ""
     }
   })
 
   # KIT -----------------------------------------------------------------------
 
-  f0g0[2, 1] <- glabel(text = "Kit:", container = f0g0)
+  f0g0[2, 1] <- glabel(text = strLblKit, container = f0g0)
 
   kit_drp <- gcombobox(
     items = getKit(),
@@ -201,48 +283,44 @@ addDye_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, pare
 
   # FRAME 1 ###################################################################
 
-  f1 <- gframe(text = "Options", horizontal = FALSE, spacing = 2, container = gv)
+  f1 <- gframe(text = strFrmOptions, horizontal = FALSE, spacing = 2, container = gv)
 
   f1_ignore_chk <- gcheckbox(
-    text = "Ignore case in marker name.",
+    text = strChkIgnore,
     checked = FALSE, container = f1
   )
 
   f1_dye_chk <- gcheckbox(
-    text = "Add dye information.",
+    text = strChkDye,
     checked = TRUE, container = f1
   )
 
   f1_color_chk <- gcheckbox(
-    text = "Add color information.",
+    text = strChkColor,
     checked = FALSE, container = f1
   )
 
   f1_r_chk <- gcheckbox(
-    text = "Add R color information.",
+    text = strChkR,
     checked = FALSE, container = f1
   )
 
   f1_order_chk <- gcheckbox(
-    text = "Add marker order.",
+    text = strChkMarker,
     checked = FALSE, container = f1
   )
 
   # SAVE ######################################################################
 
-  save_frame <- gframe(text = "Save as", container = gv)
+  save_frame <- gframe(text = strFrmSave, container = gv)
 
-  glabel(text = "Name for result:", container = save_frame)
+  glabel(text = strLblSave, container = save_frame)
 
   save_edt <- gedit(expand = TRUE, fill = TRUE, container = save_frame)
 
   # BUTTON ####################################################################
 
-  if (debug) {
-    print("BUTTON")
-  }
-
-  add_btn <- gbutton(text = "Add", container = gv)
+  add_btn <- gbutton(text = strBtnAdd, container = gv)
 
   addHandlerClicked(add_btn, handler = function(h, ...) {
 
@@ -288,7 +366,7 @@ addDye_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, pare
 
     # Change button.
     blockHandlers(add_btn)
-    svalue(add_btn) <- "Processing..."
+    svalue(add_btn) <- strBtnProcessing
     unblockHandlers(add_btn)
     enabled(add_btn) <- FALSE
 
@@ -332,7 +410,7 @@ addDye_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, pare
     # Update audit trail.
     datanew <- auditTrail(
       obj = datanew, key = keys, value = values,
-      label = "addDye_gui", arguments = FALSE,
+      label = fnc, arguments = FALSE,
       package = "strvalidator"
     )
 

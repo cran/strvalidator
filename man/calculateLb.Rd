@@ -4,10 +4,21 @@
 \alias{calculateLb}
 \title{Calculate Inter-locus Balance}
 \usage{
-calculateLb(data, ref = NULL, option = "prop", by.dye = FALSE,
-  ol.rm = TRUE, sex.rm = FALSE, qs.rm = FALSE, na = NULL,
-  kit = NULL, ignore.case = TRUE, word = FALSE, exact = FALSE,
-  debug = FALSE)
+calculateLb(
+  data,
+  ref = NULL,
+  option = "prop",
+  by.dye = FALSE,
+  ol.rm = TRUE,
+  sex.rm = FALSE,
+  qs.rm = FALSE,
+  na = NULL,
+  kit = NULL,
+  ignore.case = TRUE,
+  word = FALSE,
+  exact = FALSE,
+  debug = FALSE
+)
 }
 \arguments{
 \item{data}{data.frame containing at least
@@ -18,7 +29,7 @@ If provided alleles matching 'ref' will be extracted from 'data'
 (see \code{\link{filterProfile}}).}
 
 \item{option}{character: 'prop' for proportional Lb, 'norm' for normalized
-LB, and 'cent' for centred Lb.}
+LB, 'cent' for centred Lb, and 'peak' for the min and max peak height ratio.}
 
 \item{by.dye}{logical. Default is FALSE for global Lb, if TRUE Lb is calculated
 within each dye channel.}

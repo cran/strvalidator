@@ -1,5 +1,6 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.03.2020: Added language support.
 # 03.03.2019: Compacted and tweaked widgets under tcltk.
 # 17.02.2019: Fixed Error in if (svalue(savegui_chk)) { : argument is of length zero (tcltk)
 # 13.07.2017: Fixed narrow dropdown with hidden argument ellipsize = "none".
@@ -19,7 +20,6 @@
 # 11.06.2013: Added 'inherits=FALSE' to 'exists'.
 # 04.06.2013: Fixed bug in 'missingCol'.
 # 24.05.2013: Improved error message for missing columns.
-# 17.05.2013: listDataFrames() -> listObjects()
 
 #' @title Check Subset
 #'
@@ -50,12 +50,113 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   .gData <- NULL
   .gRef <- NULL
 
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
+
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
+    print(paste("IN:", fnc))
   }
 
+  # Default strings.
+  strWinTitle <- "Check subsetting"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Datasets"
+  strLblDataset <- "Sample dataset:"
+  strDrpDataset <- "<Select dataset>"
+  strLblSamples <- "samples"
+  strLblRefDataset <- "Reference dataset:"
+  strLblRef <- "references"
+  strLblManual <- "Or type a reference name:"
+  strFrmOptions <- "Options"
+  strLblMatching <- "Reference sample name matching:"
+  strChkIgnore <- "Ignore case ('A' will match 'A', 'B-a.2', and 'A2')"
+  strChkWord <- "Add word boundaries ('A' will match 'A', 'B-A.2', and 'A 2' but not 'A2')"
+  strChkExact <- "Exact matching ('A' will match 'A' but not 'B-A.2', 'A 2', or 'A2')"
+  strFrmSave <- "Save as"
+  strLblSave <- "Name for result:"
+  strBtnCalculate <- "Subset"
+  strMsgCheck <- "Data frame is NULL!\n\nMake sure to select a sample dataset and a reference dataset, or type a reference name"
+  strWinTitleCheck <- "Check subsetting"
+  strMsgTitleError <- "Error"
+
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+
+    strtmp <- dtStrings["strWinTitle"]$value
+    strWinTitle <- ifelse(is.na(strtmp), strWinTitle, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataset"]$value
+    strLblDataset <- ifelse(is.na(strtmp), strLblDataset, strtmp)
+
+    strtmp <- dtStrings["strDrpDataset"]$value
+    strDrpDataset <- ifelse(is.na(strtmp), strDrpDataset, strtmp)
+
+    strtmp <- dtStrings["strLblSamples"]$value
+    strLblSamples <- ifelse(is.na(strtmp), strLblSamples, strtmp)
+
+    strtmp <- dtStrings["strLblRefDataset"]$value
+    strLblRefDataset <- ifelse(is.na(strtmp), strLblRefDataset, strtmp)
+
+    strtmp <- dtStrings["strLblRef"]$value
+    strLblRef <- ifelse(is.na(strtmp), strLblRef, strtmp)
+
+    strtmp <- dtStrings["strLblManual"]$value
+    strLblManual <- ifelse(is.na(strtmp), strLblManual, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strLblMatching"]$value
+    strLblMatching <- ifelse(is.na(strtmp), strLblMatching, strtmp)
+
+    strtmp <- dtStrings["strChkIgnore"]$value
+    strChkIgnore <- ifelse(is.na(strtmp), strChkIgnore, strtmp)
+
+    strtmp <- dtStrings["strChkWord"]$value
+    strChkWord <- ifelse(is.na(strtmp), strChkWord, strtmp)
+
+    strtmp <- dtStrings["strChkExact"]$value
+    strChkExact <- ifelse(is.na(strtmp), strChkExact, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblSave"]$value
+    strLblSave <- ifelse(is.na(strtmp), strLblSave, strtmp)
+
+    strtmp <- dtStrings["strBtnCalculate"]$value
+    strBtnCalculate <- ifelse(is.na(strtmp), strBtnCalculate, strtmp)
+
+    strtmp <- dtStrings["strMsgCheck"]$value
+    strMsgCheck <- ifelse(is.na(strtmp), strMsgCheck, strtmp)
+
+    strtmp <- dtStrings["strWinTitleCheck"]$value
+    strWinTitleCheck <- ifelse(is.na(strtmp), strWinTitleCheck, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleError"]$value
+    strMsgTitleError <- ifelse(is.na(strtmp), strMsgTitleError, strtmp)
+  }
+
+  # WINDOW ####################################################################
+
   # Main window.
-  w <- gwindow(title = "Check subsetting", visible = FALSE)
+  w <- gwindow(title = strWinTitle, visible = FALSE)
 
   # Runs when window is closed.
   addHandlerUnrealize(w, handler = function(h, ...) {
@@ -99,22 +200,22 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("checkSubset_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # DATASET ###################################################################
 
   f0 <- gframe(
-    text = "Datasets",
+    text = strFrmDataset,
     horizontal = FALSE,
     spacing = 2,
     container = gv
@@ -122,11 +223,11 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
 
   f0g1 <- glayout(container = f0, spacing = 1)
 
-  f0g1[1, 1] <- glabel(text = "Select dataset:", container = f0g1)
+  f0g1[1, 1] <- glabel(text = strLblDataset, container = f0g1)
 
   f0g1[1, 2] <- dataset_drp <- gcombobox(
     items = c(
-      "<Select dataset>",
+      strDrpDataset,
       listObjects(
         env = env,
         obj.class = "data.frame"
@@ -139,7 +240,7 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   )
 
   f0g1[1, 3] <- dataset_samples_lbl <- glabel(
-    text = " 0 samples",
+    text = paste(" 0", strLblSamples),
     container = f0g1
   )
 
@@ -158,20 +259,20 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       # Load or change components.
       .gData <<- get(val_obj, envir = env)
       samples <- length(unique(.gData$Sample.Name))
-      svalue(dataset_samples_lbl) <- paste("", samples, "samples")
+      svalue(dataset_samples_lbl) <- paste("", samples, strLblSamples)
     } else {
 
       # Reset components.
       .gData <<- data.frame(No.Data = NA)
-      svalue(dataset_samples_lbl) <- " 0 samples"
+      svalue(dataset_samples_lbl) <- paste(" 0", strLblSamples)
     }
   })
 
-  f0g1[2, 1] <- glabel(text = "Select reference set:", container = f0g1)
+  f0g1[2, 1] <- glabel(text = strLblRefDataset, container = f0g1)
 
   f0g1[2, 2] <- dataset_ref_drp <- gcombobox(
     items = c(
-      "<Select dataset>",
+      strDrpDataset,
       listObjects(
         env = env,
         obj.class = "data.frame"
@@ -184,12 +285,12 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
   )
 
   f0g1[2, 3] <- dataset_ref_lbl <- glabel(
-    text = " 0 reference samples",
+    text = paste(" 0", strLblRef),
     container = f0g1
   )
 
 
-  f0g1[3, 1] <- glabel(text = "Or type a reference name:", container = f0g1)
+  f0g1[3, 1] <- glabel(text = strLblManual, container = f0g1)
 
   f0g1[3, 2] <- dataset_ref_edt <- gedit(container = f0g1)
 
@@ -208,49 +309,47 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       # Load or change components.
       .gRef <<- get(val_obj, envir = env)
       refs <- length(unique(.gRef$Sample.Name))
-      svalue(dataset_ref_lbl) <- paste("", refs, "reference samples")
+      svalue(dataset_ref_lbl) <- paste("", refs, strLblRef)
     } else {
 
       # Reset components.
       .gRef <<- data.frame(No.Data = NA)
-      svalue(dataset_ref_lbl) <- " 0 reference samples"
+      svalue(dataset_ref_lbl) <- paste(" 0", strLblRef)
     }
   })
 
   # FRAME 1 ###################################################################
 
   f1 <- gframe(
-    text = "Options",
+    text = strFrmOptions,
     horizontal = FALSE,
     spacing = 2,
     container = gv
   )
 
+  glabel(text = strLblMatching, anchor = c(-1, 0), container = f1)
+
   f1_ignore_case_chk <- gcheckbox(
-    text = "Ignore case ('A' will match 'A', 'B-a.2', and 'A2')",
+    text = strChkIgnore,
     checked = TRUE,
     container = f1
   )
 
   f1_word_chk <- gcheckbox(
-    text = "Add word boundaries ('A' will match 'A', 'B-A.2', and 'A 2' but not 'A2')",
+    text = strChkWord,
     checked = FALSE,
     container = f1
   )
 
   f1_exact_chk <- gcheckbox(
-    text = "Exact matching ('A' will match 'A' but not 'B-A.2', 'A 2', or 'A2')",
+    text = strChkExact,
     checked = FALSE,
     container = f1
   )
 
   # BUTTON ####################################################################
 
-  if (debug) {
-    print("BUTTON")
-  }
-
-  check_btn <- gbutton(text = "Subset", container = gv)
+  check_btn <- gbutton(text = strBtnCalculate, container = gv)
 
   addHandlerChanged(check_btn, handler = function(h, ...) {
 
@@ -270,7 +369,7 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
     # Check that data is available.
     if (!is.null(val_data) && !is.null(val_ref)) {
       chksubset_w <- gwindow(
-        title = "Check subsetting",
+        title = strWinTitleCheck,
         visible = FALSE, name = title,
         width = NULL, height = NULL, parent = w,
         handler = NULL, action = NULL
@@ -293,9 +392,8 @@ checkSubset_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE,
       visible(chksubset_w) <- TRUE
     } else {
       gmessage(
-        msg = "Data frame is NULL!\n\n
-               Make sure to select a dataset and a reference set or type a reference name",
-        title = "Error",
+        msg = strMsgCheck,
+        title = strMsgTitleError,
         icon = "error"
       )
     }

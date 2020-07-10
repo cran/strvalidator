@@ -4,8 +4,7 @@
 \alias{plotAT_gui}
 \title{Plot Analytical Threshold}
 \usage{
-plotAT_gui(env = parent.frame(), savegui = NULL, debug = FALSE,
-  parent = NULL)
+plotAT_gui(env = parent.frame(), savegui = NULL, debug = FALSE, parent = NULL)
 }
 \arguments{
 \item{env}{environment in which to search for data frames.}
@@ -29,5 +28,5 @@ A name for the result is automatically suggested.
 The resulting plot can be saved as either a plot object or as an image.
 }
 \seealso{
-\url{http://docs.ggplot2.org/current/} for details on plot settings.
+\url{https://ggplot2.tidyverse.org/} for details on plot settings.
 }

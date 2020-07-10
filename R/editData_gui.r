@@ -1,5 +1,6 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 08.03.2020: Added language support.
 # 18.03.2019: Fixed freeze when opened with a NA containing dataset in view mode (tcltk).
 # 14.03.2019: Fixed R-Check note.
 # 20.02.2019: Fixed drop-down menu should default to <Select data frame> (tcltk).
@@ -19,8 +20,6 @@
 # 06.01.2016: Fixed attributes window bug. Error when close using X.
 # 26.10.2015: Fixed attributes window bug.
 # 04.10.2015: Added options to limit number of rows, and show attributes.
-# 28.08.2015: Added importFrom.
-# 01.06.2015: Fixed bug column names not saved. Introduced 02.01.2015 with attributes.
 
 #' @title Edit or View Data Frames
 #'
@@ -61,19 +60,156 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
     .gDataName <- ""
   }
 
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
+
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
+    print(paste("IN:", fnc))
   }
 
+  # Default strings.
+  strWinTitleEdit <- "Edit or view dataset"
+  strWinTitleView <- "View dataset"
+  strWinTitleAttributes <- "Attributes"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Dataset"
+  strLblDataset <- "Dataset:"
+  strDrpDataset <- "<Select dataset>"
+  strLblSamples <- "samples,"
+  strLblColumns <- "columns,"
+  strLblRows <- "rows"
+  strFrmOptions <- "Options"
+  strChkAttributes <- "Show attributes (separate window)"
+  strChkLimit <- "Limit number of rows to:"
+  strTipLimit <- "NB! Sorting will only be performed on the loaded data."
+  strBtnCopy <- "Copy"
+  strTipCopy <- "Copy to clipboard (NB! large datasets might get truncated)."
+  strBtnCopying <- "Copying..."
+  strBtnExport <- "Export"
+  strTipExport <- "Opens the export dialog."
+  strBtnSave <- "Save as"
+  strTipSave <- "Save as new dataset in this project."
+  strBtnSaving <- "Saving..."
+  strFrmSave <- "Copy|Export|Save"
+  strLblNoData <- "There is no data"
+  strMsgSave <- "A name must be provided."
+  strMsgTitleError <- "Error"
+  strLblTcltk <- "The tcltk gui toolkit does not handle NA values in tables.\nNA values will be replaced with empty strings.\nIf you edit the table, NA values will be permanently replaced."
+  strChkShow <- "Don't show this message again."
+  strMsgTitleWarning <- "Warning"
+
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+
+    strtmp <- dtStrings["strWinTitleEdit"]$value
+    strWinTitleEdit <- ifelse(is.na(strtmp), strWinTitleEdit, strtmp)
+
+    strtmp <- dtStrings["strWinTitleView"]$value
+    strWinTitleView <- ifelse(is.na(strtmp), strWinTitleView, strtmp)
+
+    strtmp <- dtStrings["strWinTitleAttributes"]$value
+    strWinTitleAttributes <- ifelse(is.na(strtmp), strWinTitleAttributes, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataset"]$value
+    strLblDataset <- ifelse(is.na(strtmp), strLblDataset, strtmp)
+
+    strtmp <- dtStrings["strDrpDataset"]$value
+    strDrpDataset <- ifelse(is.na(strtmp), strDrpDataset, strtmp)
+
+    strtmp <- dtStrings["strLblSamples"]$value
+    strLblSamples <- ifelse(is.na(strtmp), strLblSamples, strtmp)
+
+    strtmp <- dtStrings["strLblColumns"]$value
+    strLblColumns <- ifelse(is.na(strtmp), strLblColumns, strtmp)
+
+    strtmp <- dtStrings["strLblRows"]$value
+    strLblRows <- ifelse(is.na(strtmp), strLblRows, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strChkAttributes"]$value
+    strChkAttributes <- ifelse(is.na(strtmp), strChkAttributes, strtmp)
+
+    strtmp <- dtStrings["strChkLimit"]$value
+    strChkLimit <- ifelse(is.na(strtmp), strChkLimit, strtmp)
+
+    strtmp <- dtStrings["strTipLimit"]$value
+    strTipLimit <- ifelse(is.na(strtmp), strTipLimit, strtmp)
+
+    strtmp <- dtStrings["strBtnCopy"]$value
+    strBtnCopy <- ifelse(is.na(strtmp), strBtnCopy, strtmp)
+
+    strtmp <- dtStrings["strTipCopy"]$value
+    strTipCopy <- ifelse(is.na(strtmp), strTipCopy, strtmp)
+
+    strtmp <- dtStrings["strBtnCopying"]$value
+    strBtnCopying <- ifelse(is.na(strtmp), strBtnCopying, strtmp)
+
+    strtmp <- dtStrings["strBtnExport"]$value
+    strBtnExport <- ifelse(is.na(strtmp), strBtnExport, strtmp)
+
+    strtmp <- dtStrings["strTipExport"]$value
+    strTipExport <- ifelse(is.na(strtmp), strTipExport, strtmp)
+
+    strtmp <- dtStrings["strBtnSave"]$value
+    strBtnSave <- ifelse(is.na(strtmp), strBtnSave, strtmp)
+
+    strtmp <- dtStrings["strTipSave"]$value
+    strTipSave <- ifelse(is.na(strtmp), strTipSave, strtmp)
+
+    strtmp <- dtStrings["strBtnSaving"]$value
+    strBtnSaving <- ifelse(is.na(strtmp), strBtnSaving, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblNoData"]$value
+    strLblNoData <- ifelse(is.na(strtmp), strLblNoData, strtmp)
+
+    strtmp <- dtStrings["strMsgSave"]$value
+    strMsgSave <- ifelse(is.na(strtmp), strMsgSave, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleError"]$value
+    strMsgTitleError <- ifelse(is.na(strtmp), strMsgTitleError, strtmp)
+
+    strtmp <- dtStrings["strLblTcltk"]$value
+    strLblTcltk <- ifelse(is.na(strtmp), strLblTcltk, strtmp)
+
+    strtmp <- dtStrings["strChkShow"]$value
+    strChkShow <- ifelse(is.na(strtmp), strChkShow, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleWarning"]$value
+    strMsgTitleWarning <- ifelse(is.na(strtmp), strMsgTitleWarning, strtmp)
+  }
+
+  # WINDOW ####################################################################
+
   if (edit) {
-    guiTitle <- "Edit or view data frame"
+    guiTitle <- strWinTitleEdit
   } else {
-    guiTitle <- "View data frame"
+    guiTitle <- strWinTitleView
   }
 
   # Create windows.
   w <- gwindow(title = guiTitle, visible = FALSE)
-  w_attributes <- gwindow(title = "Attributes", visible = FALSE)
+  w_attributes <- gwindow(title = strWinTitleAttributes, visible = FALSE)
   attr_text <- gtext("", container = w_attributes)
 
   # Runs when window is closed.
@@ -117,26 +253,22 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("editData_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # FRAME 0 ###################################################################
 
-  if (debug) {
-    print("FRAME 0")
-  }
-
   f0 <- gframe(
-    text = "Datasets",
+    text = strFrmDataset,
     horizontal = FALSE,
     spacing = 5,
     container = gv
@@ -144,11 +276,11 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
   g0 <- glayout(container = f0, spacing = 1)
 
-  g0[1, 1] <- glabel(text = "Select dataset:", container = g0)
+  g0[1, 1] <- glabel(text = strLblDataset, container = g0)
 
   g0[1, 2] <- dataset_drp <- gcombobox(
     items = c(
-      "<Select data frame>",
+      strDrpDataset,
       listObjects(
         env = env,
         obj.class = "data.frame"
@@ -164,14 +296,18 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
     svalue(dataset_drp) <- .gDataName
   }
 
-  g0[1, 3] <- g0_samples_lbl <- glabel(text = " 0 samples,", container = g0)
-  g0[1, 4] <- g0_columns_lbl <- glabel(text = " 0 columns,", container = g0)
-  g0[1, 5] <- g0_rows_lbl <- glabel(text = " 0 rows", container = g0)
+  g0_samples_lbl <- glabel(text = paste(" 0", strLblSamples), container = g0)
+  g0_columns_lbl <- glabel(text = paste(" 0", strLblColumns), container = g0)
+  g0_rows_lbl <- glabel(text = paste(" 0", strLblRows), container = g0)
+
+  g0[1, 3] <- g0_samples_lbl
+  g0[1, 4] <- g0_columns_lbl
+  g0[1, 5] <- g0_rows_lbl
 
   addHandlerChanged(dataset_drp, handler = function(h, ...) {
     val_obj <- svalue(dataset_drp)
 
-    message("Dataset ", val_obj, " was selected.")
+    message("Dataset ", val_obj, " selected.")
 
     # Check if suitable.
     ok <- checkDataset(
@@ -197,12 +333,8 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
   # FRAME 1 ###################################################################
 
-  if (debug) {
-    print("FRAME 1")
-  }
-
   f1 <- gframe(
-    text = "Options",
+    text = strFrmOptions,
     horizontal = FALSE,
     spacing = 5,
     container = gv
@@ -211,16 +343,16 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
   g1 <- glayout(container = f1, spacing = 1)
 
   g1[1, 1] <- f1_show_attr_chk <- gcheckbox(
-    text = "Show attributes (separate window)",
+    text = strChkAttributes,
     checked = FALSE, container = g1
   )
 
 
   g1[2, 1] <- f1_limit_chk <- gcheckbox(
-    text = "Limit number of rows to:",
+    text = strChkLimit,
     checked = FALSE, container = g1
   )
-  tooltip(f1_limit_chk) <- "NB! Sorting will only be performed on the loaded data."
+  tooltip(f1_limit_chk) <- strTipLimit
 
   g1[2, 2] <- f1_max_edt <- gedit(text = 100, width = 8, container = g1)
 
@@ -241,23 +373,19 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
   # FRAME 2 ###################################################################
 
-  if (debug) {
-    print("FRAME 2")
-  }
-
   f2 <- gframe(
-    text = "Copy | Export | Save",
+    text = strFrmSave,
     horizontal = TRUE, spacing = 5, container = gv
   )
 
-  copy_btn <- gbutton(text = "Copy", container = f2)
-  tooltip(copy_btn) <- "Copy to clipboard (NB! large datasets might get truncated)"
+  copy_btn <- gbutton(text = strBtnCopy, container = f2)
+  tooltip(copy_btn) <- strTipCopy
 
-  export_btn <- gbutton(text = "Export", container = f2)
-  tooltip(export_btn) <- "Opens the export dialog"
+  export_btn <- gbutton(text = strBtnExport, container = f2)
+  tooltip(export_btn) <- strTipExport
 
-  save_btn <- gbutton(text = "Save as", container = f2)
-  tooltip(save_btn) <- "Save as new dataset"
+  save_btn <- gbutton(text = strBtnSave, container = f2)
+  tooltip(save_btn) <- strTipSave
 
   save_txt <- gedit(text = .gDataName, container = f2, expand = TRUE, fill = TRUE)
 
@@ -266,7 +394,7 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
     # Change button.
     blockHandlers(copy_btn)
-    svalue(copy_btn) <- "Copying..."
+    svalue(copy_btn) <- strBtnCopying
     unblockHandlers(copy_btn)
     enabled(copy_btn) <- FALSE
 
@@ -277,7 +405,7 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
     # Change button.
     blockHandlers(copy_btn)
-    svalue(copy_btn) <- "Copy"
+    svalue(copy_btn) <- strBtnCopy
     unblockHandlers(copy_btn)
     enabled(copy_btn) <- TRUE
   })
@@ -299,13 +427,13 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
       # Change button.
       blockHandlers(save_btn)
-      svalue(save_btn) <- "Saving..."
+      svalue(save_btn) <- strBtnSaving
       unblockHandlers(save_btn)
       enabled(save_btn) <- FALSE
 
       # Update audit trail.
       datanew <- auditTrail(
-        obj = datanew, label = "editData_gui",
+        obj = datanew, label = fnc,
         arguments = FALSE, package = "strvalidator"
       )
 
@@ -314,13 +442,13 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
       # Change button.
       blockHandlers(save_btn)
-      svalue(save_btn) <- "Save as"
+      svalue(save_btn) <- strBtnSave
       unblockHandlers(save_btn)
       enabled(save_btn) <- TRUE
     } else {
       gmessage(
-        msg = "A name must be given!",
-        title = "Error",
+        msg = strMsgSave,
+        title = strMsgTitleError,
         icon = "error"
       )
     }
@@ -334,23 +462,15 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
   # FRAME 3 ###################################################################
 
-  if (debug) {
-    print("FRAME 3")
-  }
-
   f3 <- gvbox(container = gv, expand = TRUE, fill = TRUE)
 
   # Add dummy table.
   data_tbl <- gWidgets2::gtable(
-    items = data.frame(Data = "There is no data"),
+    items = data.frame(Data = strLblNoData),
     container = f3, expand = TRUE
   )
 
   # INTERNAL FUNCTIONS ########################################################
-
-  if (debug) {
-    print("INTERNAL FUNCTIONS")
-  }
 
   .showAttributes <- function() {
     if (debug) {
@@ -364,7 +484,10 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
       if (!isExtant(w_attributes)) {
 
         # Re-create window.
-        w_attributes <<- gwindow(title = "Attributes", visible = FALSE)
+        w_attributes <<- gwindow(
+          title = strWinTitleAttributes,
+          visible = FALSE
+        )
         attr_text <<- gtext("", container = w_attributes)
       }
 
@@ -413,13 +536,13 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
       } else {
         samples <- "<NA>"
       }
-      svalue(g0_samples_lbl) <- paste(" ", samples, "samples,")
-      svalue(g0_columns_lbl) <- paste(" ", ncol(.gData), "columns,")
-      svalue(g0_rows_lbl) <- paste(" ", nrow(.gData), "rows")
+      svalue(g0_samples_lbl) <- paste(" ", samples, strLblSamples)
+      svalue(g0_columns_lbl) <- paste(" ", ncol(.gData), strLblColumns)
+      svalue(g0_rows_lbl) <- paste(" ", nrow(.gData), strLblRows)
     } else {
-      svalue(g0_samples_lbl) <- paste(" ", "<NA>", "samples,")
-      svalue(g0_columns_lbl) <- paste(" ", "<NA>", "columns,")
-      svalue(g0_rows_lbl) <- paste(" ", "<NA>", "rows")
+      svalue(g0_samples_lbl) <- paste(" <NA>", strLblSamples)
+      svalue(g0_columns_lbl) <- paste(" <NA>", strLblColumns)
+      svalue(g0_rows_lbl) <- paste(" <NA>", strLblRows)
     }
   }
 
@@ -452,16 +575,14 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
 
           if (!.hideMsg) {
             d <- gbasicdialog(
-              title = "Warning", parent = w,
+              title = strMsgTitleWarning, parent = w,
               handler = function(h, ...) {
                 .hideMsg <<- svalue(show_msg_chk)
               }
             )
             g <- ggroup(container = d, horizontal = FALSE)
-            glabel("The tcltk gui toolkit does not handle NA values in tables.", container = g)
-            glabel("NA values will be replaced with empty strings.", container = g)
-            glabel("If you edit the table, NA values will be permanently replaced.", container = g)
-            show_msg_chk <- gcheckbox(text = "Don't show this message again.", container = g)
+            glabel(text = strLblTcltk, container = g)
+            show_msg_chk <- gcheckbox(text = strChkShow, container = g)
             visible(w) <- TRUE # Main window must be visible to show message.
             visible(d) <- TRUE # Show message window.
           }
@@ -479,7 +600,7 @@ editData_gui <- function(env = parent.frame(), savegui = NULL, data = NULL,
     } else {
 
       # Update with place holder.
-      data_tbl[] <<- data.frame(Data = "There is no data")
+      data_tbl[] <<- data.frame(Data = strLblNoData)
     }
   }
 

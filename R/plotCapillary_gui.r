@@ -1,5 +1,7 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 13.04.2020: Added language support.
+# 13.04.2020: Implemented function checkDataset.
 # 23.02.2019: Compacted and tweaked gui for tcltk.
 # 17.02.2019: Fixed Error in if (svalue(savegui_chk)) { : argument is of length zero (tcltk)
 # 13.07.2017: Fixed issue with button handlers.
@@ -43,7 +45,7 @@
 #' @importFrom ggplot2 ggplot aes_string facet_grid geom_point geom_line labs
 #'  geom_boxplot stat_boxplot theme geom_density coord_cartesian
 #'
-#' @seealso \url{http://docs.ggplot2.org/current/} for details on plot settings.
+#' @seealso \url{https://ggplot2.tidyverse.org/} for details on plot settings.
 
 plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, parent = NULL) {
 
@@ -52,12 +54,181 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
   .gDataName <- NULL
   .gPlot <- NULL
 
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
+
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
+    print(paste("IN:", fnc))
   }
 
+  # Default strings.
+  strWinTitle <- "Plot capillary balance"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Dataset"
+  strLblDataset <- "Dataset:"
+  strDrpDataset <- "<Select dataset>"
+  strLblRows <- "rows"
+  strFrmOptions <- "Options"
+  strChkOverride <- "Override automatic titles"
+  strLblTitlePlot <- "Plot title:"
+  strLblTitleSub <- "Sub title:"
+  strLblTitleX <- "X title:"
+  strLblTitleY <- "Y title:"
+  strExpPoints <- "Data points"
+  strLblShape <- "Shape:"
+  strLblAlpha <- "Alpha:"
+  strExpAxes <- "Axes"
+  strLblLimitY <- "Limit Y axis (min-max)"
+  strFrmPlot <- "Plot capillary balance data"
+  strBtnDotplot <- "Dotplot"
+  strBtnBoxplot <- "Boxplot"
+  strBtnDistribution <- "Distribution"
+  strBtnProcessing <- "Processing..."
+  strFrmSave <- "Save as"
+  strLblSave <- "Name for result:"
+  strBtnSaveObject <- "Save as object"
+  strBtnSaveImage <- "Save as image"
+  strBtnObjectSaved <- "Object saved"
+  strLblMainTitleDotplot <- "Mean peak height grouped by capillary for"
+  strLblMainTitleBoxplot <- "Mean peak height by capillary for"
+  strLblMainTitleDistribution <- "Mean peak height for"
+  strLblMainSubTitleDotplot <- "[dotted blue line indicate global mean, red line indicate median per capillary]"
+  strLblXTitleInjection <- "Injection"
+  strLblXTitleCapillary <- "Capillary"
+  strLblXTitleDensity <- "Density"
+  strLblYTitleMean <- "Mean peak height (RFU)"
+  strMsgNull <- "Data frame is NULL or NA!"
+  strMsgTitleError <- "Error"
+
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+
+    strtmp <- dtStrings["strWinTitle"]$value
+    strWinTitle <- ifelse(is.na(strtmp), strWinTitle, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataset"]$value
+    strLblDataset <- ifelse(is.na(strtmp), strLblDataset, strtmp)
+
+    strtmp <- dtStrings["strDrpDataset"]$value
+    strDrpDataset <- ifelse(is.na(strtmp), strDrpDataset, strtmp)
+
+    strtmp <- dtStrings["strLblRows"]$value
+    strLblRows <- ifelse(is.na(strtmp), strLblRows, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strChkOverride"]$value
+    strChkOverride <- ifelse(is.na(strtmp), strChkOverride, strtmp)
+
+    strtmp <- dtStrings["strLblTitlePlot"]$value
+    strLblTitlePlot <- ifelse(is.na(strtmp), strLblTitlePlot, strtmp)
+
+    strtmp <- dtStrings["strLblTitleSub"]$value
+    strLblTitleSub <- ifelse(is.na(strtmp), strLblTitleSub, strtmp)
+
+    strtmp <- dtStrings["strLblTitleX"]$value
+    strLblTitleX <- ifelse(is.na(strtmp), strLblTitleX, strtmp)
+
+    strtmp <- dtStrings["strLblTitleY"]$value
+    strLblTitleY <- ifelse(is.na(strtmp), strLblTitleY, strtmp)
+
+    strtmp <- dtStrings["strExpPoints"]$value
+    strExpPoints <- ifelse(is.na(strtmp), strExpPoints, strtmp)
+
+    strtmp <- dtStrings["strLblShape"]$value
+    strLblShape <- ifelse(is.na(strtmp), strLblShape, strtmp)
+
+    strtmp <- dtStrings["strLblAlpha"]$value
+    strLblAlpha <- ifelse(is.na(strtmp), strLblAlpha, strtmp)
+
+    strtmp <- dtStrings["strExpAxes"]$value
+    strExpAxes <- ifelse(is.na(strtmp), strExpAxes, strtmp)
+
+    strtmp <- dtStrings["strLblLimitY"]$value
+    strLblLimitY <- ifelse(is.na(strtmp), strLblLimitY, strtmp)
+
+    strtmp <- dtStrings["strFrmPlot"]$value
+    strFrmPlot <- ifelse(is.na(strtmp), strFrmPlot, strtmp)
+
+    strtmp <- dtStrings["strBtnDotplot"]$value
+    strBtnDotplot <- ifelse(is.na(strtmp), strBtnDotplot, strtmp)
+
+    strtmp <- dtStrings["strBtnBoxplot"]$value
+    strBtnBoxplot <- ifelse(is.na(strtmp), strBtnBoxplot, strtmp)
+
+    strtmp <- dtStrings["strBtnDistribution"]$value
+    strBtnDistribution <- ifelse(is.na(strtmp), strBtnDistribution, strtmp)
+
+    strtmp <- dtStrings["strBtnProcessing"]$value
+    strBtnProcessing <- ifelse(is.na(strtmp), strBtnProcessing, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblSave"]$value
+    strLblSave <- ifelse(is.na(strtmp), strLblSave, strtmp)
+
+    strtmp <- dtStrings["strBtnSaveObject"]$value
+    strBtnSaveObject <- ifelse(is.na(strtmp), strBtnSaveObject, strtmp)
+
+    strtmp <- dtStrings["strBtnSaveImage"]$value
+    strBtnSaveImage <- ifelse(is.na(strtmp), strBtnSaveImage, strtmp)
+
+    strtmp <- dtStrings["strBtnObjectSaved"]$value
+    strBtnObjectSaved <- ifelse(is.na(strtmp), strBtnObjectSaved, strtmp)
+
+    strtmp <- dtStrings["strLblMainTitleDotplot"]$value
+    strLblMainTitleDotplot <- ifelse(is.na(strtmp), strLblMainTitleDotplot, strtmp)
+
+    strtmp <- dtStrings["strLblMainTitleBoxplot"]$value
+    strLblMainTitleBoxplot <- ifelse(is.na(strtmp), strLblMainTitleBoxplot, strtmp)
+
+    strtmp <- dtStrings["strLblMainTitleDistribution"]$value
+    strLblMainTitleDistribution <- ifelse(is.na(strtmp), strLblMainTitleDistribution, strtmp)
+
+    strtmp <- dtStrings["strLblMainSubTitleDotplot"]$value
+    strLblMainSubTitleDotplot <- ifelse(is.na(strtmp), strLblMainSubTitleDotplot, strtmp)
+
+    strtmp <- dtStrings["strLblXTitleInjection"]$value
+    strLblXTitleInjection <- ifelse(is.na(strtmp), strLblXTitleInjection, strtmp)
+
+    strtmp <- dtStrings["strLblXTitleCapillary"]$value
+    strLblXTitleCapillary <- ifelse(is.na(strtmp), strLblXTitleCapillary, strtmp)
+
+    strtmp <- dtStrings["strLblXTitleDensity"]$value
+    strLblXTitleDensity <- ifelse(is.na(strtmp), strLblXTitleDensity, strtmp)
+
+    strtmp <- dtStrings["strLblYTitleMean"]$value
+    strLblYTitleMean <- ifelse(is.na(strtmp), strLblYTitleMean, strtmp)
+
+    strtmp <- dtStrings["strMsgNull"]$value
+    strMsgNull <- ifelse(is.na(strtmp), strMsgNull, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleError"]$value
+    strMsgTitleError <- ifelse(is.na(strtmp), strMsgTitleError, strtmp)
+  }
+
+  # WINDOW ####################################################################
+
   # Main window.
-  w <- gwindow(title = "Plot capillary balance", visible = FALSE)
+  w <- gwindow(title = strWinTitle, visible = FALSE)
 
   # Runs when window is closed.
   addHandlerUnrealize(w, handler = function(h, ...) {
@@ -100,32 +271,32 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("plotCapillary_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # FRAME 0 ###################################################################
 
   f0 <- gframe(
-    text = "Dataset",
+    text = strFrmDataset,
     horizontal = TRUE,
     spacing = 2,
     container = gv
   )
 
-  glabel(text = "Select dataset:", container = f0)
+  glabel(text = strLblDataset, container = f0)
 
   dataset_drp <- gcombobox(
     items = c(
-      "<Select dataset>",
+      strDrpDataset,
       listObjects(
         env = env,
         obj.class = "data.frame"
@@ -137,7 +308,10 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
     ellipsize = "none"
   )
 
-  f0_samples_lbl <- glabel(text = " (0 rows)", container = f0)
+  f0_samples_lbl <- glabel(
+    text = paste(" (0 ", strLblRows, ")", sep = ""),
+    container = f0
+  )
 
   addHandlerChanged(dataset_drp, handler = function(h, ...) {
     val_obj <- svalue(dataset_drp)
@@ -162,8 +336,7 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
       svalue(f5_save_edt) <- paste(val_obj, "_ggplot", sep = "")
 
       svalue(f0_samples_lbl) <- paste(" (",
-        nrow(.gData),
-        " rows)",
+        nrow(.gData), " ", strLblRows, ")",
         sep = ""
       )
 
@@ -176,21 +349,21 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
       .gData <<- NULL
       svalue(f5_save_edt) <- ""
       svalue(dataset_drp, index = TRUE) <- 1
-      svalue(f0_samples_lbl) <- " (0 rows)"
+      svalue(f0_samples_lbl) <- paste(" (0 ", strLblRows, ")", sep = "")
     }
   })
 
   # FRAME 1 ###################################################################
 
   f1 <- gframe(
-    text = "Options",
+    text = strFrmOptions,
     horizontal = FALSE,
     spacing = 2,
     container = gv
   )
 
   titles_chk <- gcheckbox(
-    text = "Override automatic titles.",
+    text = strChkOverride,
     checked = FALSE, container = f1
   )
 
@@ -205,56 +378,48 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
   )
 
   # Legends
-  glabel(text = "Plot title:", container = titles_group, anchor = c(-1, 0))
+  glabel(text = strLblTitlePlot, container = titles_group, anchor = c(-1, 0))
   title_edt <- gedit(expand = TRUE, fill = TRUE, container = titles_group)
 
-  glabel(text = "2nd line:", container = titles_group, anchor = c(-1, 0))
+  glabel(text = strLblTitleSub, container = titles_group, anchor = c(-1, 0))
   sub_title_edt <- gedit(expand = TRUE, fill = TRUE, container = titles_group)
 
-  glabel(text = "X title:", container = titles_group, anchor = c(-1, 0))
+  glabel(text = strLblTitleX, container = titles_group, anchor = c(-1, 0))
   x_title_edt <- gedit(expand = TRUE, fill = TRUE, container = titles_group)
 
-  glabel(text = "Y title:", container = titles_group, anchor = c(-1, 0))
+  glabel(text = strLblTitleY, container = titles_group, anchor = c(-1, 0))
   y_title_edt <- gedit(expand = TRUE, fill = TRUE, container = titles_group)
 
 
   # FRAME 7 ###################################################################
 
   f7 <- gframe(
-    text = "Plot capillary balance data",
-    horizontal = FALSE,
+    text = strFrmPlot,
+    horizontal = TRUE,
     container = gv,
     spacing = 5
   )
 
-  plot_dot_btn <- gbutton(text = "Dotplot", container = f7)
+  plot_dot_btn <- gbutton(text = strBtnDotplot, container = f7)
 
-  plot_box_btn <- gbutton(text = "Boxplot", container = f7)
+  plot_box_btn <- gbutton(text = strBtnBoxplot, container = f7)
 
-  plot_dst_btn <- gbutton(text = "Distribution", container = f7)
+  plot_dst_btn <- gbutton(text = strBtnDistribution, container = f7)
 
   addHandlerChanged(plot_dot_btn, handler = function(h, ...) {
+    val_obj <- svalue(dataset_drp)
 
-    # Check if suitable for plot.
+    # Check if suitable.
     requiredCol <- c(
       "Instrument", "Instrument.ID", "Run", "Mean.Height",
       "Injection", "Capillary", "Well", "Comment"
     )
+    ok <- checkDataset(
+      name = val_obj, reqcol = requiredCol,
+      env = env, parent = w, debug = debug
+    )
 
-    if (!all(requiredCol %in% colnames(.gData))) {
-      missingCol <- requiredCol[!requiredCol %in% colnames(.gData)]
-
-      message <- paste("Additional columns required:\n",
-        paste(missingCol, collapse = "\n"),
-        sep = ""
-      )
-
-      gmessage(message,
-        title = "message",
-        icon = "error",
-        parent = w
-      )
-    } else {
+    if (ok) {
       enabled(plot_dot_btn) <- FALSE
       .plotBalance(what = "dotplot")
       enabled(plot_dot_btn) <- TRUE
@@ -262,27 +427,19 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
   })
 
   addHandlerChanged(plot_box_btn, handler = function(h, ...) {
+    val_obj <- svalue(dataset_drp)
 
-    # Check if suitable for plot.
+    # Check if suitable.
     requiredCol <- c(
       "Instrument", "Instrument.ID", "Run", "Mean.Height",
       "Injection", "Capillary", "Well", "Comment"
     )
+    ok <- checkDataset(
+      name = val_obj, reqcol = requiredCol,
+      env = env, parent = w, debug = debug
+    )
 
-    if (!all(requiredCol %in% colnames(.gData))) {
-      missingCol <- requiredCol[!requiredCol %in% colnames(.gData)]
-
-      message <- paste("Additional columns required:\n",
-        paste(missingCol, collapse = "\n"),
-        sep = ""
-      )
-
-      gmessage(message,
-        title = "message",
-        icon = "error",
-        parent = w
-      )
-    } else {
+    if (ok) {
       enabled(plot_box_btn) <- FALSE
       .plotBalance(what = "boxplot")
       enabled(plot_box_btn) <- TRUE
@@ -290,27 +447,19 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
   })
 
   addHandlerChanged(plot_dst_btn, handler = function(h, ...) {
+    val_obj <- svalue(dataset_drp)
 
-    # Check if suitable for plot.
+    # Check if suitable.
     requiredCol <- c(
       "Instrument", "Instrument.ID", "Run", "Mean.Height",
       "Injection", "Capillary", "Well", "Comment"
     )
+    ok <- checkDataset(
+      name = val_obj, reqcol = requiredCol,
+      env = env, parent = w, debug = debug
+    )
 
-    if (!all(requiredCol %in% colnames(.gData))) {
-      missingCol <- requiredCol[!requiredCol %in% colnames(.gData)]
-
-      message <- paste("Additional columns required:\n",
-        paste(missingCol, collapse = "\n"),
-        sep = ""
-      )
-
-      gmessage(message,
-        title = "message",
-        icon = "error",
-        parent = w
-      )
-    } else {
+    if (ok) {
       enabled(plot_dst_btn) <- FALSE
       .plotBalance(what = "dstplot")
       enabled(plot_dst_btn) <- TRUE
@@ -320,26 +469,26 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
   # FRAME 5 ###################################################################
 
   f5 <- gframe(
-    text = "Save as",
+    text = strFrmSave,
     horizontal = TRUE,
     spacing = 2,
     container = gv
   )
 
-  glabel(text = "Name for result:", container = f5)
+  glabel(text = strLblSave, container = f5)
 
   f5_save_edt <- gedit(expand = TRUE, fill = TRUE, container = f5)
 
-  f5_save_btn <- gbutton(text = "Save as object", container = f5)
+  f5_save_btn <- gbutton(text = strBtnSaveObject, container = f5)
 
-  f5_ggsave_btn <- gbutton(text = "Save as image", container = f5)
+  f5_ggsave_btn <- gbutton(text = strBtnSaveImage, container = f5)
 
   addHandlerClicked(f5_save_btn, handler = function(h, ...) {
     val_name <- svalue(f5_save_edt)
 
     # Change button.
     blockHandlers(f5_save_btn)
-    svalue(f5_save_btn) <- "Processing..."
+    svalue(f5_save_btn) <- strBtnProcessing
     unblockHandlers(f5_save_btn)
     enabled(f5_save_btn) <- FALSE
 
@@ -351,7 +500,7 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
 
     # Change button.
     blockHandlers(f5_save_btn)
-    svalue(f5_save_btn) <- "Object saved"
+    svalue(f5_save_btn) <- strBtnObjectSaved
     unblockHandlers(f5_save_btn)
   })
 
@@ -368,7 +517,7 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
   # ADVANCED OPTIONS ##########################################################
 
   e2 <- gexpandgroup(
-    text = "Data points",
+    text = strExpPoints,
     horizontal = FALSE,
     container = f1
   )
@@ -378,14 +527,14 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
 
   grid2 <- glayout(container = e2)
 
-  grid2[1, 1] <- glabel(text = "Shape:", container = grid2)
+  grid2[1, 1] <- glabel(text = strLblShape, container = grid2)
   grid2[1, 2] <- e2_shape_spb <- gspinbutton(
     from = 0, to = 25,
     by = 1, value = 18,
     container = grid2
   )
 
-  grid2[1, 3] <- glabel(text = "Alpha:", container = grid2)
+  grid2[1, 3] <- glabel(text = strLblAlpha, container = grid2)
   grid2[1, 4] <- e2_alpha_spb <- gspinbutton(
     from = 0, to = 1,
     by = 0.01, value = 1,
@@ -395,7 +544,7 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
   # FRAME 3 ###################################################################
 
   e3 <- gexpandgroup(
-    text = "Axes",
+    text = strExpAxes,
     horizontal = FALSE,
     container = f1
   )
@@ -405,7 +554,7 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
 
   grid3 <- glayout(container = e3, spacing = 1)
 
-  grid3[1, 1:2] <- glabel(text = "Limit Y axis (min-max)", container = grid3)
+  grid3[1, 1:2] <- glabel(text = strLblLimitY, container = grid3)
   grid3[2, 1] <- e3_y_min_edt <- gedit(text = "", width = 5, container = grid3)
   grid3[2, 2] <- e3_y_max_edt <- gedit(text = "", width = 5, container = grid3)
 
@@ -504,14 +653,14 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
           xTitle <- val_x_title
           yTitle <- val_y_title
         } else {
-          mainTitle <- paste("Mean peak height grouped by capillary for ",
+          mainTitle <- paste(strLblMainTitleDotplot, " ",
             unique(.gData$Instrument.ID),
             " (", unique(.gData$Instrument), ")",
             sep = ""
           )
-          subTitle <- "[dotted blue line indicate global mean, red line indicate median per capillary]"
-          xTitle <- "Injection"
-          yTitle <- "Mean peak height (RFU)"
+          subTitle <- strLblMainSubTitleDotplot
+          xTitle <- strLblXTitleInjection
+          yTitle <- strLblYTitleMean
         }
 
         # POINT (best for few replicates (injections))
@@ -532,14 +681,14 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
           xTitle <- val_x_title
           yTitle <- val_y_title
         } else {
-          mainTitle <- paste("Mean peak height per capillary for ",
+          mainTitle <- paste(strLblMainTitleBoxplot, " ",
             unique(.gData$Instrument.ID),
             " (", unique(.gData$Instrument), ")",
             sep = ""
           )
           subTitle <- ""
-          xTitle <- "Capillary"
-          yTitle <- "Mean peak height (RFU)"
+          xTitle <- strLblXTitleCapillary
+          yTitle <- strLblYTitleMean
         }
 
         # BOXPLOT (best suited for many replicates (injections))
@@ -561,14 +710,14 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
           xTitle <- val_x_title
           yTitle <- val_y_title
         } else {
-          mainTitle <- paste("Mean peak height for ",
+          mainTitle <- paste(strLblMainTitleDistribution, " ",
             unique(.gData$Instrument.ID),
             " (", unique(.gData$Instrument), ")",
             sep = ""
           )
           subTitle <- ""
-          xTitle <- "Mean peak height (RFU)"
-          yTitle <- "Density"
+          xTitle <- strLblYTitleMean
+          yTitle <- strLblXTitleDensity
         }
 
         # DISTRIBUTION PLOT.
@@ -594,15 +743,15 @@ plotCapillary_gui <- function(env = parent.frame(), savegui = NULL, debug = FALS
       print(gp)
 
       # Change save button.
-      svalue(f5_save_btn) <- "Save as object"
+      svalue(f5_save_btn) <- strBtnSaveObject
       enabled(f5_save_btn) <- TRUE
 
       # Store in global variable.
       .gPlot <<- gp
     } else {
       gmessage(
-        msg = "Data frame is NULL or NA!",
-        title = "Error",
+        msg = strMsgNull,
+        title = strMsgTitleError,
         icon = "error"
       )
     }

@@ -4,16 +4,26 @@
 \alias{export}
 \title{Export}
 \usage{
-export(object, name = NA, use.object.name = is.na(name),
-  env = parent.frame(), path = NA, ext = "auto", delim = "\\t",
-  width = 3000, height = 2000, res = 250, overwrite = FALSE,
-  debug = FALSE)
+export(
+  object,
+  name = NA,
+  use.object.name = is.na(name),
+  env = parent.frame(),
+  path = NA,
+  ext = "auto",
+  delim = "\\t",
+  width = 3000,
+  height = 2000,
+  res = 250,
+  overwrite = FALSE,
+  debug = FALSE
+)
 }
 \arguments{
 \item{object}{string, list or vector containing object names to be exported.}
 
 \item{name}{string, list or vector containing file names.
-Multiple names as string must be separated by pipe '|'.
+Multiple names as string must be separated by pipe '|' or comma ','.
 If not equal number of names as objects, first name will be used to construct names.}
 
 \item{use.object.name}{logical, if TRUE file name will be the same as object name.}

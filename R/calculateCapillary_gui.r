@@ -1,5 +1,8 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 04.07.2020: Added missing string variable.
+# 03.03.2020: Fixed reference to function name.
+# 29.02.2020: Added language support.
 # 17.02.2019: Fixed Error in if (svalue(savegui_chk)) { : argument is of length zero (tcltk)
 # 06.08.2017: Added audit trail.
 # 13.07.2017: Fixed issue with button handlers.
@@ -44,14 +47,105 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
   .gPlot <- NULL
   .gPlotName <- NULL
 
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
+
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
+    print(paste("IN:", fnc))
+  }
+
+  # Default strings.
+  strWinTitle <- "Calculate capillary balance"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Dataset"
+  strLblDataSample <- "Samples Table:"
+  strDrpDefault <- "<Select dataset>"
+  strLblSamples <- "samples"
+  strLblDataSizing <- "Sample Plot Sizing Table:"
+  strLblSampleFiles <- "sample files"
+  strFrmOptions <- "Options"
+  strLblRun <- "Run name:"
+  strLblRunMsg <- "Optional run name"
+  strLblThreshold <- "Sizing quality threshold:"
+  strFrmSave <- "Save as"
+  strLblSave <- "Name for result:"
+  strBtnCalculate <- "Calculate"
+  strBtnProcessing <- "Processing..."
+  strMsgDataset <- "A 'Samples Table' dataset and a 'SamplePlotSizing' dataset have to be selected."
+  strMsgTitleDataset <- "Datasets not selected"
+
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+
+    strtmp <- dtStrings["strWinTitle"]$value
+    strWinTitle <- ifelse(is.na(strtmp), strWinTitle, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataSample"]$value
+    strLblDataSample <- ifelse(is.na(strtmp), strLblDataSample, strtmp)
+
+    strtmp <- dtStrings["strDrpDefault"]$value
+    strDrpDefault <- ifelse(is.na(strtmp), strDrpDefault, strtmp)
+
+    strtmp <- dtStrings["strLblSamples"]$value
+    strLblSamples <- ifelse(is.na(strtmp), strLblSamples, strtmp)
+
+    strtmp <- dtStrings["strLblDataSizing"]$value
+    strLblDataSizing <- ifelse(is.na(strtmp), strLblDataSizing, strtmp)
+
+    strtmp <- dtStrings["strLblSampleFiles"]$value
+    strLblSampleFiles <- ifelse(is.na(strtmp), strLblSampleFiles, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strLblRun"]$value
+    strLblRun <- ifelse(is.na(strtmp), strLblRun, strtmp)
+
+    strtmp <- dtStrings["strLblRunMsg"]$value
+    strLblRunMsg <- ifelse(is.na(strtmp), strLblRunMsg, strtmp)
+
+    strtmp <- dtStrings["strLblThreshold"]$value
+    strLblThreshold <- ifelse(is.na(strtmp), strLblThreshold, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblSave"]$value
+    strLblSave <- ifelse(is.na(strtmp), strLblSave, strtmp)
+
+    strtmp <- dtStrings["strBtnCalculate"]$value
+    strBtnCalculate <- ifelse(is.na(strtmp), strBtnCalculate, strtmp)
+
+    strtmp <- dtStrings["strBtnProcessing"]$value
+    strBtnProcessing <- ifelse(is.na(strtmp), strBtnProcessing, strtmp)
+    
+    strtmp <- dtStrings["strMsgDataset"]$value
+    strMsgDataset <- ifelse(is.na(strtmp), strMsgDataset, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleDataset"]$value
+    strMsgTitleDataset <- ifelse(is.na(strtmp), strMsgTitleDataset, strtmp)
   }
 
   # WINDOW ####################################################################
 
   # Main window.
-  w <- gwindow(title = "Calculate capillary balance", visible = FALSE)
+  w <- gwindow(title = strWinTitle, visible = FALSE)
 
   # Runs when window is closed.
   addHandlerUnrealize(w, handler = function(h, ...) {
@@ -94,22 +188,22 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("calculateCapillary_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # FRAME 0 ###################################################################
 
   f0 <- gframe(
-    text = "Select datasets",
+    text = strFrmDataset,
     horizontal = TRUE,
     spacing = 5,
     container = gv
@@ -119,9 +213,9 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
 
   # Samples -------------------------------------------------------------------
 
-  g0[1, 1] <- glabel(text = "Samples Table:", container = g0)
+  g0[1, 1] <- glabel(text = strLblDataSample, container = g0)
 
-  dfs <- c("<Select a dataset>", listObjects(env = env, obj.class = "data.frame"))
+  dfs <- c(strDrpDefault, listObjects(env = env, obj.class = "data.frame"))
 
   g0[1, 2] <- g0_data_drp <- gcombobox(
     items = dfs,
@@ -130,7 +224,10 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
     container = g0,
     ellipsize = "none"
   )
-  g0[1, 3] <- g0_data_samples_lbl <- glabel(text = " 0 samples", container = g0)
+  g0[1, 3] <- g0_data_samples_lbl <- glabel(
+    text = paste(" 0", strLblSamples),
+    container = g0
+  )
 
   addHandlerChanged(g0_data_drp, handler = function(h, ...) {
     val_obj <- svalue(g0_data_drp)
@@ -152,7 +249,7 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
       .gSamplesName <<- val_obj
       svalue(g0_data_samples_lbl) <- paste(
         length(unique(.gSamples$Sample.Name)),
-        "samples."
+        strLblSamples
       )
       svalue(f4_save_edt) <- paste(val_obj, "_cap", sep = "")
     } else {
@@ -161,14 +258,14 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
       .gSamples <<- NULL
       .gSamplesName <<- NULL
       svalue(g0_data_drp, index = TRUE) <- 1
-      svalue(g0_data_samples_lbl) <- " 0 samples"
+      svalue(g0_data_samples_lbl) <- paste(" 0", strLblSamples)
       svalue(f4_save_edt) <- ""
     }
   })
 
   # Plot ----------------------------------------------------------------------
 
-  g0[2, 1] <- glabel(text = "Sample Plot Sizing Table:", container = g0)
+  g0[2, 1] <- glabel(text = strLblDataSizing, container = g0)
 
   # NB! dfs defined in previous section.
   g0[2, 2] <- g0_ref_drp <- gcombobox(
@@ -179,7 +276,10 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
     ellipsize = "none"
   )
 
-  g0[2, 3] <- g0_ref_samples_lbl <- glabel(text = " 0 sample files", container = g0)
+  g0[2, 3] <- g0_ref_samples_lbl <- glabel(
+    text = paste(" 0", strLblSampleFiles),
+    container = g0
+  )
 
   addHandlerChanged(g0_ref_drp, handler = function(h, ...) {
     val_obj <- svalue(g0_ref_drp)
@@ -206,14 +306,14 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
       .gPlot <<- NULL
       .gPlotName <<- NULL
       svalue(g0_ref_drp, index = TRUE) <- 1
-      svalue(g0_ref_samples_lbl) <- " 0 sample files"
+      svalue(g0_ref_samples_lbl) <- paste(" 0", strLblSampleFiles)
     }
   })
 
   # FRAME 1 ###################################################################
 
   f1 <- gframe(
-    text = "Options",
+    text = strFrmOptions,
     horizontal = FALSE,
     spacing = 10,
     container = gv
@@ -221,14 +321,14 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
 
   f1g1 <- ggroup(horizontal = TRUE, spacing = 5, container = f1)
   glabel(
-    text = "Run name:", initial.msg = "Optional run name",
+    text = strLblRun, initial.msg = strLblRunMsg,
     anchor = c(-1, 0), container = f1g1
   )
   f1_run_edt <- gedit(text = "", width = 45, container = f1g1)
 
   f1g2 <- ggroup(horizontal = TRUE, spacing = 5, container = f1)
   glabel(
-    text = "Sizing quality threshold:",
+    text = strLblThreshold,
     anchor = c(-1, 0), container = f1g2
   )
   f1_sq_spb <- gspinbutton(
@@ -239,19 +339,19 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
   # FRAME 4 ###################################################################
 
   f4 <- gframe(
-    text = "Save as",
+    text = strFrmSave,
     horizontal = TRUE,
     spacing = 5,
     container = gv
   )
 
-  glabel(text = "Name for result:", container = f4)
+  glabel(text = strLblSave, container = f4)
 
   f4_save_edt <- gedit(text = "", expand = TRUE, container = f4)
 
   # BUTTON ####################################################################
 
-  calculate_btn <- gbutton(text = "Calculate", container = gv)
+  calculate_btn <- gbutton(text = strBtnCalculate, container = gv)
 
   addHandlerClicked(calculate_btn, handler = function(h, ...) {
 
@@ -282,7 +382,7 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
 
       # Change button.
       blockHandlers(calculate_btn)
-      svalue(calculate_btn) <- "Processing..."
+      svalue(calculate_btn) <- strBtnProcessing
       unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
 
@@ -302,7 +402,7 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
       # Update audit trail.
       datanew <- auditTrail(
         obj = datanew, key = keys, value = values,
-        label = "calculateCapillary_gui", arguments = FALSE,
+        label = fnc, arguments = FALSE,
         package = "strvalidator"
       )
 
@@ -311,17 +411,16 @@ calculateCapillary_gui <- function(env = parent.frame(), savegui = NULL,
 
       if (debug) {
         print(head(datanew))
-        print(paste("EXIT:", match.call()[[1]]))
+        print(paste("EXIT:", fnc))
       }
 
       # Close GUI.
       .saveSettings()
       dispose(w)
     } else {
-      message <- "A 'Samples Table' dataset and a 'SamplePlotSizing' dataset have to be selected."
-
-      gmessage(message,
-        title = "Datasets not selected",
+      gmessage(
+        msg = strMsgDataset,
+        title = strMsgTitleDataset,
         icon = "error",
         parent = w
       )

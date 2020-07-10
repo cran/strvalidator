@@ -4,8 +4,14 @@
 \alias{calculateAllT}
 \title{Calculate Stochastic Thresholds}
 \usage{
-calculateAllT(data, kit, p.dropout = 0.01, p.conservative = 0.05,
-  rm.sex = TRUE, debug = FALSE)
+calculateAllT(
+  data,
+  kit,
+  p.dropout = 0.01,
+  p.conservative = 0.05,
+  rm.sex = TRUE,
+  debug = FALSE
+)
 }
 \arguments{
 \item{data}{output from \code{\link{calculateDropout}}.}
@@ -38,7 +44,7 @@ Explanation of the result:
 Explanatory_variable - Drop-out is the dependent variable.
 An allele in heterozygous markers in the reference profile is chosen and
 drop-out is scored if the other allele is not observed in the sample, i.e.
-below the LDT. The 'Random' method chose a random allele, while the 'LMW'
+below the AT. The 'Random' method chose a random allele, while the 'LMW'
 and 'HMW' method chose the low and high molecular weight allele, respectively.
 The 'Locus' method score drop-out if any of the two alleles has dropped out.
 As explanatory variable the peak height of the surviving allele '(Ph)',

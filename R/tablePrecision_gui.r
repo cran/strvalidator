@@ -1,5 +1,11 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 07.06.2020: Added .Deprecated("calculateStatistics_gui")
+# 03.05.2020: Added language support.
+# 02.05.2019: Further adjustments to tables in gui and handlers.
+# 26.03.2019: Further adjustments to tables in gui and handlers.
+# 24.03.2019: Improved tables with set initial height.
+# 23.03.2019: Fixed save field not expanded (tcltk)
 # 17.02.2019: Fixed Error in if (svalue(savegui_chk)) { : argument is of length zero (tcltk)
 # 23.07.2018: Made 'Save as' textbox expandable.
 # 07.08.2017: Added audit trail.
@@ -14,9 +20,6 @@
 # 28.06.2014: Added help button and moved save gui checkbox.
 # 08.05.2014: Implemented 'checkDataset'.
 # 06.02.2014: Fixed button locks when error.
-# 06.02.2014: Changed name calculatePrecision_gui -> tablePrecision_gui
-# 12.01.2014: Replaced 'subset' with native code.
-# 08.12.2013: First version.
 
 #' @title Table Precision
 #'
@@ -43,25 +46,149 @@
 
 tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
                                debug = FALSE, parent = NULL) {
+  .Deprecated("calculateStatistics_gui")
 
   # Global variables.
-  .gData <- data.frame(Columns = "NA")
+  # NB! Omitting 'stringsAsFactors = FALSE' creates really strange behaviour.
+  .gData <- data.frame(Please.select.a.dataset = NA, stringsAsFactors = FALSE)
   .gRef <- NULL
   .gDataName <- NULL
   .gRefName <- NULL
 
+  # Language ------------------------------------------------------------------
+
+  # Get this functions name from call.
+  fnc <- as.character(match.call()[[1]])
+
   if (debug) {
-    print(paste("IN:", match.call()[[1]]))
+    print(paste("IN:", fnc))
+  }
+
+  # Default strings.
+  strWinTitle <- "Calculate summary statistics for precision"
+  strChkGui <- "Save GUI settings"
+  strBtnHelp <- "Help"
+  strFrmDataset <- "Dataset"
+  strLblDataset <- "Dataset:"
+  strDrpDataset <- "<Select dataset>"
+  strLblSamples <- "samples"
+  strFrmOptions <- "Options"
+  strRadReference <- "Filter by reference dataset"
+  strRadBins <- "Filter by kit bins"
+  strRadNone <- "Do not filter"
+  strLblReference <- "Reference dataset:"
+  strChkIgnore <- "Ignore case"
+  strBtnCheck <- "Check subsetting"
+  strLblKit <- "Kit:"
+  strChkExclude <- "Exclude virtual bins"
+  strFrmKey <- "Create key from columns"
+  strEdtMessage <- "Doubleklick or drag column names to list"
+  strFrmTarget <- "Calculate precision for target columns"
+  strFrmSave <- "Save as"
+  strLblSave <- "Name for result:"
+  strBtnCalculate <- "Calculate"
+  strBtnProcessing <- "Processing..."
+  strMsgDataset <- "A dataset and a reference dataset have to be selected."
+  strMsgCheck <- "Data frame is NULL!\n\nMake sure to select a sample dataset."
+  strMsgTitleDataset <- "Datasets not selected"
+  strWinTitleCheck <- "Check subsetting"
+  strMsgTitleError <- "Error"
+
+  # Get strings from language file.
+  dtStrings <- getStrings(gui = fnc)
+
+  # If language file is found.
+  if (!is.null(dtStrings)) {
+    # Get language strings, use default if not found.
+    strtmp <- dtStrings["strWinTitle"]$value
+    strWinTitle <- ifelse(is.na(strtmp), strWinTitle, strtmp)
+
+    strtmp <- dtStrings["strChkGui"]$value
+    strChkGui <- ifelse(is.na(strtmp), strChkGui, strtmp)
+
+    strtmp <- dtStrings["strBtnHelp"]$value
+    strBtnHelp <- ifelse(is.na(strtmp), strBtnHelp, strtmp)
+
+    strtmp <- dtStrings["strFrmDataset"]$value
+    strFrmDataset <- ifelse(is.na(strtmp), strFrmDataset, strtmp)
+
+    strtmp <- dtStrings["strLblDataset"]$value
+    strLblDataset <- ifelse(is.na(strtmp), strLblDataset, strtmp)
+
+    strtmp <- dtStrings["strDrpDataset"]$value
+    strDrpDataset <- ifelse(is.na(strtmp), strDrpDataset, strtmp)
+
+    strtmp <- dtStrings["strLblSamples"]$value
+    strLblSamples <- ifelse(is.na(strtmp), strLblSamples, strtmp)
+
+    strtmp <- dtStrings["strFrmOptions"]$value
+    strFrmOptions <- ifelse(is.na(strtmp), strFrmOptions, strtmp)
+
+    strtmp <- dtStrings["strRadReference"]$value
+    strRadReference <- ifelse(is.na(strtmp), strRadReference, strtmp)
+
+    strtmp <- dtStrings["strRadBins"]$value
+    strRadBins <- ifelse(is.na(strtmp), strRadBins, strtmp)
+
+    strtmp <- dtStrings["strRadNone"]$value
+    strRadNone <- ifelse(is.na(strtmp), strRadNone, strtmp)
+
+    strtmp <- dtStrings["strLblReference"]$value
+    strLblReference <- ifelse(is.na(strtmp), strLblReference, strtmp)
+
+    strtmp <- dtStrings["strChkIgnore"]$value
+    strChkIgnore <- ifelse(is.na(strtmp), strChkIgnore, strtmp)
+
+    strtmp <- dtStrings["strBtnCheck"]$value
+    strBtnCheck <- ifelse(is.na(strtmp), strBtnCheck, strtmp)
+
+    strtmp <- dtStrings["strLblKit"]$value
+    strLblKit <- ifelse(is.na(strtmp), strLblKit, strtmp)
+
+    strtmp <- dtStrings["strChkExclude"]$value
+    strChkExclude <- ifelse(is.na(strtmp), strChkExclude, strtmp)
+
+    strtmp <- dtStrings["strFrmKey"]$value
+    strFrmKey <- ifelse(is.na(strtmp), strFrmKey, strtmp)
+
+    strtmp <- dtStrings["strEdtMessage"]$value
+    strEdtMessage <- ifelse(is.na(strtmp), strEdtMessage, strtmp)
+
+    strtmp <- dtStrings["strFrmTarget"]$value
+    strFrmTarget <- ifelse(is.na(strtmp), strFrmTarget, strtmp)
+
+    strtmp <- dtStrings["strFrmSave"]$value
+    strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
+
+    strtmp <- dtStrings["strLblSave"]$value
+    strLblSave <- ifelse(is.na(strtmp), strLblSave, strtmp)
+
+    strtmp <- dtStrings["strBtnCalculate"]$value
+    strBtnCalculate <- ifelse(is.na(strtmp), strBtnCalculate, strtmp)
+
+    strtmp <- dtStrings["strBtnProcessing"]$value
+    strBtnProcessing <- ifelse(is.na(strtmp), strBtnProcessing, strtmp)
+
+    strtmp <- dtStrings["strMsgDataset"]$value
+    strMsgDataset <- ifelse(is.na(strtmp), strMsgDataset, strtmp)
+
+    strtmp <- dtStrings["strMsgCheck"]$value
+    strMsgCheck <- ifelse(is.na(strtmp), strMsgCheck, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleDataset"]$value
+    strMsgTitleDataset <- ifelse(is.na(strtmp), strMsgTitleDataset, strtmp)
+
+    strtmp <- dtStrings["strWinTitleCheck"]$value
+    strWinTitleCheck <- ifelse(is.na(strtmp), strWinTitleCheck, strtmp)
+
+    strtmp <- dtStrings["strMsgTitleError"]$value
+    strMsgTitleError <- ifelse(is.na(strtmp), strMsgTitleError, strtmp)
   }
 
   # WINDOW ####################################################################
 
-  if (debug) {
-    print("WINDOW")
-  }
-
   # Main window.
-  w <- gwindow(title = "Calculate summary statistics for precision", visible = FALSE)
+  w <- gwindow(title = strWinTitle, visible = FALSE)
 
   # Runs when window is closed.
   addHandlerUnrealize(w, handler = function(h, ...) {
@@ -95,7 +222,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
 
   gv <- ggroup(
     horizontal = FALSE,
-    spacing = 8,
+    spacing = 5,
     use.scrollwindow = FALSE,
     container = w,
     expand = TRUE
@@ -104,24 +231,24 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
   # Help button group.
   gh <- ggroup(container = gv, expand = FALSE, fill = "both")
 
-  savegui_chk <- gcheckbox(text = "Save GUI settings", checked = FALSE, container = gh)
+  savegui_chk <- gcheckbox(text = strChkGui, checked = FALSE, container = gh)
 
   addSpring(gh)
 
-  help_btn <- gbutton(text = "Help", container = gh)
+  help_btn <- gbutton(text = strBtnHelp, container = gh)
 
   addHandlerChanged(help_btn, handler = function(h, ...) {
 
     # Open help page for function.
-    print(help("tablePrecision_gui", help_type = "html"))
+    print(help(fnc, help_type = "html"))
   })
 
   # FRAME 0 ###################################################################
 
   f0 <- gframe(
-    text = "Datasets",
+    text = strFrmDataset,
     horizontal = TRUE,
-    spacing = 5,
+    spacing = 2,
     container = gv
   )
 
@@ -129,9 +256,9 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
 
   # Dataset -------------------------------------------------------------------
 
-  g0[1, 1] <- glabel(text = "Select dataset:", container = g0)
+  g0[1, 1] <- glabel(text = strLblDataset, container = g0)
 
-  dfs <- c("<Select a dataset>", listObjects(env = env, obj.class = "data.frame"))
+  dfs <- c(strDrpDataset, listObjects(env = env, obj.class = "data.frame"))
 
   g0[1, 2] <- g0_data_drp <- gcombobox(
     items = dfs,
@@ -140,7 +267,10 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
     container = g0,
     ellipsize = "none"
   )
-  g0[1, 3] <- g0_data_samples_lbl <- glabel(text = " 0 samples", container = g0)
+  g0[1, 3] <- g0_data_samples_lbl <- glabel(
+    text = paste(" 0", strLblSamples),
+    container = g0
+  )
 
   addHandlerChanged(g0_data_drp, handler = function(h, ...) {
     val_obj <- svalue(g0_data_drp)
@@ -161,11 +291,14 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
       .refresh_key_tbl()
       .refresh_target_tbl()
 
+      svalue(f1_key_txt) <- ""
+      svalue(f1_target_txt) <- ""
+
       svalue(g0_data_samples_lbl) <- paste(
         length(unique(.gData$Sample.Name)),
-        "samples."
+        strLblSamples
       )
-      svalue(f4_save_edt) <- paste(val_obj, "_precision_table", sep = "")
+      svalue(save_edt) <- paste(val_obj, "_precision_stat", sep = "")
 
       # Detect kit.
       kitIndex <- detectKit(.gData, index = TRUE)
@@ -177,51 +310,36 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
     } else {
 
       # Reset components.
-      .gData <<- data.frame(Columns = "NA")
+      .gData <<- data.frame(Please.select.a.dataset = "NA")
       .gDataName <<- NULL
       svalue(g0_data_drp, index = TRUE) <- 1
-      svalue(g0_data_samples_lbl) <- " 0 samples"
-      svalue(f4_save_edt) <- ""
+      svalue(g0_data_samples_lbl) <- paste(" 0", strLblSamples)
+      svalue(save_edt) <- ""
       .refresh_key_tbl()
       .refresh_target_tbl()
+      svalue(f1_key_txt) <- ""
+      svalue(f1_target_txt) <- ""
     }
   })
 
   # FRAME 2 ###################################################################
 
   f2 <- gframe(
-    text = "Filter",
+    text = strFrmOptions,
     horizontal = FALSE,
-    spacing = 15,
+    spacing = 2,
     container = gv
   )
 
-  f2_options <- c(
-    "Filter by reference dataset",
-    "Filter by kit bins",
-    "Do not filter"
-  )
-
   f2_filter_opt <- gradio(
-    items = f2_options,
+    items = c(strRadReference, strRadBins, strRadNone),
     selected = 3,
     horizontal = FALSE,
     container = f2
   )
 
   addHandlerChanged(f2_filter_opt, handler = function(h, ...) {
-    val_opt <- svalue(f2_filter_opt, index = TRUE)
-
-    if (val_opt == 1) {
-      enabled(f2g1) <- TRUE
-      enabled(f2g2) <- FALSE
-    } else if (val_opt == 2) {
-      enabled(f2g1) <- FALSE
-      enabled(f2g2) <- TRUE
-    } else {
-      enabled(f2g1) <- FALSE
-      enabled(f2g2) <- FALSE
-    }
+    .updateGui()
   })
 
 
@@ -230,7 +348,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
   f2g1 <- glayout(container = f2, spacing = 1)
   enabled(f2g1) <- FALSE
 
-  f2g1[1, 1] <- glabel(text = "Select reference dataset:", container = f2g1)
+  f2g1[1, 1] <- glabel(text = strLblReference, container = f2g1)
 
   # NB! dfs defined in previous section.
   f2g1[2, 1] <- f2g1_ref_drp <- gcombobox(
@@ -241,9 +359,15 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
     ellipsize = "none"
   )
 
-  f2g1[2, 2] <- f2g1_ref_samples_lbl <- glabel(text = " 0 references", container = f2g1)
+  f2g1[2, 2] <- f2g1_ref_samples_lbl <- glabel(
+    text = paste(" 0", strLblSamples),
+    container = f2g1
+  )
 
-  f2g1[2, 3] <- f2g1_ignore_chk <- gcheckbox(text = "Ignore case", checked = TRUE, container = f2g1)
+  f2g1[2, 3] <- f2g1_ignore_chk <- gcheckbox(
+    text = strChkIgnore,
+    checked = TRUE, container = f2g1
+  )
 
 
   addHandlerChanged(f2g1_ref_drp, handler = function(h, ...) {
@@ -253,53 +377,26 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
       .gRef <<- get(val_obj, envir = env)
       .gRefName <<- val_obj
 
-      # Check if required columns...
+      # Check if suitable.
       requiredCol <- c("Sample.Name", "Marker", "Allele")
-      slimmed <- sum(grepl("Allele", names(.gRef), fixed = TRUE)) == 1
+      ok <- checkDataset(
+        name = val_obj, reqcol = requiredCol, slimcol = "Allele",
+        env = env, parent = w, debug = debug
+      )
 
-      if (!all(requiredCol %in% colnames(.gRef))) {
-        missingCol <- requiredCol[!requiredCol %in% colnames(.gRef)]
-
-        message <- paste("Additional columns required:\n",
-          paste(missingCol, collapse = "\n"),
-          sep = ""
-        )
-
-        gmessage(message,
-          title = "message",
-          icon = "error",
-          parent = w
-        )
-
-        # Reset components.
-        .gRef <<- NULL
-        .gRefName <<- NULL
-        svalue(f2g1_ref_drp, index = TRUE) <- 1
-        svalue(f2g1_ref_samples_lbl) <- " 0 references"
-      } else if (!slimmed) {
-        message <- paste("The dataset is too fat!\n\n",
-          "There can only be 1 'Allele' column\n",
-          "Slim the dataset in the 'EDIT' tab",
-          sep = ""
-        )
-
-        gmessage(message,
-          title = "message",
-          icon = "error",
-          parent = w
-        )
-
-        # Reset components.
-        .gRef <<- NULL
-        svalue(f2g1_ref_drp, index = TRUE) <- 1
-        svalue(f2g1_ref_samples_lbl) <- " 0 references"
-      } else {
+      if (ok) {
 
         # Load or change components.
         svalue(f2g1_ref_samples_lbl) <- paste(
           length(unique(.gRef$Sample.Name)),
-          "samples."
+          strLblSamples
         )
+      } else {
+
+        # Reset components.
+        .gRef <<- NULL
+        svalue(f2g1_ref_drp, index = TRUE) <- 1
+        svalue(f2g1_ref_samples_lbl) <- paste(" 0", strLblSamples)
       }
     } else {
 
@@ -312,7 +409,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
   # CHECK ---------------------------------------------------------------------
 
   f2g1[3, 1] <- f2g1_check_btn <- gbutton(
-    text = "Check subsetting",
+    text = strBtnCheck,
     container = f2g1
   )
 
@@ -328,7 +425,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
 
     if (!is.null(.gData) || !is.null(.gRef)) {
       chksubset_w <- gwindow(
-        title = "Check subsetting",
+        title = strWinTitleCheck,
         visible = FALSE, name = title,
         width = NULL, height = NULL, parent = w,
         handler = NULL, action = NULL
@@ -350,9 +447,8 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
       visible(chksubset_w) <- TRUE
     } else {
       gmessage(
-        msg = "Data frame is NULL!\n\n
-               Make sure to select a dataset and a reference set",
-        title = "Error",
+        msg = strMsgCheck,
+        title = strMsgTitleError,
         icon = "error"
       )
     }
@@ -363,7 +459,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
   f2g2 <- ggroup(horizontal = TRUE, container = f2)
   enabled(f2g2) <- FALSE
 
-  glabel(text = "Select kit:", container = f2g2)
+  glabel(text = strLblKit, container = f2g2)
 
   f2g2_kit_drp <- gcombobox(
     items = getKit(),
@@ -374,117 +470,185 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
   )
 
   f2g2_virtual_chk <- gcheckbox(
-    text = "Exclude virtual bins.",
+    text = strChkExclude,
     checked = TRUE,
     container = f2g2
   )
 
   # FRAME 1 ###################################################################
 
-  f1 <- gframe(
-    text = "Options",
-    horizontal = FALSE,
-    spacing = 5,
-    expand = TRUE,
-    container = gv
-  )
-
   # KEY -----------------------------------------------------------------------
 
-  f1_key_f <- gframe("Create key from columns",
+  f1_key_f <- gframe(
+    text = strFrmKey,
     horizontal = FALSE,
-    container = f1,
-    expand = TRUE
+    container = gv,
+    expand = TRUE,
+    fill = TRUE
   )
 
   f1_key_txt <- gedit(
-    initial.msg = "Doubleklick or drag column names to list",
-    width = 40,
+    initial.msg = strEdtMessage,
     container = f1_key_f
   )
 
+  # Populate table.
   f1_key_tbl <- gWidgets2::gtable(
     items = names(.gData),
     container = f1_key_f,
     expand = TRUE
   )
+  # Set initial table size.
+  size(f1_key_tbl) <- list(height = 100, width = 350, column.widths = 350)
 
+  # Add click handler to table widget.
+  addHandlerDoubleclick(f1_key_tbl, handler = function(h, ...) {
+
+    # Get values.
+    tbl_val <- svalue(h$obj, index = FALSE)
+    key_val <- svalue(f1_key_txt)
+
+    # Check that the action was on a list element.
+    if (!identical(tbl_val, character(0)) && length(tbl_val) > 0) {
+
+      # Add new value to selected.
+      new <- ifelse(nchar(key_val) > 0,
+        paste(key_val, tbl_val, sep = ","),
+        tbl_val
+      )
+
+      # Update text box.
+      svalue(f1_key_txt) <- new
+
+      # Update column name table.
+      tmp_tbl <- f1_key_tbl[] # Get all values.
+
+      # Remove value added to selected and Update table.
+      f1_key_tbl[] <- tmp_tbl[tmp_tbl != tbl_val]
+    }
+  })
+
+  # Add a drop source to the table.
+  addDropSource(f1_key_tbl, handler = function(h, ...) svalue(h$obj))
+
+  # Add the edit widget as a drop target.
   addDropTarget(f1_key_txt, handler = function(h, ...) {
+
     # Get values.
     drp_val <- h$dropdata
-    f1_key_val <- svalue(h$obj)
+    key_val <- svalue(h$obj)
 
-    # Add new value to selected.
-    new <- ifelse(nchar(f1_key_val) > 0,
-      paste(f1_key_val, drp_val, sep = ","),
-      drp_val
-    )
+    # Check that the action was on a list element.
+    if (!identical(drp_val, character(0)) && length(drp_val) > 0 && nchar(drp_val) > 0) {
 
-    # Update text box.
-    svalue(h$obj) <- new
+      # Add new value to selected.
+      new <- ifelse(nchar(key_val) > 0,
+        paste(key_val, drp_val, sep = ","),
+        drp_val
+      )
 
-    # Update column name table.
-    tmp_tbl <- f1_key_tbl[, ] # Get all values.
-    tmp_tbl <- tmp_tbl[tmp_tbl != drp_val] # Remove value added to selected.
-    f1_key_tbl[, ] <- tmp_tbl # Update table.
+      # Update text box.
+      svalue(f1_key_txt) <- new
+
+      # Update column name table.
+      tmp_tbl <- f1_key_tbl[] # Get all values.
+
+      # Remove value added to selected and update table.
+      f1_key_tbl[] <- tmp_tbl[tmp_tbl != drp_val]
+    }
   })
 
   # TARGET --------------------------------------------------------------------
 
-  f1_target_f <- gframe("Calculate precision for target columns",
+  f1_target_f <- gframe(
+    text = strFrmTarget,
     horizontal = FALSE,
-    container = f1,
-    expand = TRUE
+    container = gv,
+    expand = TRUE,
+    fill = TRUE
   )
 
   f1_target_txt <- gedit(
-    initial.msg = "Doubleklick or drag column names to list",
-    width = 40,
+    initial.msg = strEdtMessage,
     container = f1_target_f
   )
 
+  # Populate table.
   f1_target_tbl <- gWidgets2::gtable(
     items = names(.gData),
     container = f1_target_f,
     expand = TRUE
   )
+  # Set initial table size.
+  size(f1_target_tbl) <- list(height = 100, width = 350, column.widths = 350)
 
+  # Add click handler to table widget.
+  addHandlerDoubleclick(f1_target_tbl, handler = function(h, ...) {
+
+    # Get values.
+    tbl_val <- svalue(h$obj)
+    target_val <- svalue(f1_target_txt)
+
+    # Check that the action was on a list element.
+    if (!identical(tbl_val, character(0)) && length(tbl_val) > 0) {
+
+      # Add new value to selected.
+      new <- ifelse(nchar(target_val) > 0,
+        paste(target_val, tbl_val, sep = ","),
+        tbl_val
+      )
+
+      # Update text box.
+      svalue(f1_target_txt) <- new
+
+      # Update sample name table.
+      tmp_tbl <- f1_target_tbl[] # Get all values.
+
+      # Remove value added to selected and update table.
+      f1_target_tbl[] <- tmp_tbl[tmp_tbl != tbl_val]
+    }
+  })
+
+  # Add a drop source to the table.
+  addDropSource(f1_target_tbl, handler = function(h, ...) svalue(h$obj))
+
+  # Add the edit widget as a drop target.
   addDropTarget(f1_target_txt, handler = function(h, ...) {
     # Get values.
     drp_val <- h$dropdata
-    f1_target_val <- svalue(h$obj)
+    target_val <- svalue(h$obj)
 
-    # Add new value to selected.
-    new <- ifelse(nchar(f1_target_val) > 0,
-      paste(f1_target_val, drp_val, sep = ","),
-      drp_val
-    )
+    # Check that the action was on a list element.
+    if (!identical(drp_val, character(0)) && length(drp_val) > 0 && nchar(drp_val) > 0) {
 
-    # Update text box.
-    svalue(h$obj) <- new
+      # Add new value to selected.
+      new <- ifelse(nchar(target_val) > 0,
+        paste(target_val, drp_val, sep = ","),
+        drp_val
+      )
 
-    # Update column name table.
-    tmp_tbl <- f1_target_tbl[, ] # Get all values.
-    tmp_tbl <- tmp_tbl[tmp_tbl != drp_val] # Remove value added to selected.
-    f1_target_tbl[, ] <- tmp_tbl # Update table.
+      # Update text box.
+      svalue(h$obj) <- new
+
+      # Update column name table.
+      tmp_tbl <- f1_target_tbl[] # Get all values.
+
+      # Remove value added to selected and update table.
+      f1_target_tbl[] <- tmp_tbl[tmp_tbl != drp_val]
+    }
   })
 
-  # FRAME 4 ###################################################################
+  # SAVE ######################################################################
 
-  f4 <- gframe(
-    text = "Save as",
-    horizontal = TRUE,
-    spacing = 5,
-    container = gv
-  )
+  save_frame <- gframe(text = strFrmSave, container = gv)
 
-  glabel(text = "Name for result:", container = f4)
+  glabel(text = strLblSave, container = save_frame)
 
-  f4_save_edt <- gedit(text = "", expand = TRUE, container = f4)
+  save_edt <- gedit(expand = TRUE, fill = TRUE, container = save_frame)
 
   # BUTTON ####################################################################
 
-  calculate_btn <- gbutton(text = "Calculate", container = gv)
+  calculate_btn <- gbutton(text = strBtnCalculate, container = gv)
 
   addHandlerClicked(calculate_btn, handler = function(h, ...) {
 
@@ -497,7 +661,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
     val_ref <- .gRef
     val_name_data <- .gDataName
     val_name_ref <- .gRefName
-    val_name <- svalue(f4_save_edt)
+    val_name <- svalue(save_edt)
     val_kit <- svalue(f2g2_kit_drp)
     val_exclude <- svalue(f2g2_virtual_chk)
 
@@ -538,7 +702,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
 
       # Change button.
       blockHandlers(calculate_btn)
-      svalue(calculate_btn) <- "Processing..."
+      svalue(calculate_btn) <- strBtnProcessing
       unblockHandlers(calculate_btn)
       enabled(calculate_btn) <- FALSE
 
@@ -593,7 +757,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
       # Update audit trail.
       datanew <- auditTrail(
         obj = datanew, key = keys, value = values,
-        label = "tablePrecision_gui", arguments = FALSE,
+        label = fnc, arguments = FALSE,
         package = "strvalidator"
       )
 
@@ -602,17 +766,16 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
 
       if (debug) {
         print(str(datanew))
-        print(paste("EXIT:", match.call()[[1]]))
+        print(paste("EXIT:", fnc))
       }
 
       # Close GUI.
       .saveSettings()
       dispose(w)
     } else {
-      message <- "A dataset and a reference dataset have to be selected."
-
-      gmessage(message,
-        title = "Datasets not selected",
+      gmessage(
+        msg = strMsgDataset,
+        title = strMsgTitleDataset,
         icon = "error",
         parent = w
       )
@@ -621,45 +784,30 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
 
   # INTERNAL FUNCTIONS ########################################################
 
+  .updateGui <- function() {
+
+    # Get radio button selection.
+    val_opt <- svalue(f2_filter_opt, index = TRUE)
+
+    if (val_opt == 1) {
+      enabled(f2g1) <- TRUE
+      enabled(f2g2) <- FALSE
+    } else if (val_opt == 2) {
+      enabled(f2g1) <- FALSE
+      enabled(f2g2) <- TRUE
+    } else {
+      enabled(f2g1) <- FALSE
+      enabled(f2g2) <- FALSE
+    }
+  }
+
   .refresh_target_tbl <- function() {
     if (debug) {
       print(paste("IN:", match.call()[[1]]))
     }
 
-    # Refresh widget by removing it and...
-    delete(f1_target_f, f1_target_tbl)
-
-    # ...creating a new table.
-    f1_target_tbl <<- gWidgets2::gtable(
-      items = names(.gData),
-      container = f1_target_f,
-      expand = TRUE
-    )
-
-
-    addDropSource(f1_target_tbl, handler = function(h, ...) svalue(h$obj))
-
-    addHandlerDoubleclick(f1_target_tbl, handler = function(h, ...) {
-
-      # Get values.
-      tbl_val <- svalue(h$obj)
-      target_val <- svalue(f1_target_txt)
-
-      # Add new value to selected.
-      new <- ifelse(nchar(target_val) > 0,
-        paste(target_val, tbl_val, sep = ","),
-        tbl_val
-      )
-
-      # Update text box.
-      svalue(f1_target_txt) <- new
-
-
-      # Update sample name table.
-      tmp_tbl <- f1_target_tbl[, ] # Get all values.
-      tmp_tbl <- tmp_tbl[tmp_tbl != tbl_val] # Remove value added to selected.
-      f1_target_tbl[, ] <- tmp_tbl # Update table.
-    })
+    # Populate table.
+    f1_target_tbl[] <<- names(.gData)
   }
 
   .refresh_key_tbl <- function() {
@@ -667,38 +815,8 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
       print(paste("IN:", match.call()[[1]]))
     }
 
-    # Refresh widget by removing it and...
-    delete(f1_key_f, f1_key_tbl)
-
-    # ...creating a new table.
-    f1_key_tbl <<- gWidgets2::gtable(
-      items = names(.gData),
-      container = f1_key_f,
-      expand = TRUE
-    )
-
-    addDropSource(f1_key_tbl, handler = function(h, ...) svalue(h$obj))
-
-    addHandlerDoubleclick(f1_key_tbl, handler = function(h, ...) {
-
-      # Get values.
-      tbl_val <- svalue(h$obj)
-      key_val <- svalue(f1_key_txt)
-
-      # Add new value to selected.
-      new <- ifelse(nchar(key_val) > 0,
-        paste(key_val, tbl_val, sep = ","),
-        tbl_val
-      )
-
-      # Update text box.
-      svalue(f1_key_txt) <- new
-
-      # Update column name table.
-      tmp_tbl <- f1_key_tbl[, ] # Get all values.
-      tmp_tbl <- tmp_tbl[tmp_tbl != tbl_val] # Remove value added to selected.
-      f1_key_tbl[, ] <- tmp_tbl # Update table.
-    })
+    # Populate table.
+    f1_key_tbl[] <<- names(.gData)
   }
 
   .loadSavedSettings <- function() {
@@ -777,6 +895,7 @@ tablePrecision_gui <- function(env = parent.frame(), savegui = NULL,
 
   # Load GUI settings.
   .loadSavedSettings()
+  .updateGui()
 
   # Show GUI.
   visible(w) <- TRUE
