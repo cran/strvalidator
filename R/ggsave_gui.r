@@ -1,5 +1,7 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 12.09.2022: Reworked to avoid 'dispose' error https://github.com/jverzani/gWidgets2/issues/103
+# 10.09.2022: Compacted the gui. Fixed narrow dropdowns. Removed destroy workaround.
 # 15.03.2020: Added language support.
 # 15.02.2019: Minor adjustments to tcltk gui. Expand gedit.
 # 11.02.2019: Minor adjustments to tcltk gui.
@@ -42,7 +44,7 @@
 #'
 #' @export
 #'
-#' @importFrom ggplot2 ggsave
+#' @importFrom ggplot2 ggsave last_plot
 #' @importFrom utils help
 #' @importFrom grDevices dev.cur dev.list dev.size
 #'
@@ -82,13 +84,11 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
   strLblPath <- "Save file to path:"
   strBtnSave <- "Save"
   strBtnProcessing <- "Processing..."
-  strMsgSave <- "Plot object, file name and path must be provided.\n\nThis error may also occur the first time the function is used.\nPlease locate the folder using the 'Open' button."
+  strMsgPath <- "File path must be provided!\n\nThis error may also occur the first time the function is used.\nPlease locate the folder using the [file] button."
+  strMsgName <- "File name must be provided!"
   strMsgTitleError <- "Error"
   strMsgTitleSaveError <- "Save error"
-  strMsgFileExist <- "The file already exist!/n/nChose to cancel, overwrite or give a new name."
-  strBtnCancel <- "Cancel"
-  strBtnOverwrite <- "Overwrite"
-  strBtnRetry <- "Retry"
+  strMsgFileExist <- "The file already exist!\n\nClick [Yes] to overwrite or [No] to cancel and type a new name."
 
   # Get strings from language file.
   dtStrings <- getStrings(gui = fnc)
@@ -151,8 +151,11 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
     strtmp <- dtStrings["strBtnProcessing"]$value
     strBtnProcessing <- ifelse(is.na(strtmp), strBtnProcessing, strtmp)
 
-    strtmp <- dtStrings["strMsgSave"]$value
-    strMsgSave <- ifelse(is.na(strtmp), strMsgSave, strtmp)
+    strtmp <- dtStrings["strMsgPath"]$value
+    strMsgPath <- ifelse(is.na(strtmp), strMsgPath, strtmp)
+
+    strtmp <- dtStrings["strMsgName"]$value
+    strMsgName <- ifelse(is.na(strtmp), strMsgName, strtmp)
 
     strtmp <- dtStrings["strMsgTitleError"]$value
     strMsgTitleError <- ifelse(is.na(strtmp), strMsgTitleError, strtmp)
@@ -162,15 +165,6 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
 
     strtmp <- dtStrings["strMsgFileExist"]$value
     strMsgFileExist <- ifelse(is.na(strtmp), strMsgFileExist, strtmp)
-
-    strtmp <- dtStrings["strBtnCancel"]$value
-    strBtnCancel <- ifelse(is.na(strtmp), strBtnCancel, strtmp)
-
-    strtmp <- dtStrings["strBtnOverwrite"]$value
-    strBtnOverwrite <- ifelse(is.na(strtmp), strBtnOverwrite, strtmp)
-
-    strtmp <- dtStrings["strBtnRetry"]$value
-    strBtnRetry <- ifelse(is.na(strtmp), strBtnRetry, strtmp)
   }
 
   # WINDOW ####################################################################
@@ -200,29 +194,14 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
       focus(parent)
     }
 
-    # Check which toolkit we are using.
-    if (gtoolkit() == "tcltk") {
-      if (as.numeric(gsub("[^0-9]", "", packageVersion("gWidgets2tcltk"))) <= 106) {
-        # Version <= 1.0.6 have the wrong implementation:
-        # See: https://stackoverflow.com/questions/54285836/how-to-retrieve-checkbox-state-in-gwidgets2tcltk-works-in-gwidgets2rgtk2
-        message("tcltk version <= 1.0.6, returned TRUE!")
-        return(TRUE) # Destroys window under tcltk, but not RGtk2.
-      } else {
-        # Version > 1.0.6 will be fixed:
-        # https://github.com/jverzani/gWidgets2tcltk/commit/9388900afc57454b6521b00a187ca4a16829df53
-        message("tcltk version >1.0.6, returned FALSE!")
-        return(FALSE) # Destroys window under tcltk, but not RGtk2.
-      }
-    } else {
-      message("RGtk2, returned FALSE!")
-      return(FALSE) # Destroys window under RGtk2, but not with tcltk.
-    }
+    # Destroy window.
+    return(FALSE)
   })
 
   # Vertical main group.
   gv <- ggroup(
     horizontal = FALSE,
-    spacing = 5,
+    spacing = 1,
     use.scrollwindow = FALSE,
     container = w,
     expand = TRUE
@@ -248,7 +227,7 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
   f1 <- gframe(
     text = strFrmOptions,
     horizontal = FALSE,
-    spacing = 5,
+    spacing = 1,
     container = gv
   )
 
@@ -257,7 +236,7 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
     expand = TRUE
   )
 
-  f1g1 <- ggroup(horizontal = TRUE, spacing = 10, container = f1)
+  f1g1 <- ggroup(horizontal = TRUE, spacing = 1, container = f1)
 
   f1g1_name_edt <- gedit(text = name, container = f1g1, expand = TRUE, fill = TRUE)
 
@@ -302,7 +281,7 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
 
   # GRID 2 --------------------------------------------------------------------
 
-  f1g2 <- glayout(container = f1, spacing = 2)
+  f1g2 <- glayout(container = f1, spacing = 1)
 
   f1g2[1, 1] <- glabel(
     text = strLblSettings,
@@ -533,6 +512,11 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
 
   addHandlerChanged(g_save_btn, handler = function(h, ...) {
 
+    # Change button label.
+    blockHandlers(g_save_btn)
+    svalue(g_save_btn) <- strBtnProcessing
+    unblockHandlers(g_save_btn)
+
     # Get values.
     val_name <- svalue(f1g1_name_edt)
     val_ggplot <- ggplot
@@ -544,16 +528,6 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
     val_h <- as.numeric(svalue(f1g2_height_edt))
     val_r <- as.numeric(svalue(f1g2_res_edt))
     val_path <- svalue(f1g3_save_brw)
-
-    # Check file name.
-    if (nchar(val_name) == 0) {
-      val_name <- NA
-    }
-
-    # Check path.
-    if (length(val_path) == 0) {
-      val_path <- NA
-    }
 
     if (debug) {
       print("val_name")
@@ -572,144 +546,115 @@ ggsave_gui <- function(ggplot = NULL, name = "", env = parent.frame(),
       print(val_path)
     }
 
-    # Check for file name and path.
-    ok <- !is.na(val_name) && !is.na(val_path) && !is.null(val_ggplot)
+    # If no plot is provided, default to last plot.
+    if (is.null(val_ggplot)) {
+      val_ggplot <- last_plot()
+      message("No plot provided. Defaults to last plot.")
+      str(val_ggplot)
+    }
 
-    if (ok) {
-      blockHandlers(g_save_btn)
-      svalue(g_save_btn) <- strBtnProcessing
-      unblockHandlers(g_save_btn)
+    # Initiate logical.
+    okPathAndName <- FALSE
+
+    if (is.na(val_path) | nchar(val_path) == 0) {
+      # Check if path is provided.
+
+      message("val_path=NA or length(val_path)=0")
+
+      gmessage(
+        msg = strMsgPath,
+        title = strMsgTitleError,
+        parent = w,
+        icon = "error"
+      )
+    } else if (is.na(val_name) | nchar(val_name) == 0) {
+      # Check if file name is provided.
+
+      message("val_name=NA or length(val_name)=0")
+
+      gmessage(
+        msg = strMsgName,
+        title = strMsgTitleError,
+        parent = w,
+        icon = "error"
+      )
+    } else {
+      okPathAndName <- TRUE
+    }
+
+    if (okPathAndName) {
 
       # Add trailing path separator if not present.
       if (substr(val_path, nchar(val_path), nchar(val_path) + 1) != .separator) {
         val_path <- paste(val_path, .separator, sep = "")
       }
 
-      # Repeat until saved or cancel.
+      # Create filename (NB! used further below).
+      val_filename <- paste(val_name, val_ext, sep = "")
+      # Construct complete file name.
+      fullFileName <- paste(val_path, val_filename, sep = "")
+
+      # Initiate logical.
       okToSave <- FALSE
-      cancel <- FALSE
-      repeat{
 
-        # Construct complete file name.
-        fullFileName <- paste(val_path, val_name, val_ext, sep = "")
+      if (val_replace) {
+        # Ok to overwrite.
+        okToSave <- TRUE
 
-        if (val_replace) {
-          # Ok to overwrite.
-          okToSave <- TRUE
-
-          if (debug) {
-            print("Replace=TRUE. Ok to save!")
-          }
-        } else {
-          # Not ok to overwrite.
-
-          if (debug) {
-            print("Replace=FALSE. Check if file exist!")
-          }
-
-          # Check if file exist.
-          if (file.exists(fullFileName)) {
-            if (debug) {
-              print(paste("file '", name, "' already exist!", sep = ""))
-            }
-
-            # Create dialog.
-            dialog <- gbasicdialog(
-              title = strMsgTitleSaveError, parent = w,
-              do.buttons = FALSE, width = 200, height = 200
-            )
-
-            # Vertical container.
-            gg <- ggroup(container = dialog, horizontal = FALSE)
-
-            glabel(
-              text = strMsgFileExist,
-              anchor = c(-1, 0), container = gg
-            )
-
-            # Edit box for new name.
-            newName <- gedit(container = gg)
-
-            # Container for buttons.
-            buttcont <- ggroup(container = gg)
-
-            btn_cancel <- gbutton(strBtnCancel,
-              container = buttcont,
-              handler = function(h, ...) {
-                cancel <<- TRUE
-                dispose(dialog)
-              }
-            )
-
-            btn_replace <- gbutton(strBtnOverwrite,
-              container = buttcont,
-              handler = function(h, ...) {
-                val_replace <<- TRUE
-                dispose(dialog)
-              }
-            )
-
-            btn_retry <- gbutton(strBtnRetry,
-              container = buttcont,
-              handler = function(h, ...) {
-                val_name <<- svalue(newName)
-                if (debug) {
-                  print("val_name")
-                  print(val_name)
-                }
-                dispose(dialog)
-              }
-            )
-
-            # Show dialog.
-            visible(dialog, set = TRUE)
-          } else {
-            okToSave <- TRUE
-          }
+        if (debug) {
+          print("Replace=TRUE. Ok to save!")
         }
+      } else {
+        # Not ok to overwrite.
 
-        if (cancel) {
-          # Chose to cancel.
+        message("Replace=FALSE. Check if file exist!")
 
-          if (debug) {
-            print("Chose to cancel!")
-          }
+        # Check if file exist.
+        if (file.exists(fullFileName)) {
+          message(paste("file '", val_name, "' already exist!", sep = ""))
 
-          break ## EXIT REPEAT.
-        }
-
-        if (okToSave) {
-
-          # Save plot device as image.
-          ggsave(
-            filename = paste(val_name, val_ext, sep = ""),
-            plot = val_ggplot,
-            path = val_path,
-            scale = val_scale,
-            width = val_w, height = val_h,
-            units = val_unit, dpi = val_r
+          # Create modal confirm dialog (YES/NO).
+          okToSave <- gconfirm(
+            title = strMsgTitleSaveError, msg = strMsgFileExist, parent = w
           )
 
+          message("Overwrite? ", okToSave)
+        } else {
 
-          if (debug) {
-            print("Image saved!")
-          }
-
-          break ## EXIT REPEAT.
+          # File does not exist.
+          okToSave <- TRUE
         }
-      } ## END REPEAT.
+      }
 
-      # Close GUI.
-      .saveSettings()
-      dispose(w)
-    } else {
-      gmessage(
-        msg = strMsgSave,
-        title = strMsgTitleError,
-        parent = w,
-        icon = "error"
-      )
+      if (okToSave) {
+
+        # Save plot device as image.
+        ggsave(
+          filename = val_filename,
+          plot = val_ggplot,
+          path = val_path,
+          scale = val_scale,
+          width = val_w, height = val_h,
+          units = val_unit, dpi = val_r
+        )
+
+        # Confirm to console.
+        message("Image saved: ", val_path, val_filename)
+
+        # Close GUI.
+        .saveSettings()
+        dispose(w)
+      } else {
+
+        # Confirm to console.
+        message("Image not saved!")
+      }
     }
+
+    # Change button label.
+    blockHandlers(g_save_btn)
+    svalue(g_save_btn) <- strBtnSave
+    unblockHandlers(g_save_btn)
   })
 
   # INTERNAL FUNCTIONS ########################################################

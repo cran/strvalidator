@@ -1,5 +1,11 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 08.09.2022: Compacted gui. Fixed narrow dropdowns. Removed destroy workaround.
+# 20.08.2022: Fixed retaining new option decimals to quantile widget.
+# 09.08.2022: Added saving/retaining the new option decimals.
+# 05.08.2022: Decreased spacing in options. Added new option decimals.
+# 02.08.2022: Fixed bug "Error in if (length(value) == 0 || value == "")...".
+# 02.08.2022: Fixed saved gui state cleared when opening with pre set parameters.
 # 28.06.2020: Fixed bug dropdowns not populated in tcltk.
 # 13.06.2020: Fixed bug "The column <Select Columns> was not found in the dataset."
 # 12.06.2020: Fixed bug in call to checkDataset.
@@ -22,6 +28,7 @@
 #' @param quant numeric quantile to calculate. Default=0.95.
 #' @param group character vector preselected column(s) to group by.
 #' @param count character vector preselected column to count unique values in.
+#' @param decimals numeric number of decimals. Negative does not round.
 #' @param env environment in which to search for data frames and save result.
 #' @param savegui logical indicating if GUI settings should be saved in the environment.
 #' @param debug logical indicating printing debug information.
@@ -37,13 +44,14 @@
 #' @seealso \code{link{quantile}}, \code{link{min}}, \code{link{max}}, \code{link{mean}}, \code{link{sd}}
 
 calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
-                                    group = NULL, count = NULL,
+                                    group = NULL, count = NULL, decimals = 4,
                                     env = parent.frame(), savegui = NULL,
                                     debug = FALSE, parent = NULL) {
 
   # Global variables.
   .gData <- NULL
   .gDataName <- NULL
+  .gSkipClear <- FALSE
 
   # Language ------------------------------------------------------------------
 
@@ -67,7 +75,8 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
   strLblGroupBy <- "Group by column(s):"
   strLblCount <- "Count unique values in column:"
   strDrpColumn <- "<Select Columns>"
-  strLblQuantile <- "Calculate quantile"
+  strLblQuantile <- "Calculate quantile:"
+  strLblDecimals <- "Round to decimals (-1 for no rounding):"
   strFrmSave <- "Save as"
   strLblSave <- "Name for result:"
   strBtnCalculate <- "Calculate"
@@ -123,6 +132,9 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
     strtmp <- dtStrings["strLblQuantile"]$value
     strLblQuantile <- ifelse(is.na(strtmp), strLblQuantile, strtmp)
 
+    strtmp <- dtStrings["strLblDecimals"]$value
+    strLblDecimals <- ifelse(is.na(strtmp), strLblDecimals, strtmp)
+
     strtmp <- dtStrings["strFrmSave"]$value
     strFrmSave <- ifelse(is.na(strtmp), strFrmSave, strtmp)
 
@@ -164,28 +176,13 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
       focus(parent)
     }
 
-    # Check which toolkit we are using.
-    if (gtoolkit() == "tcltk") {
-      if (as.numeric(gsub("[^0-9]", "", packageVersion("gWidgets2tcltk"))) <= 106) {
-        # Version <= 1.0.6 have the wrong implementation:
-        # See: https://stackoverflow.com/questions/54285836/how-to-retrieve-checkbox-state-in-gwidgets2tcltk-works-in-gwidgets2rgtk2
-        message("tcltk version <= 1.0.6, returned TRUE!")
-        return(TRUE) # Destroys window under tcltk, but not RGtk2.
-      } else {
-        # Version > 1.0.6 will be fixed:
-        # https://github.com/jverzani/gWidgets2tcltk/commit/9388900afc57454b6521b00a187ca4a16829df53
-        message("tcltk version >1.0.6, returned FALSE!")
-        return(FALSE) # Destroys window under tcltk, but not RGtk2.
-      }
-    } else {
-      message("RGtk2, returned FALSE!")
-      return(FALSE) # Destroys window under RGtk2, but not with tcltk.
-    }
+    # Destroy window.
+    return(FALSE)
   })
 
   gv <- ggroup(
     horizontal = FALSE,
-    spacing = 8,
+    spacing = 1,
     use.scrollwindow = FALSE,
     container = w,
     expand = TRUE
@@ -211,13 +208,18 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
   data_frm <- gframe(
     text = strFrmDataset,
     horizontal = TRUE,
-    spacing = 5,
+    spacing = 1,
     container = gv
   )
 
   # Dataset -------------------------------------------------------------------
 
   glabel(text = strLblDataset, container = data_frm)
+
+  data_rows_lbl <- glabel(
+    text = paste(" 0", strLblRows),
+    container = data_frm
+  )
 
   dfs <- c(strDrpDataset, listObjects(env = env, obj.class = "data.frame"))
 
@@ -226,11 +228,9 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
     selected = 1,
     editable = FALSE,
     container = data_frm,
-    ellipsize = "none"
-  )
-  data_rows_lbl <- glabel(
-    text = paste(" 0", strLblRows),
-    container = data_frm
+    ellipsize = "none",
+    expand = TRUE,
+    fill = "x"
   )
 
   addHandlerChanged(data_drp, handler = function(h, ...) {
@@ -242,7 +242,7 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
   option_frm <- gframe(
     text = strFrmOptions,
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 1,
     container = gv
   )
 
@@ -307,6 +307,16 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
     container = option_frm
   )
 
+  # Decimals ------------------------------------------------------------------
+
+  glabel(text = strLblDecimals, container = option_frm)
+
+  decimals_spb <- gspinbutton(
+    from = -1, to = 10,
+    by = 1, value = decimals,
+    container = option_frm
+  )
+
   # SAVE ######################################################################
 
   save_frame <- gframe(text = strFrmSave, container = gv)
@@ -329,6 +339,7 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
     val_group <- svalue(group_edt)
     val_count <- svalue(count_drp)
     val_quant <- svalue(quant_spb)
+    val_decimals <- svalue(decimals_spb)
 
     if (val_group == strDrpColumn) {
       val_group <- NULL
@@ -348,6 +359,8 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
       print(val_count)
       print("val_quant")
       print(val_quant)
+      print("val_decimals")
+      print(val_decimals)
     }
 
     # Check if data.
@@ -391,6 +404,8 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
           print(val_count)
           print("val_quant")
           print(val_quant)
+          print("val_decimals")
+          print(val_decimals)
         }
 
         # Change button.
@@ -405,6 +420,7 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
           group = val_group,
           count = val_count,
           quant = val_quant,
+          decimals = val_decimals,
           debug = debug
         )
 
@@ -450,7 +466,7 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
   # INTERNAL FUNCTIONS ########################################################
 
   .updateWidgets <- function() {
-    val_obj <- svalue(data_drp)
+    val_obj <- gWidgets2::svalue(data_drp)
 
     if (val_obj != strDrpDataset) {
       # Load or change components.
@@ -459,7 +475,7 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
       .gData <<- get(val_obj, envir = env)
       .gDataName <<- val_obj
 
-      svalue(data_rows_lbl) <- paste(nrow(.gData), strLblRows)
+      gWidgets2::svalue(data_rows_lbl) <- paste(nrow(.gData), strLblRows)
 
       # Update dropdown menues.
       target_columns <- unique(c(strDrpColumn, names(.gData)))
@@ -467,25 +483,29 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
       group_drp[] <- target_columns
       count_drp[] <- target_columns
 
+      # Select default value, try to find matching column name.
+      hit <- which(target_columns %in% target)
+      index <- ifelse(is.null(target) | gWidgets2::is_empty(hit), 1, hit)
+      gWidgets2::svalue(target_drp, index = TRUE) <- index
+
       # Select default value.
-      svalue(target_drp, index = TRUE) <- ifelse(is.null(target), 1,
-        which(target_columns %in% target)
-      )
-      svalue(group_drp, index = TRUE) <- 1
-      svalue(count_drp, index = TRUE) <- ifelse(is.null(count), 1,
-        which(target_columns %in% count)
-      )
+      gWidgets2::svalue(group_drp, index = TRUE) <- 1
+
+      # Select default value, try to find matching column name.
+      hit <- which(target_columns %in% count)
+      index <- ifelse(is.null(target) | gWidgets2::is_empty(hit), 1, hit)
+      gWidgets2::svalue(count_drp, index = TRUE) <- index
 
       # Suggest a name for the result.
-      svalue(save_edt) <- paste(val_obj, "_stats", sep = "")
+      gWidgets2::svalue(save_edt) <- paste(val_obj, "_stats", sep = "")
     } else {
 
       # Reset components.
       .gData <<- NULL
       .gDataName <<- NULL
-      svalue(data_drp, index = TRUE) <- 1
-      svalue(data_rows_lbl) <- paste(" 0", strLblRows)
-      svalue(save_edt) <- ""
+      gWidgets2::svalue(data_drp, index = TRUE) <- 1
+      gWidgets2::svalue(data_rows_lbl) <- paste(" 0", strLblRows)
+      gWidgets2::svalue(save_edt) <- ""
 
       # Update dropdown menues.
       target_drp[] <- strDrpColumn
@@ -493,16 +513,16 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
       count_drp[] <- strDrpColumn
 
       # Select default value.
-      svalue(target_drp, index = TRUE) <- 1
-      svalue(group_drp, index = TRUE) <- 1
-      svalue(count_drp, index = TRUE) <- 1
+      gWidgets2::svalue(target_drp, index = TRUE) <- 1
+      gWidgets2::svalue(group_drp, index = TRUE) <- 1
+      gWidgets2::svalue(count_drp, index = TRUE) <- 1
     }
 
     # Change button.
-    blockHandlers(calculate_btn)
-    svalue(calculate_btn) <- strBtnCalculate
-    unblockHandlers(calculate_btn)
-    enabled(calculate_btn) <- TRUE
+    gWidgets2::blockHandlers(calculate_btn)
+    gWidgets2::svalue(calculate_btn) <- strBtnCalculate
+    gWidgets2::unblockHandlers(calculate_btn)
+    gWidgets2::enabled(calculate_btn) <- TRUE
   }
 
   .loadSavedSettings <- function() {
@@ -535,6 +555,9 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
       if (exists(".strvalidator_calculateStatistics_gui_quant", envir = env, inherits = FALSE)) {
         svalue(quant_spb) <- get(".strvalidator_calculateStatistics_gui_quant", envir = env)
       }
+      if (exists(".strvalidator_calculateStatistics_gui_decimals", envir = env, inherits = FALSE)) {
+        svalue(decimals_spb) <- get(".strvalidator_calculateStatistics_gui_decimals", envir = env)
+      }
       if (debug) {
         print("Saved settings loaded!")
       }
@@ -548,6 +571,13 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
       assign(x = ".strvalidator_calculateStatistics_gui_savegui", value = svalue(savegui_chk), envir = env)
       assign(x = ".strvalidator_calculateStatistics_gui_group", value = svalue(group_edt), envir = env)
       assign(x = ".strvalidator_calculateStatistics_gui_quant", value = svalue(quant_spb), envir = env)
+      assign(x = ".strvalidator_calculateStatistics_gui_decimals", value = svalue(decimals_spb), envir = env)
+
+      if (debug) {
+        print("Settings saved!")
+      }
+    } else if (.gSkipClear) {
+      # Do nothing when started with parameters.
     } else { # or remove all saved values if false.
 
       if (exists(".strvalidator_calculateStatistics_gui_savegui", envir = env, inherits = FALSE)) {
@@ -563,10 +593,6 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
       if (debug) {
         print("Settings cleared!")
       }
-    }
-
-    if (debug) {
-      print("Settings saved!")
     }
   }
 
@@ -586,6 +612,7 @@ calculateStatistics_gui <- function(data = NULL, target = NULL, quant = 0.95,
 
     # Save settings disabled when starting with parameters.
     enabled(savegui_chk) <- FALSE
+    .gSkipClear <- TRUE
   }
 
   # Show GUI.

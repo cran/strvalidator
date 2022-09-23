@@ -74,15 +74,16 @@ calculateAllele_gui	4	strFrmDataset	Dataset
 calculateAllele_gui	5	strLblDataset	Sample dataset:
 calculateAllele_gui	6	strDrpDefault	<Select dataset>
 calculateAllele_gui	7	strLblRows	rows
-calculateAllele_gui	8	strFrmOptions	Options
-calculateAllele_gui	9	strLblThreshold	Peak height threshold: 
-calculateAllele_gui	10	strTipThreshold	Peaks with heights below this value will be removed.
-calculateAllele_gui	11	strChkSexMarkers	Remove sex markers defined in kit: 
-calculateAllele_gui	12	strFrmSave	Save as
-calculateAllele_gui	13	strLblSave	Name for result:
-calculateAllele_gui	14	strBtnCalculate	Calculate
-calculateAllele_gui	15	strMsgDataset	Select a dataset!
-calculateAllele_gui	16	strMsgTitleDataset	Error
+calculateAllele_gui	8	strLblKit	Kit:
+calculateAllele_gui	9	strFrmOptions	Options
+calculateAllele_gui	10	strLblThreshold	Peak height threshold: 
+calculateAllele_gui	11	strTipThreshold	Peaks with heights below this value will be removed.
+calculateAllele_gui	12	strChkSexMarkers	Remove sex markers defined in kit.
+calculateAllele_gui	13	strFrmSave	Save as
+calculateAllele_gui	14	strLblSave	Name for result:
+calculateAllele_gui	15	strBtnCalculate	Calculate
+calculateAllele_gui	16	strMsgDataset	Select a dataset!
+calculateAllele_gui	17	strMsgTitleDataset	Error
 calculateAllT_gui	1	strWinTitle	Calculate stochastic thresholds
 calculateAllT_gui	2	strChkGui	Save GUI settings
 calculateAllT_gui	3	strBtnHelp	Help
@@ -602,15 +603,16 @@ calculateStatistics_gui	9	strLblTarget	Select target column:
 calculateStatistics_gui	10	strLblGroupBy	Group by column(s):
 calculateStatistics_gui	11	strLblCount	Count unique values in column:
 calculateStatistics_gui	12	strDrpColumn	<Select Columns>
-calculateStatistics_gui	13	strLblQuantile	Calculate quantile
-calculateStatistics_gui	14	strFrmSave	Save as
-calculateStatistics_gui	15	strLblSave	Name for result:
-calculateStatistics_gui	16	strBtnCalculate	Calculate
-calculateStatistics_gui	17	strBtnProcessing	Processing...
-calculateStatistics_gui	18	strMsgDataset	A dataset must be selected.
-calculateStatistics_gui	19	strMsgTitleDataset	Dataset not selected
-calculateStatistics_gui	20	strMsgCheck	Data frame is NULL!\n\nMake sure to select a sample dataset.
-calculateStatistics_gui	21	strMsgTitleError	Error
+calculateStatistics_gui	13	strLblQuantile	Calculate quantile:
+calculateStatistics_gui	14	strLblDecimals	Round to decimals (-1 for no rounding):
+calculateStatistics_gui	15	strFrmSave	Save as
+calculateStatistics_gui	16	strLblSave	Name for result:
+calculateStatistics_gui	17	strBtnCalculate	Calculate
+calculateStatistics_gui	18	strBtnProcessing	Processing...
+calculateStatistics_gui	19	strMsgDataset	A dataset must be selected.
+calculateStatistics_gui	20	strMsgTitleDataset	Dataset not selected
+calculateStatistics_gui	21	strMsgCheck	Data frame is NULL!\n\nMake sure to select a sample dataset.
+calculateStatistics_gui	22	strMsgTitleError	Error
 calculateStutter_gui	1	strWinTitle	Calculate stutter ratio
 calculateStutter_gui	2	strChkGui	Save GUI settings
 calculateStutter_gui	3	strBtnHelp	Help
@@ -766,21 +768,23 @@ editData_gui	12	strFrmOptions	Options
 editData_gui	13	strChkAttributes	Show attributes (separate window)
 editData_gui	14	strChkLimit	Limit number of rows to:
 editData_gui	15	strTipLimit	NB! Sorting will only be performed on the loaded data.
-editData_gui	16	strBtnCopy	Copy
-editData_gui	17	strTipCopy	Copy to clipboard (NB! large datasets might get truncated).
-editData_gui	18	strBtnCopying	Copying...
-editData_gui	19	strBtnExport	Export
-editData_gui	20	strTipExport	Opens the export dialog.
-editData_gui	21	strBtnSave	Save as
-editData_gui	22	strTipSave	Save as new dataset in this project.
-editData_gui	23	strBtnSaving	Saving...
-editData_gui	24	strFrmSave	Copy|Export|Save
-editData_gui	25	strLblNoData	There is no data
-editData_gui	26	strMsgSave	A name must be provided.
-editData_gui	27	strMsgTitleError	Error
-editData_gui	28	strLblTcltk	The tcltk gui toolkit does not handle NA values in tables.\nNA values will be replaced with empty strings.\nIf you edit the table, NA values will be permanently replaced.
-editData_gui	29	strChkShow	Don't show this message again.
-editData_gui	30	strMsgTitleWarning	Warning
+editData_gui	16	strBtnView	View
+editData_gui	17	strTipView	View as interactive table in Posit Viewer tab.
+editData_gui	18	strBtnCopy	Copy
+editData_gui	19	strTipCopy	Copy to clipboard (NB! large datasets might get truncated).
+editData_gui	20	strBtnCopying	Copying...
+editData_gui	21	strBtnExport	Export
+editData_gui	22	strTipExport	Opens the export dialog.
+editData_gui	23	strBtnSave	Save as
+editData_gui	24	strTipSave	Save as new dataset in this project.
+editData_gui	25	strBtnSaving	Saving...
+editData_gui	26	strFrmSave	View|Copy|Export|Save
+editData_gui	27	strLblNoData	There is no data
+editData_gui	28	strMsgSave	A name must be provided.
+editData_gui	29	strMsgTitleError	Error
+editData_gui	30	strLblTcltk	The tcltk gui toolkit does not handle NA values in tables.\nNA values will be replaced with empty strings.\nIf you edit the table, NA values will be permanently replaced.
+editData_gui	31	strChkShow	Don't show this message again.
+editData_gui	32	strMsgTitleWarning	Warning tables.\nNA values will be replaced with empty strings.\nIf you edit the table, NA values will be permanently replaced.
 export_gui	1	strWinTitle	Export objects as files or images
 export_gui	2	strChkGui	Save GUI settings
 export_gui	3	strBtnHelp	Help
@@ -909,13 +913,11 @@ ggsave_gui	15	strLblScale	Scaling factor
 ggsave_gui	16	strLblPath	Save file to path:
 ggsave_gui	17	strBtnSave	Save
 ggsave_gui	18	strBtnProcessing	Processing...
-ggsave_gui	19	strMsgSave	Plot object, file name and path must be provided.\n\nThis error may also occur the first time the function is used.\nPlease locate the folder using the 'Open' button.
-ggsave_gui	20	strMsgTitleError	Error
-ggsave_gui	21	strMsgTitleSaveError	Save error
-ggsave_gui	22	strMsgFileExist	The file already exist!/n/nChose to cancel, overwrite or give a new name.
-ggsave_gui	23	strBtnCancel	Cancel
-ggsave_gui	24	strBtnOverwrite	Overwrite
-ggsave_gui	25	strBtnRetry	Retry
+ggsave_gui	19	strMsgPath	File path must be provided!\n\nThis error may also occur the first time the function is used.\nPlease locate the folder using the [file] button.
+ggsave_gui	20	strMsgName	File name must be provided!
+ggsave_gui	21	strMsgTitleError	Error
+ggsave_gui	22	strMsgTitleSaveError	Save error
+ggsave_gui	23	strMsgFileExist	The file already exist!\n\nClick [Yes] to overwrite or [No] to cancel and type a new name.
 guessProfile_gui	1	strWinTitle	Guess profile
 guessProfile_gui	2	strChkGui	Save GUI settings
 guessProfile_gui	3	strBtnHelp	Help
@@ -1012,7 +1014,7 @@ modelDropout_gui	3	strBtnHelp	Help
 modelDropout_gui	4	strFrmDataset	Dataset
 modelDropout_gui	5	strLblDataset	Sample dataset:
 modelDropout_gui	6	strDrpDataset	<Select dataset>
-modelDropout_gui	7	strLblKit	and the kit used:
+modelDropout_gui	7	strLblKit	Kit:
 modelDropout_gui	8	strFrmOptions	Options
 modelDropout_gui	9	strChkOverride	Override automatic titles
 modelDropout_gui	10	strLblTitlePlot	Plot title:
@@ -1021,7 +1023,7 @@ modelDropout_gui	12	strLblTitleY	Y title:
 modelDropout_gui	13	strLblRange	Dataset peak height range:
 modelDropout_gui	14	strChkLog	Log (Height)
 modelDropout_gui	15	strChkSex	Exclude sex markers
-modelDropout_gui	16	strLblNote	NB! Currently, the recommended methods are the first three options.\nThe fourth alternative has not been evaluated by the DNA Commission.\nSee 'Details' in 'Help' for more information.
+modelDropout_gui	16	strLblNote	NB! The recommended methods are the first three options.\nThe fourth alternative has not been evaluated by the DNA Commission.\nThe average peak heigt 'H' has a limitation when there are dropouts.\nSee 'Details' in 'Help' for more information.
 modelDropout_gui	17	strLblModels	Model drop-out from scoring method:
 modelDropout_gui	18	strRadRandom	Relative a random allele and peak height of surviving allele
 modelDropout_gui	19	strRadLMW	Relative the low molecular weight allele and peak height of surviving allele
@@ -1127,7 +1129,7 @@ plotBalance_gui	4	strFrmDataset	Dataset and kit
 plotBalance_gui	5	strLblDataset	Balance dataset:
 plotBalance_gui	6	strDrpDataset	<Select dataset>
 plotBalance_gui	7	strLblSamples	samples
-plotBalance_gui	8	strLblKit	and the kit used:
+plotBalance_gui	8	strLblKit	Kit:
 plotBalance_gui	9	strFrmOptions	Options
 plotBalance_gui	10	strChkOverride	Override automatic titles
 plotBalance_gui	11	strLblTitlePlot	Plot title:
@@ -1357,6 +1359,30 @@ plotDropout_gui	49	strLblYTitleMarker	Marker
 plotDropout_gui	50	strLblYTitleCP	Cumulative probability
 plotDropout_gui	51	strMsgNull	Data frame is NULL or NA!
 plotDropout_gui	52	strMsgTitleError	Error
+plotEPG2_gui	1	strWinTitle	Plot electropherogram (EPG)
+plotEPG2_gui	2	strChkGui	Save GUI settings
+plotEPG2_gui	3	strBtnHelp	Help
+plotEPG2_gui	4	strFrmDataset	Datasets
+plotEPG2_gui	5	strLblDataset	Sample dataset:
+plotEPG2_gui	6	strDrpDataset	<Select dataset>
+plotEPG2_gui	7	strLblSamples	samples
+plotEPG2_gui	8	strLblSample	Sample:
+plotEPG2_gui	9	strDrpSample	<Select sample>
+plotEPG2_gui	10	strLblKit	Kit:
+plotEPG2_gui	11	strFrmOptions	Options
+plotEPG2_gui	12	strLblScale	Y axis scale:
+plotEPG2_gui	13	strOptYmax	Across dye max y-scale
+plotEPG2_gui	14	strOptYind	Individual dye y-scale
+plotEPG2_gui	15	strLblAT	Analytical threshold:
+plotEPG2_gui	16	strLblST	Stochastic threshold:
+plotEPG2_gui	17	strFrmSave	Save as
+plotEPG2_gui	18	strLblSave	Name for result:
+plotEPG2_gui	19	strBtnSaveObject	Save as object
+plotEPG2_gui	20	strBtnObjectSaved	Object saved
+plotEPG2_gui	21	strBtnPlot	Plot EPG
+plotEPG2_gui	22	strBtnProcessing	Processing...
+plotEPG2_gui	23	strMsgDataset	A dataset must be selected. Sample is optional.
+plotEPG2_gui	24	strMsgTitleDataset	Datasets not selected
 plotGroups_gui	1	strWinTitle	Plot groups
 plotGroups_gui	2	strChkGui	Save GUI settings
 plotGroups_gui	3	strBtnHelp	Help
@@ -1457,7 +1483,7 @@ plotPrecision_gui	3	strBtnHelp	Help
 plotPrecision_gui	4	strFrmDataset	Dataset and kit
 plotPrecision_gui	5	strLblDataset	Precision dataset:
 plotPrecision_gui	6	strDrpDataset	<Select dataset>
-plotPrecision_gui	7	strLblKit	and the kit used:
+plotPrecision_gui	7	strLblKit	Kit:
 plotPrecision_gui	8	strFrmOptions	Options
 plotPrecision_gui	9	strChkOverride	Override automatic titles
 plotPrecision_gui	10	strExpTitles	Titles
@@ -1520,7 +1546,7 @@ plotPullup_gui	4	strFrmDataset	Dataset and kit
 plotPullup_gui	5	strLblDataset	Pull-up dataset:
 plotPullup_gui	6	strDrpDataset	<Select dataset>
 plotPullup_gui	7	strLblSamples	samples
-plotPullup_gui	8	strLblKit	and the kit used:
+plotPullup_gui	8	strLblKit	Kit:
 plotPullup_gui	9	strFrmOptions	Options
 plotPullup_gui	10	strChkOverride	Override automatic titles
 plotPullup_gui	11	strLblTitlePlot	Plot title:
@@ -1655,7 +1681,7 @@ plotStutter_gui	4	strFrmDataset	Dataset and kit
 plotStutter_gui	5	strLblDataset	Stutter dataset:
 plotStutter_gui	6	strDrpDataset	<Select dataset>
 plotStutter_gui	7	strLblSamples	samples
-plotStutter_gui	8	strLblKit	and the kit used:
+plotStutter_gui	8	strLblKit	Kit:
 plotStutter_gui	9	strFrmOptions	Options
 plotStutter_gui	10	strChkOverride	Override automatic titles
 plotStutter_gui	11	strExpTitles	Titles
@@ -1899,153 +1925,70 @@ strvalidator	130	strBtnHeight	Height
 strvalidator	131	strLblHeight	Calculate peak height metrics
 strvalidator	132	strBtnEPG	EPG
 strvalidator	133	strLblEPG	Generate EPG like plot
-strvalidator	134	strLblAT	Calculate analytical threshold (AT1, AT2, AT4, AT7)
-strvalidator	135	strLblAT6	Calculate analytical threshold (AT6)
-strvalidator	136	strBtnPlot	Plot
-strvalidator	137	strLblPlotAT6	Create plots for analysed data (AT6)
-strvalidator	138	strLblStutter	Calculate stutters for a dataset
-strvalidator	139	strLblPlotStutter	Create plots for stutter data
-strvalidator	140	strBtnStatistics	Statistics
-strvalidator	141	strLblStatStutterGlobal	Calculate global summary statistics
-strvalidator	142	strLblStatStutterMarker	Calculate summary statistics by marker
-strvalidator	143	strLblStatStutterStutter	Calculate summary statistics by marker and stutter type
-strvalidator	144	strFrmHb	Heterozygous balance (intra-locus)
-strvalidator	145	strFrmLb	Profile balance (inter-locus)
-strvalidator	146	strLblHb	Calculate heterozygote balance
-strvalidator	147	strLblLb	Calculate profile balance
-strvalidator	148	strLblPlotBalance	Create plots for analysed data
-strvalidator	149	strLblStatBalanceGlobal	Calculate global summary statistics
-strvalidator	150	strLblStatBalanceMarker	Calculate summary statistics by marker
-strvalidator	151	strFrmCapillary	Capillary balance
-strvalidator	152	strLblCapillary	Calculate capillary balance for a dataset
-strvalidator	153	strLblPlotCapillary	Create plots for capillary balance data
-strvalidator	154	strLblStatCapillaryCap	Calculate summary statistics by capillary
-strvalidator	155	strLblStatCapillaryInj	Calculate summary statistics by injection
-strvalidator	156	strLblStatCapillaryRow	Calculate summary statistics by plate row
-strvalidator	157	strLblStatCapillaryRun	Calculate summary statistics by run
-strvalidator	158	strLblStatCapillaryIns	Calculate summary statistics by instrument
-strvalidator	159	strFrmRatio	Marker peak height ratio
-strvalidator	160	strLblRatio	Calculate locus ratio for a dataset
-strvalidator	161	strLblPlotRatio	Create plots for marker ratio data
-strvalidator	162	strLblConcordance	Calculate concordance between multiple datasets
-strvalidator	163	strBtnScore	Score
-strvalidator	164	strLblScore	Score dropouts for a dataset
-strvalidator	165	strLblDropout	Calculate stochastic thresholds
-strvalidator	166	strBtnModel	Model
-strvalidator	167	strLblModel	Model and plot dropout risk
-strvalidator	168	strLblPlotDropout	Create plots for analysed data
-strvalidator	169	strLblMixture	Calculate mixture for a dataset
-strvalidator	170	strFrmType	Result types
-strvalidator	171	strLblType	Calculate result types for a dataset
-strvalidator	172	strLblPlotType	Create plots for result type data
-strvalidator	173	strFrmPeaks	Number of peaks
-strvalidator	174	strLblPeaks	Count the number of peaks in sample
-strvalidator	175	strLblPlotPeaks	Create plots for peak data
-strvalidator	176	strFrmStatistics	Summary statistics
-strvalidator	177	strLblStatistics	Calculate summary statistics
-strvalidator	178	strFrmDistribution	Distributions
-strvalidator	179	strLblDistribution	Plot distributions for data
-strvalidator	180	strLblGroups	Plot cumulative distribution for multiple groups
-strvalidator	181	strFrmDropin	Drop-in tools
-strvalidator	182	strLblSpikes	Identify possible spikes
-strvalidator	183	strLblFilterSpikes	Remove spikes
-strvalidator	184	strLblArtefacts	Identify possible artefacts
-strvalidator	185	strLblFilterArtefacts	Remove artefacts
-strvalidator	186	strLblPlotContamination	Plot contamination
-strvalidator	187	strFrmSlope	Profile slope
-strvalidator	188	strLblSlope	Calculate the profile slope
-strvalidator	189	strLblPlotSlope	Plot slope data
-strvalidator	190	strLblPrecision	Create precision plots
-strvalidator	191	strLblStatPrecisionSize	Calculate summary statistics for Size
-strvalidator	192	strLblStatPrecisionDataPoint	Calculate summary statistics for Data.Point
-strvalidator	193	strLblStatPrecisionHeight	Calculate summary statistics for Height
-strvalidator	194	strLblPullup	Calculate spectral pull-up/bleed-through
-strvalidator	195	strLblPlotPullup	Create plots for pull-up data
-tableBalance_gui	1	strWinTitle	Calculate summary statistics for balance
-tableBalance_gui	2	strChkGui	Save GUI settings
-tableBalance_gui	3	strBtnHelp	Help
-tableBalance_gui	4	strFrmDataset	Dataset
-tableBalance_gui	5	strLblDataset	Dataset:
-tableBalance_gui	6	strDrpDataset	<Select dataset>
-tableBalance_gui	7	strLblSamples	samples
-tableBalance_gui	8	strFrmOptions	Options
-tableBalance_gui	9	strLblQuantile	Calculate quantile
-tableBalance_gui	10	strLblBy	Statistics to calculate
-tableBalance_gui	11	strRadGlobal	global
-tableBalance_gui	12	strRadMarker	marker
-tableBalance_gui	13	strFrmSave	Save as
-tableBalance_gui	14	strLblSave	Name for result:
-tableBalance_gui	15	strBtnCalculate	Calculate
-tableBalance_gui	16	strBtnProcessing	Processing...
-tableBalance_gui	17	strMsgNull	Data frame is NULL or NA!
-tableBalance_gui	18	strMsgTitleError	Error
-tableCapillary_gui	1	strWinTitle	Calculate summary statistics for capillary balance
-tableCapillary_gui	2	strChkGui	Save GUI settings
-tableCapillary_gui	3	strBtnHelp	Help
-tableCapillary_gui	4	strFrmDataset	Dataset
-tableCapillary_gui	5	strLblDataset	Dataset:
-tableCapillary_gui	6	strDrpDataset	<Select dataset>
-tableCapillary_gui	7	strLblRows	rows
-tableCapillary_gui	8	strFrmOptions	Options
-tableCapillary_gui	9	strLblBy	Statistics to calculate
-tableCapillary_gui	10	strRadCapillary	capillary
-tableCapillary_gui	11	strRadInjection	injection
-tableCapillary_gui	12	strRadRow	plate row
-tableCapillary_gui	13	strRadRun	run
-tableCapillary_gui	14	strRadInstrument	instrument
-tableCapillary_gui	15	strFrmSave	Save as
-tableCapillary_gui	16	strLblSave	Name for result:
-tableCapillary_gui	17	strBtnCalculate	Calculate
-tableCapillary_gui	18	strBtnProcessing	Processing...
-tableCapillary_gui	19	strMsgNull	Data frame is NULL or NA!
-tableCapillary_gui	20	strMsgTitleError	Error
-tablePrecision_gui	1	strWinTitle	Calculate summary statistics for precision
-tablePrecision_gui	2	strChkGui	Save GUI settings
-tablePrecision_gui	3	strBtnHelp	Help
-tablePrecision_gui	4	strFrmDataset	Dataset
-tablePrecision_gui	5	strLblDataset	Dataset:
-tablePrecision_gui	6	strDrpDataset	<Select dataset>
-tablePrecision_gui	7	strLblSamples	samples
-tablePrecision_gui	8	strFrmOptions	Options
-tablePrecision_gui	9	strRadReference	Filter by reference dataset
-tablePrecision_gui	10	strRadBins	Filter by kit bins
-tablePrecision_gui	11	strRadNone	Do not filter
-tablePrecision_gui	12	strLblReference	Reference dataset:
-tablePrecision_gui	13	strChkIgnore	Ignore case
-tablePrecision_gui	14	strBtnCheck	Check subsetting
-tablePrecision_gui	15	strLblKit	Kit:
-tablePrecision_gui	16	strChkExclude	Exclude virtual bins
-tablePrecision_gui	17	strFrmKey	Create key from columns
-tablePrecision_gui	18	strEdtMessage	Doubleklick or drag column names to list
-tablePrecision_gui	19	strFrmTarget	Calculate precision for target columns
-tablePrecision_gui	20	strFrmSave	Save as
-tablePrecision_gui	21	strLblSave	Name for result:
-tablePrecision_gui	22	strBtnCalculate	Calculate
-tablePrecision_gui	23	strBtnProcessing	Processing...
-tablePrecision_gui	24	strMsgDataset	A dataset and a reference dataset have to be selected.
-tablePrecision_gui	25	strMsgCheck	Data frame is NULL!\n\nMake sure to select a sample dataset.
-tablePrecision_gui	26	strMsgTitleDataset	Datasets not selected
-tablePrecision_gui	27	strWinTitleCheck	Check subsetting
-tablePrecision_gui	28	strMsgTitleError	Error
-tableStutter_gui	1	strWinTitle	Calculate summary statistics for stutters
-tableStutter_gui	2	strChkGui	Save GUI settings
-tableStutter_gui	3	strBtnHelp	Help
-tableStutter_gui	4	strFrmDataset	Dataset
-tableStutter_gui	5	strLblDataset	Dataset:
-tableStutter_gui	6	strDrpDataset	<Select dataset>
-tableStutter_gui	7	strLblSamples	samples
-tableStutter_gui	8	strFrmOptions	Options
-tableStutter_gui	9	strLblQuantile	Calculate quantile
-tableStutter_gui	10	strLblBy	Statistics to calculate
-tableStutter_gui	11	strRadGlobal	global
-tableStutter_gui	12	strRadMarker	marker
-tableStutter_gui	13	strRadStutter	stutter
-tableStutter_gui	14	strFrmSave	Save as
-tableStutter_gui	15	strLblSave	Name for result:
-tableStutter_gui	16	strBtnCalculate	Calculate
-tableStutter_gui	17	strBtnProcessing	Processing...
-tableStutter_gui	18	strMsgNull	Data frame is NULL or NA!
-tableStutter_gui	19	strMsgTitleError	Error
+strvalidator	134	strBtnEPG2	EPG2
+strvalidator	135	strLblEPG2	Generate interactive EPG like plot
+strvalidator	136	strLblAT	Calculate analytical threshold (AT1, AT2, AT4, AT7)
+strvalidator	137	strLblAT6	Calculate analytical threshold (AT6)
+strvalidator	138	strBtnPlot	Plot
+strvalidator	139	strLblPlotAT6	Create plots for analysed data (AT6)
+strvalidator	140	strLblStutter	Calculate stutters for a dataset
+strvalidator	141	strLblPlotStutter	Create plots for stutter data
+strvalidator	142	strBtnStatistics	Statistics
+strvalidator	143	strLblStatStutterGlobal	Calculate global summary statistics
+strvalidator	144	strLblStatStutterMarker	Calculate summary statistics by marker
+strvalidator	145	strLblStatStutterStutter	Calculate summary statistics by marker and stutter type
+strvalidator	146	strFrmHb	Heterozygote balance (intra-locus)
+strvalidator	147	strFrmLb	Profile balance (inter-locus)
+strvalidator	148	strLblHb	Calculate heterozygote balance
+strvalidator	149	strLblLb	Calculate profile balance
+strvalidator	150	strLblPlotBalance	Create plots for analysed data
+strvalidator	151	strLblStatBalanceGlobal	Calculate global summary statistics
+strvalidator	152	strLblStatBalanceMarker	Calculate summary statistics by marker
+strvalidator	153	strFrmCapillary	Capillary balance
+strvalidator	154	strLblCapillary	Calculate capillary balance for a dataset
+strvalidator	155	strLblPlotCapillary	Create plots for capillary balance data
+strvalidator	156	strLblStatCapillaryCap	Calculate summary statistics by capillary
+strvalidator	157	strLblStatCapillaryInj	Calculate summary statistics by injection
+strvalidator	158	strLblStatCapillaryRow	Calculate summary statistics by plate row
+strvalidator	159	strLblStatCapillaryRun	Calculate summary statistics by run
+strvalidator	160	strLblStatCapillaryIns	Calculate summary statistics by instrument
+strvalidator	161	strFrmRatio	Marker peak height ratio
+strvalidator	162	strLblRatio	Calculate locus ratio for a dataset
+strvalidator	163	strLblPlotRatio	Create plots for marker ratio data
+strvalidator	164	strLblConcordance	Calculate concordance between multiple datasets
+strvalidator	165	strBtnScore	Score
+strvalidator	166	strLblScore	Score dropouts for a dataset
+strvalidator	167	strLblDropout	Calculate stochastic thresholds
+strvalidator	168	strBtnModel	Model
+strvalidator	169	strLblModel	Model and plot dropout risk
+strvalidator	170	strLblPlotDropout	Create plots for analysed data
+strvalidator	171	strLblMixture	Calculate mixture for a dataset
+strvalidator	172	strFrmType	Result types
+strvalidator	173	strLblType	Calculate result types for a dataset
+strvalidator	174	strLblPlotType	Create plots for result type data
+strvalidator	175	strFrmPeaks	Number of peaks
+strvalidator	176	strLblPeaks	Count the number of peaks in sample
+strvalidator	177	strLblPlotPeaks	Create plots for peak data
+strvalidator	178	strFrmStatistics	Summary statistics
+strvalidator	179	strLblStatistics	Calculate summary statistics
+strvalidator	180	strFrmDistribution	Distributions
+strvalidator	181	strLblDistribution	Plot distributions for data
+strvalidator	182	strLblGroups	Plot cumulative distribution for multiple groups
+strvalidator	183	strFrmDropin	Drop-in tools
+strvalidator	184	strLblSpikes	Identify possible spikes
+strvalidator	185	strLblFilterSpikes	Remove spikes
+strvalidator	186	strLblArtefacts	Identify possible artefacts
+strvalidator	187	strLblFilterArtefacts	Remove artefacts
+strvalidator	188	strLblPlotContamination	Plot contamination
+strvalidator	189	strFrmSlope	Profile slope
+strvalidator	190	strLblSlope	Calculate the profile slope
+strvalidator	191	strLblPlotSlope	Plot slope data
+strvalidator	192	strLblPrecision	Create precision plots
+strvalidator	193	strLblStatPrecisionSize	Calculate summary statistics for Size
+strvalidator	194	strLblStatPrecisionDataPoint	Calculate summary statistics for Data.Point
+strvalidator	195	strLblStatPrecisionHeight	Calculate summary statistics for Height
+strvalidator	196	strLblPullup	Calculate spectral pull-up/bleed-through
+strvalidator	197	strLblPlotPullup	Create plots for pull-up data
 trim_gui	1	strWinTitle	Trim dataset
 trim_gui	2	strChkGui	Save GUI settings
 trim_gui	3	strBtnHelp	Help

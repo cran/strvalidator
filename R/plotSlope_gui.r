@@ -1,5 +1,7 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 10.09.2022: Compacted the gui. Fixed narrow dropdowns. Removed destroy workaround.
+# 11.05.2021: Removed unused imports. Fixes issue#19.
 # 04.07.2020: Fixed no visible binding for variables.
 # 02.05.2020: Added language support.
 # 06.09.2019: Fixed narrow dropdown with hidden argument ellipsize = "none".
@@ -31,9 +33,6 @@
 #' @export
 #'
 #' @importFrom utils help str
-#' @importFrom stats as.formula
-#' @importFrom grid unit textGrob grid.newpage grid.draw
-#' @importFrom gridExtra arrangeGrob
 #' @importFrom ggplot2 ggplot aes_string geom_point theme element_text labs
 #'  xlab ylab theme_gray theme_bw theme_linedraw theme_light theme_dark
 #'  theme_minimal theme_classic theme_void geom_errorbar position_dodge
@@ -52,7 +51,7 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
     "theme_classic()", "theme_void()"
   )
   val_obj <- NULL
-  
+
   # Language ------------------------------------------------------------------
 
   # Get this functions name from call.
@@ -208,29 +207,14 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
       focus(parent)
     }
 
-    # Check which toolkit we are using.
-    if (gtoolkit() == "tcltk") {
-      if (as.numeric(gsub("[^0-9]", "", packageVersion("gWidgets2tcltk"))) <= 106) {
-        # Version <= 1.0.6 have the wrong implementation:
-        # See: https://stackoverflow.com/questions/54285836/how-to-retrieve-checkbox-state-in-gwidgets2tcltk-works-in-gwidgets2rgtk2
-        message("tcltk version <= 1.0.6, returned TRUE!")
-        return(TRUE) # Destroys window under tcltk, but not RGtk2.
-      } else {
-        # Version > 1.0.6 will be fixed:
-        # https://github.com/jverzani/gWidgets2tcltk/commit/9388900afc57454b6521b00a187ca4a16829df53
-        message("tcltk version >1.0.6, returned FALSE!")
-        return(FALSE) # Destroys window under tcltk, but not RGtk2.
-      }
-    } else {
-      message("RGtk2, returned FALSE!")
-      return(FALSE) # Destroys window under RGtk2, but not with tcltk.
-    }
+    # Destroy window.
+    return(FALSE)
   })
 
   # Vertical main group.
   gv <- ggroup(
     horizontal = FALSE,
-    spacing = 5,
+    spacing = 1,
     use.scrollwindow = FALSE,
     container = w,
     expand = TRUE
@@ -256,11 +240,16 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
   f0 <- gframe(
     text = strFrmDataset,
     horizontal = TRUE,
-    spacing = 2,
+    spacing = 1,
     container = gv
   )
 
   glabel(text = strLblDataset, container = f0)
+
+  samples_lbl <- glabel(
+    text = paste(" 0 ", strLblSamples, sep = ""),
+    container = f0
+  )
 
   dataset_drp <- gcombobox(
     items = c(
@@ -273,12 +262,9 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
     selected = 1,
     editable = FALSE,
     container = f0,
-    ellipsize = "none"
-  )
-
-  f0_samples_lbl <- glabel(
-    text = paste(" (0 ", strLblSamples, ")", sep = ""),
-    container = f0
+    ellipsize = "none",
+    expand = TRUE,
+    fill = "x"
   )
 
   addHandlerChanged(dataset_drp, handler = function(h, ...) {
@@ -301,9 +287,9 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
       # Suggest name.
       svalue(f5_save_edt) <- paste(val_obj, "_ggplot", sep = "")
 
-      svalue(f0_samples_lbl) <- paste(" (",
+      svalue(samples_lbl) <- paste(" ",
         length(unique(.gData$Sample.Name)),
-        " ", strLblSamples, ")",
+        " ", strLblSamples,
         sep = ""
       )
 
@@ -315,7 +301,7 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
       .gData <<- NULL
       svalue(f5_save_edt) <- ""
       svalue(dataset_drp, index = TRUE) <- 1
-      svalue(f0_samples_lbl) <- paste(" (0 ", strLblSamples, ")", sep = "")
+      svalue(samples_lbl) <- paste(" 0 ", strLblSamples, sep = "")
     }
   })
 
@@ -324,7 +310,7 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
   f1 <- gframe(
     text = strFrmOptions,
     horizontal = FALSE,
-    spacing = 2,
+    spacing = 1,
     container = gv
   )
 
@@ -362,31 +348,18 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
     ellipsize = "none"
   )
 
-  # FRAME 7 ###################################################################
+  # BUTTON ####################################################################
 
-  f7 <- gframe(
-    text = strFrmPlot,
-    horizontal = TRUE,
-    container = gv
+  plot_sample_btn <- gbutton(
+    text = strBtnPlot, container = gv,
+    expand = TRUE, fill = TRUE
   )
-
-  plot_sample_btn <- gbutton(text = strBtnPlot, container = f7)
+  tooltip(plot_sample_btn) <- "Plot slope by sample and group"
 
   addHandlerChanged(plot_sample_btn, handler = function(h, ...) {
-
-    # Check if suitable for plot.
-    requiredCol <- c("Sample.Name", "Group", "Slope", "Lower", "Upper")
-
-    ok <- checkDataset(
-      name = val_obj, reqcol = requiredCol,
-      env = env, parent = w, debug = debug
-    )
-
-    if (ok) {
-      enabled(plot_sample_btn) <- FALSE
-      .plotSlope(what = "Sample")
-      enabled(plot_sample_btn) <- TRUE
-    }
+    enabled(plot_sample_btn) <- FALSE
+    .plot()
+    enabled(plot_sample_btn) <- TRUE
   })
 
   # FRAME 5 ###################################################################
@@ -394,7 +367,7 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
   f5 <- gframe(
     text = strFrmSave,
     horizontal = TRUE,
-    spacing = 2,
+    spacing = 1,
     container = gv
   )
 
@@ -477,7 +450,7 @@ plotSlope_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, p
 
   # FUNCTIONS #################################################################
 
-  .plotSlope <- function(what) {
+  .plot <- function() {
 
     # Get values.
     val_titles <- svalue(titles_chk)

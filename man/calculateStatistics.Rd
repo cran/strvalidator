@@ -10,6 +10,7 @@ calculateStatistics(
   quant = 0.95,
   group = NULL,
   count = NULL,
+  decimals = -1,
   debug = FALSE
 )
 }
@@ -23,6 +24,8 @@ calculateStatistics(
 \item{group}{character vector of column(s) to group by, if any.}
 
 \item{count}{character column to count unique values in, if any.}
+
+\item{decimals}{numeric number of decimals. Negative does not round.}
 
 \item{debug}{logical indicating printing debug information.}
 }

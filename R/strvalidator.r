@@ -9,7 +9,7 @@
 # IMPORTANT: Use devtools::check_win_oldrelease() to test on previous major R.
 # IMPORTANT: Use revdepcheck::revdep_check() to check reverse dependencies?
 # IMPORTANT: Use devtools::check_rhub() to check on multiple platforms.
-# IMPORTANT: Use devtools::release() to submitt to CRAN.
+# IMPORTANT: Use devtools::release() to submit to CRAN.
 # NB! The error below indicates some problem with the test server (try again later).
 # Error in curl::curl_fetch_memory(url, handle = h) : Timeout was reached
 
@@ -21,13 +21,18 @@
 # NB! Write changes in NEWS for x.yy.z.9### versions, but move changes to NEWS
 # under x.yy.z upon release official version.
 
-# NOTE:
 # NOTE: Can't import data frame named 'drop'
 # NOTE: Buttons named 'Plot' will show up 'plot'.
 # NOTE: Some button names will change due to locale.
 
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 14.09.2022: Added export buttons to DT table for View.
+# 10.09.2022: Fixed warning when selecting multiple objects for export.
+# 02.09.2022: Added "datatables" to supported classes in view function.
+# 21.08.2022: Fixed workspace not refreshed when no supported objects in environment and after loading a previous project.
+# 12.08.2022: Added "plotly" to supported classes and view function.
+# 23.07.2022: Added button to plotEPG2.
 # 28.06.2020: Description made gexpandgroup and loads only if opened.
 # 07.06.2020: Added calls to calculateStatistics_gui. Depracated table*.
 # 21.05.2020: Added language support for welcome tab/about.
@@ -45,9 +50,6 @@
 # 18.07.2018: Added button to plot groups in 'Result' tab.
 # 17.07.2018: Added button to calculate stochastic thresholds in 'Dropout' tab.
 # 02.08.2017: Allow multiple objects to be removed from workspace.
-# 31.07.2017: Fixed error when pressing 'New' project.
-# 19.07.2017: Updated the export_gui call with new argument 'obj' and logic.
-# 18.07.2017: Changed 'Edit' button to 'View' button in all tabs except 'Tools'.
 
 #' @title Graphical User Interface For The STR-validator Package
 #'
@@ -67,6 +69,7 @@
 #' @return TRUE
 #'
 #' @import gWidgets2
+#' @import gWidgets2tcltk
 #' @importFrom utils packageVersion help object.size browseURL
 #' @importFrom graphics title
 #'
@@ -85,14 +88,18 @@ strvalidator <- function(debug = FALSE) {
   .separator <- .Platform$file.sep # Platform dependent path separator.
   .save_gui <- TRUE
   .ws_last_open_dir <- getwd()
-  .object_classes_view <- c("data.frame", "ggplot")
-  .object_classes_import <- c("data.frame", "ggplot")
+  .object_classes_view <- c("data.frame", "ggplot", "plotly")
+  .object_classes_import <- c("data.frame", "ggplot", "plotly")
   .project_description_variable <- ".strvalidator_project_description"
   .project_tmp_env <- new.env(parent = emptyenv())
   .project_name_list <- NULL
   .project_path_list <- NULL
   .ws_name_variable <- ".strvalidator_project_name"
   .ws_path_variable <- ".strvalidator_project_path"
+  .object_empty_df <- data.frame(
+    Object = "[Object]", Size = "[Size]",
+    stringsAsFactors = FALSE
+  )
 
   # Language ------------------------------------------------------------------
 
@@ -244,6 +251,8 @@ strvalidator <- function(debug = FALSE) {
   strLblHeight <- "Calculate peak height metrics"
   strBtnEPG <- "EPG"
   strLblEPG <- "Generate EPG like plot"
+  strBtnEPG2 <- "EPG2"
+  strLblEPG2 <- "Generate interactive EPG like plot"
   strBtnCalculate <- "Calculate"
   strLblAT <- "Calculate analytical threshold (AT1, AT2, AT4, AT7)"
   strLblAT6 <- "Calculate analytical threshold (AT6)"
@@ -255,7 +264,7 @@ strvalidator <- function(debug = FALSE) {
   strLblStatStutterGlobal <- "Calculate global summary statistics"
   strLblStatStutterMarker <- "Calculate summary statistics by marker"
   strLblStatStutterStutter <- "Calculate summary statistics by marker and stutter type"
-  strFrmHb <- "Heterozygous balance (intra-locus)"
+  strFrmHb <- "Heterozygote balance (intra-locus)"
   strFrmLb <- "Profile balance (inter-locus)"
   strLblHb <- "Calculate heterozygote balance"
   strLblLb <- "Calculate profile balance"
@@ -714,6 +723,12 @@ strvalidator <- function(debug = FALSE) {
     strtmp <- dtStrings["strLblEPG"]$value
     strLblEPG <- ifelse(is.na(strtmp), strLblEPG, strtmp)
 
+    strtmp <- dtStrings["strBtnEPG2"]$value
+    strBtnEPG2 <- ifelse(is.na(strtmp), strBtnEPG2, strtmp)
+
+    strtmp <- dtStrings["strLblEPG2"]$value
+    strLblEPG2 <- ifelse(is.na(strtmp), strLblEPG2, strtmp)
+
     strtmp <- dtStrings["strLblAT"]$value
     strLblAT <- ifelse(is.na(strtmp), strLblAT, strtmp)
 
@@ -955,7 +970,7 @@ strvalidator <- function(debug = FALSE) {
   # Define groups.
   start_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabWelcome,
@@ -964,7 +979,7 @@ strvalidator <- function(debug = FALSE) {
 
   project_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabProject,
@@ -973,7 +988,7 @@ strvalidator <- function(debug = FALSE) {
 
   file_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabWorkspace,
@@ -982,7 +997,7 @@ strvalidator <- function(debug = FALSE) {
 
   drylab_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabDryLab,
@@ -991,7 +1006,7 @@ strvalidator <- function(debug = FALSE) {
 
   tools_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 5,
+    spacing = 2,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabTools,
@@ -1000,7 +1015,7 @@ strvalidator <- function(debug = FALSE) {
 
   at_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabAT,
@@ -1009,7 +1024,7 @@ strvalidator <- function(debug = FALSE) {
 
   stutter_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabStutter,
@@ -1018,7 +1033,7 @@ strvalidator <- function(debug = FALSE) {
 
   balance_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 5,
+    spacing = 2,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabBalance,
@@ -1027,7 +1042,7 @@ strvalidator <- function(debug = FALSE) {
 
   concordance_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabConcordance,
@@ -1036,7 +1051,7 @@ strvalidator <- function(debug = FALSE) {
 
   drop_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabDroput,
@@ -1045,7 +1060,7 @@ strvalidator <- function(debug = FALSE) {
 
   mixture_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabMixture,
@@ -1054,7 +1069,7 @@ strvalidator <- function(debug = FALSE) {
 
   result_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabResult,
@@ -1063,7 +1078,7 @@ strvalidator <- function(debug = FALSE) {
 
   precision_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabPrecision,
@@ -1072,7 +1087,7 @@ strvalidator <- function(debug = FALSE) {
 
   pullup_tab <- ggroup(
     horizontal = FALSE,
-    spacing = 10,
+    spacing = 4,
     use.scrollwindow = FALSE,
     container = nb,
     label = strTabPullup,
@@ -1085,7 +1100,7 @@ strvalidator <- function(debug = FALSE) {
   start_f1 <- gframe(
     horizontal = FALSE,
     container = start_tab,
-    spacing = 5,
+    spacing = 2,
     expand = TRUE,
     fill = TRUE
   )
@@ -1182,8 +1197,8 @@ strvalidator <- function(debug = FALSE) {
   project_f1 <- ggroup(
     horizontal = FALSE,
     container = project_tab,
-    spacing = 5,
-    expand = TRUE
+    spacing = 2,
+    expand = FALSE
   )
 
   # FOLDER --------------------------------------------------------------------
@@ -1205,7 +1220,7 @@ strvalidator <- function(debug = FALSE) {
   project_f2 <- gframe(
     text = strFrmProject,
     horizontal = TRUE,
-    spacing = 5,
+    spacing = 2,
     container = project_f1,
     expand = TRUE
   )
@@ -1213,7 +1228,7 @@ strvalidator <- function(debug = FALSE) {
   # Button group.
   project_g1 <- ggroup(
     horizontal = FALSE,
-    spacing = 5,
+    spacing = 2,
     container = project_f2,
     expand = FALSE
   )
@@ -1403,7 +1418,7 @@ strvalidator <- function(debug = FALSE) {
 
   # Button group.
   project_g3 <- ggroup(
-    horizontal = FALSE, spacing = 5,
+    horizontal = FALSE, spacing = 2,
     container = project_f3, expand = FALSE
   )
 
@@ -1441,7 +1456,7 @@ strvalidator <- function(debug = FALSE) {
   # Button group.
   project_g4 <- ggroup(
     horizontal = FALSE,
-    spacing = 5,
+    spacing = 2,
     container = project_f3,
     expand = TRUE,
     fill = TRUE
@@ -1511,10 +1526,7 @@ strvalidator <- function(debug = FALSE) {
   tooltip(ws_view_btn) <- strTipView
 
   ws_loaded_tbl <- gWidgets2::gtable(
-    items = data.frame(
-      Object = "[Object]", Size = "[Size]",
-      stringsAsFactors = FALSE
-    ),
+    items = .object_empty_df,
     multiple = TRUE,
     chosencol = 1,
     expand = TRUE,
@@ -1530,7 +1542,10 @@ strvalidator <- function(debug = FALSE) {
 
       # Create a new environment.
       .strvalidator_env <<- new.env(parent = emptyenv())
-      print("A new project environment was created.")
+      message("A new project environment was created.")
+
+      # Refresh workspace.
+      .refreshLoaded()
     }
   })
 
@@ -1583,6 +1598,11 @@ strvalidator <- function(debug = FALSE) {
 
           # Load new project.
           load(file = ws_path, envir = .strvalidator_env)
+
+          # Refresh workspace.
+          .refreshLoaded()
+
+          # Load saved project settings.
           .loadSavedSettings()
 
           # Save last used directory.
@@ -1647,7 +1667,7 @@ strvalidator <- function(debug = FALSE) {
     # Get selected items.
     val <- svalue(ws_loaded_tbl)
 
-    if (!is.null(val) && !is.na(val) && length(val) > 0) {
+    if (!any(is.null(val)) && !any(is.na(val)) && length(val) > 0) {
 
       # List selected objects.
       message("Objects selected for export: ", paste(val, collapse = ", "))
@@ -1690,17 +1710,15 @@ strvalidator <- function(debug = FALSE) {
 
       if ("data.frame" %in% val_class) {
 
-        # Open GUI.
-        editData_gui(
-          env = .strvalidator_env,
-          savegui = .save_gui,
-          data = get(val_obj, envir = .strvalidator_env),
-          name = val_obj,
-          edit = FALSE, debug = debug, parent = w
+        # Convert to DT and view.
+        dt <- DT::datatable(val_data,
+          rownames = FALSE, filter = "top",
+          extensions = "Buttons", options = list(dom = "Bfrtip", buttons = c("copy", "csv", "excel", "pdf", "print"))
         )
-      } else if ("ggplot" %in% val_class) {
+        print(dt)
+      } else if (any(c("ggplot", "plotly", "datatables") %in% val_class)) {
 
-        # Plot object.
+        # View object.
         print(val_data)
       } else {
         blockHandlers(w)
@@ -1960,14 +1978,13 @@ strvalidator <- function(debug = FALSE) {
   )
 
   workspace_f2g1 <- ggroup(
-    horizontal = FALSE,
+    horizontal = TRUE,
     container = workspace_f2,
-    expand = FALSE
+    expand = TRUE,
+    fill = "x"
   )
 
   ws_r_refresh_btn <- gbutton(text = strBtnRefresh, container = workspace_f2g1)
-
-  ws_r_load_btn <- gbutton(text = strBtnLoad, container = workspace_f2g1)
 
   ws_r_drp <- gcombobox(
     items = c(
@@ -1980,14 +1997,19 @@ strvalidator <- function(debug = FALSE) {
     selected = 1,
     editable = FALSE,
     container = workspace_f2g1,
-    ellipsize = "none"
+    ellipsize = "none",
+    expand = TRUE,
+    fill = "x"
   )
+
+  #  ws_r_load_btn <- gbutton(text = strBtnLoad, container = workspace_f2g1)
 
   addHandlerChanged(ws_r_refresh_btn, handler = function(h, ...) {
     .refreshWs()
   })
 
-  addHandlerChanged(ws_r_load_btn, handler = function(h, ...) {
+  addHandlerChanged(ws_r_drp, handler = function(h, ...) {
+    #    addHandlerChanged(ws_r_load_btn, handler = function(h, ...) {
 
     # Get selected dataset name.
     val_name <- svalue(ws_r_drp)
@@ -2010,7 +2032,7 @@ strvalidator <- function(debug = FALSE) {
 
   # DRY LAB  ##################################################################
 
-  dry_grid <- glayout(container = drylab_tab, spacing = 5)
+  dry_grid <- glayout(container = drylab_tab, spacing = 2)
 
   # VIEW ----------------------------------------------------------------------
 
@@ -2100,7 +2122,7 @@ strvalidator <- function(debug = FALSE) {
 
   # TOOLS  ####################################################################
 
-  tools_grid <- glayout(container = tools_tab, spacing = 5)
+  tools_grid <- glayout(container = tools_tab, spacing = 2)
 
   # EDIT ----------------------------------------------------------------------
 
@@ -2397,9 +2419,28 @@ strvalidator <- function(debug = FALSE) {
     generateEPG_gui(env = .strvalidator_env, savegui = .save_gui, debug = debug, parent = w)
   })
 
+  # GENERATE EPG2 -------------------------------------------------------------
+
+  tools_grid[16, 1] <- tools_epg2_btn <- gbutton(
+    text = strBtnEPG2,
+    container = tools_grid
+  )
+
+  tools_grid[16, 2] <- glabel(
+    text = strLblEPG2,
+    container = tools_grid,
+    anchor = c(-1, 0)
+  )
+
+  addHandlerChanged(tools_epg2_btn, handler = function(h, ...) {
+
+    # Open GUI.
+    plotEPG2_gui(env = .strvalidator_env, savegui = .save_gui, debug = debug, parent = w)
+  })
+
   # AT  #######################################################################
 
-  at_grid <- glayout(container = at_tab, spacing = 5)
+  at_grid <- glayout(container = at_tab, spacing = 2)
 
 
   # VIEW ----------------------------------------------------------------------
@@ -2480,7 +2521,7 @@ strvalidator <- function(debug = FALSE) {
   # STUTTER  ##################################################################
 
 
-  stutter_grid <- glayout(container = stutter_tab, spacing = 5)
+  stutter_grid <- glayout(container = stutter_tab, spacing = 2)
 
 
   # VIEW ----------------------------------------------------------------------
@@ -2639,7 +2680,7 @@ strvalidator <- function(debug = FALSE) {
   # BALANCE  ##################################################################
 
 
-  balance_g1 <- glayout(container = balance_tab, spacing = 5)
+  balance_g1 <- glayout(container = balance_tab, spacing = 2)
 
   # VIEW ----------------------------------------------------------------------
 
@@ -2672,7 +2713,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = balance_tab
   )
 
-  balance_hb <- glayout(container = balance_hb_frm, spacing = 5)
+  balance_hb <- glayout(container = balance_hb_frm, spacing = 2)
 
   # CALCULATE -----------------------------------------------------------------
 
@@ -2781,7 +2822,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = balance_tab
   )
 
-  balance_lb <- glayout(container = balance_lb_frm, spacing = 5)
+  balance_lb <- glayout(container = balance_lb_frm, spacing = 2)
 
   # CALCULATE -----------------------------------------------------------------
 
@@ -2891,7 +2932,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = balance_tab
   )
 
-  balance_g3 <- glayout(container = balance_f3, spacing = 5)
+  balance_g3 <- glayout(container = balance_f3, spacing = 2)
 
 
   # CALCULATE -----------------------------------------------------------------
@@ -3089,7 +3130,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = balance_tab
   )
 
-  balance_g4 <- glayout(container = balance_f4, spacing = 5)
+  balance_g4 <- glayout(container = balance_f4, spacing = 2)
 
   # CALCULATE -----------------------------------------------------------------
 
@@ -3136,7 +3177,7 @@ strvalidator <- function(debug = FALSE) {
   # CONCORDANCE  ##############################################################
 
 
-  conc_grid <- glayout(container = concordance_tab, spacing = 5)
+  conc_grid <- glayout(container = concordance_tab, spacing = 2)
 
   # VIEW ----------------------------------------------------------------------
 
@@ -3185,7 +3226,7 @@ strvalidator <- function(debug = FALSE) {
   # DROPOUT  ##################################################################
 
 
-  drop_grid <- glayout(container = drop_tab, spacing = 5)
+  drop_grid <- glayout(container = drop_tab, spacing = 2)
 
   # VIEW ----------------------------------------------------------------------
 
@@ -3303,7 +3344,7 @@ strvalidator <- function(debug = FALSE) {
   # MIXTURE  ##################################################################
 
 
-  mix_grid <- glayout(container = mixture_tab, spacing = 5)
+  mix_grid <- glayout(container = mixture_tab, spacing = 2)
 
   # VIEW ----------------------------------------------------------------------
 
@@ -3356,7 +3397,7 @@ strvalidator <- function(debug = FALSE) {
   # RESULT  ###################################################################
 
 
-  result_grid <- glayout(container = result_tab, spacing = 5)
+  result_grid <- glayout(container = result_tab, spacing = 2)
 
   # VIEW ----------------------------------------------------------------------
 
@@ -3387,7 +3428,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = result_tab
   )
 
-  result_g1 <- glayout(container = result_f1, spacing = 5)
+  result_g1 <- glayout(container = result_f1, spacing = 2)
 
 
   # CALCULATE -----------------------------------------------------------------
@@ -3441,7 +3482,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = result_tab
   )
 
-  result_g2 <- glayout(container = result_f2, spacing = 5)
+  result_g2 <- glayout(container = result_f2, spacing = 2)
 
 
   # CALCULATE -----------------------------------------------------------------
@@ -3495,7 +3536,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = result_tab
   )
 
-  result_g3 <- glayout(container = result_f3, spacing = 5)
+  result_g3 <- glayout(container = result_f3, spacing = 2)
 
   # CALCULATE PEAK HEIGHT -----------------------------------------------------
 
@@ -3547,7 +3588,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = result_tab
   )
 
-  result_g4 <- glayout(container = result_f4, spacing = 5)
+  result_g4 <- glayout(container = result_f4, spacing = 2)
 
   # PLOT PEAKS ----------------------------------------------------------------
 
@@ -3599,7 +3640,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = result_tab
   )
 
-  result_g5 <- glayout(container = result_f5, spacing = 5)
+  result_g5 <- glayout(container = result_f5, spacing = 2)
 
 
   # CALCULATE -----------------------------------------------------------------
@@ -3716,7 +3757,7 @@ strvalidator <- function(debug = FALSE) {
     horizontal = FALSE, container = result_tab
   )
 
-  result_g6 <- glayout(container = result_f6, spacing = 5)
+  result_g6 <- glayout(container = result_f6, spacing = 2)
 
   # CALCULATE -----------------------------------------------------------------
 
@@ -3764,7 +3805,7 @@ strvalidator <- function(debug = FALSE) {
   # PRECISION  ################################################################
 
 
-  precision_grid <- glayout(container = precision_tab, spacing = 5)
+  precision_grid <- glayout(container = precision_tab, spacing = 2)
 
   # VIEW ----------------------------------------------------------------------
 
@@ -3924,7 +3965,7 @@ strvalidator <- function(debug = FALSE) {
 
   # PULLUP  ###################################################################
 
-  pull_grid <- glayout(container = pullup_tab, spacing = 5)
+  pull_grid <- glayout(container = pullup_tab, spacing = 2)
 
   # VIEW ----------------------------------------------------------------------
 
@@ -4100,7 +4141,11 @@ strvalidator <- function(debug = FALSE) {
     # Get data frames in global workspace.
     dfs <- listObjects(env = .GlobalEnv, obj.class = .object_classes_import)
 
-    if (!is.null(dfs)) {
+    # Get current list in dropdown.
+    cList <- svalue(ws_r_drp)
+
+    # Only populate dropdown if there are new objects available.
+    if (!is.null(dfs) && !all(dfs %in% cList)) {
       blockHandler(ws_r_drp)
 
       # Populate drop list.
@@ -4134,6 +4179,12 @@ strvalidator <- function(debug = FALSE) {
         Object = dfs, Size = dfsSize,
         stringsAsFactors = FALSE
       )
+      unblockHandler(ws_loaded_tbl)
+    } else {
+
+      # No objects in environment. Load empty data.frame to clear previous list.
+      blockHandler(ws_loaded_tbl)
+      ws_loaded_tbl[, ] <- .object_empty_df
       unblockHandler(ws_loaded_tbl)
     }
   }

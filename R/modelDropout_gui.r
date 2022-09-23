@@ -1,5 +1,7 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 10.09.2022: Compacted the gui. Fixed narrow dropdowns. Removed destroy workaround.
+# 09.07.2022: Fixed "...URLs which should use \doi (with the DOI name only)".
 # 10.04.2020: Added language support.
 # 20.03.2019: Fixed save object triggered when plotting if label is changed.
 # 24.02.2019: Added option to use log10 y-axis scale.
@@ -61,10 +63,12 @@
 #' is less than a specified value (e.g. 1-0.95=0.05). By default the gender
 #' marker is excluded from the dataset used for modeling, and the peak height
 #' is used as explanatory variable. The logarithm of the average peak height 'H'
-#' can be used instead of the allele/locus peak height [3]. To evaluate the
-#' goodness of fit for the logistic regression the Hosmer-Lemeshow test is
-#' used [4]. A value below 0.05 indicates a poor fit. Alternatives to the
-#' logistic regression method are discussed in reference [5] and [6].
+#' can be used instead of the allele/locus peak height [3] (The implementation
+#' of 'H' has limitations when dropout is present. See \code{\link{calculateHeight}}).
+#' To evaluate the goodness of fit for the logistic regression the 
+#' Hosmer-Lemeshow test is used [4]. A value below 0.05 indicates a poor fit. 
+#' Alternatives to the logistic regression method are discussed in reference [5]
+#' and [6].
 #'
 #' Explanation of the result:
 #' Dropout - all alleles are scored according to the limit of detection threshold (LDT).
@@ -92,20 +96,20 @@
 #'  include drop-out and/or drop-in using probabilistic methods,
 #'  Forensic Science International: Genetics, Volume 6, Issue 6, December 2012,
 #'  Pages 679-688, ISSN 1872-4973, 10.1016/j.fsigen.2012.06.002.
-#' \url{http://www.sciencedirect.com/science/article/pii/S1872497312001354}
+#' \doi{10.1016/j.fsigen.2012.06.002}
 #' @references
 #' [2] Peter Gill, Roberto Puch-Solis, James Curran,
 #'  The low-template-DNA (stochastic) threshold-Its determination relative to
 #'  risk analysis for national DNA databases,
 #'  Forensic Science International: Genetics, Volume 3, Issue 2, March 2009,
 #'  Pages 104-111, ISSN 1872-4973, 10.1016/j.fsigen.2008.11.009.
-#' \url{http://www.sciencedirect.com/science/article/pii/S1872497308001798}
+#' \doi{10.1016/j.fsigen.2008.11.009}
 #' @references
 #' [3] Torben Tvedebrink, Poul Svante Eriksen, Helle Smidt Mogensen, Niels Morling,
 #'  Estimating the probability of allelic drop-out of STR alleles in forensic genetics,
 #'  Forensic Science International: Genetics, Volume 3, Issue 4, September 2009,
 #'  Pages 222-226, ISSN 1872-4973, 10.1016/j.fsigen.2009.02.002.
-#'  \url{http://www.sciencedirect.com/science/article/pii/S1872497309000398}
+#'  \doi{10.1016/j.fsigen.2009.02.002}
 #' @references
 #' [4] H. DW Jr., S. Lemeshow, Applied Logistic Regression, John Wiley & Sons, 2004.
 #' @references
@@ -114,13 +118,13 @@
 #'  and low template techniques for NGM,
 #'  Forensic Science International: Genetetics, Volume 6, Issue 6 December 2012,
 #'  Pages 708-715, ISSN 1872-4973, 10.1016/j.fsigen.2012.05.001.
-#'  \url{http://www.sciencedirect.com/science/article/pii/S1872497312001172}
+#'  \doi{10.1016/j.fsigen.2012.05.001}
 #' @references
 #' [6] R. Puch-Solis, A.J. Kirkham, P. Gill, J. Read, S. Watson, D. Drew,
 #'  Practical determination of the low template DNA threshold,
 #'  Forensic Science International: Genetetics, Volume 5, Issue 5, November 2011,
 #'  Pages 422-427, ISSN 1872-4973, 10.1016/j.fsigen.2010.09.001.
-#'  \url{http://www.sciencedirect.com/science/article/pii/S1872497310001511}
+#'  \doi{10.1016/j.fsigen.2010.09.001}
 #'
 #' @return TRUE
 #'
@@ -133,7 +137,7 @@
 #'  geom_ribbon geom_segment geom_text coord_cartesian theme element_text labs
 #'  xlab ylab
 #'
-#' @seealso \code{\link{calculateDropout}}, \code{\link{plotDropout_gui}}
+#' @seealso \code{\link{calculateDropout}}, \code{\link{plotDropout_gui}}, \code{\link[ResourceSelection]{hoslem.test}}
 
 modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, parent = NULL) {
 
@@ -157,7 +161,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   strFrmDataset <- "Dataset"
   strLblDataset <- "Dropout dataset:"
   strDrpDataset <- "<Select dataset>"
-  strLblKit <- "and the kit used:"
+  strLblKit <- "Kit:"
   strFrmOptions <- "Options"
   strChkOverride <- "Override automatic titles"
   strLblTitlePlot <- "Plot title:"
@@ -476,29 +480,14 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
       focus(parent)
     }
 
-    # Check which toolkit we are using.
-    if (gtoolkit() == "tcltk") {
-      if (as.numeric(gsub("[^0-9]", "", packageVersion("gWidgets2tcltk"))) <= 106) {
-        # Version <= 1.0.6 have the wrong implementation:
-        # See: https://stackoverflow.com/questions/54285836/how-to-retrieve-checkbox-state-in-gwidgets2tcltk-works-in-gwidgets2rgtk2
-        message("tcltk version <= 1.0.6, returned TRUE!")
-        return(TRUE) # Destroys window under tcltk, but not RGtk2.
-      } else {
-        # Version > 1.0.6 will be fixed:
-        # https://github.com/jverzani/gWidgets2tcltk/commit/9388900afc57454b6521b00a187ca4a16829df53
-        message("tcltk version >1.0.6, returned FALSE!")
-        return(FALSE) # Destroys window under tcltk, but not RGtk2.
-      }
-    } else {
-      message("RGtk2, returned FALSE!")
-      return(FALSE) # Destroys window under RGtk2, but not with tcltk.
-    }
+    # Destroy window.
+    return(FALSE)
   })
 
   gv <- ggroup(
     horizontal = FALSE,
     spacing = 5,
-    use.scrollwindow = FALSE,
+    use.scrollwindow = TRUE,
     container = w,
     expand = TRUE
   )
@@ -522,12 +511,16 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
 
   f0 <- gframe(
     text = strFrmDataset,
-    horizontal = TRUE,
-    spacing = 2,
+    horizontal = FALSE,
+    spacing = 1,
     container = gv
   )
 
-  glabel(text = strLblDataset, container = f0)
+  # Datasets ------------------------------------------------------------------
+
+  g0 <- ggroup(container = f0, spacing = 1, expand = TRUE, fill = "x")
+
+  glabel(text = strLblDataset, container = g0)
 
   dataset_drp <- gcombobox(
     items = c(
@@ -539,18 +532,26 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
     ),
     selected = 1,
     editable = FALSE,
-    container = f0,
-    ellipsize = "none"
+    container = g0,
+    ellipsize = "none",
+    expand = TRUE,
+    fill = "x"
   )
 
-  glabel(text = strLblKit, container = f0)
+  # Kit -----------------------------------------------------------------------
+
+  g1 <- ggroup(container = f0, spacing = 1, expand = TRUE, fill = "x")
+
+  glabel(text = strLblKit, container = g1)
 
   kit_drp <- gcombobox(
     items = getKit(),
     selected = 1,
     editable = FALSE,
-    container = f0,
-    ellipsize = "none"
+    container = g1,
+    ellipsize = "none",
+    expand = TRUE,
+    fill = "x"
   )
 
   addHandlerChanged(dataset_drp, handler = function(h, ...) {
@@ -604,7 +605,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   f1 <- gframe(
     text = strFrmOptions,
     horizontal = FALSE,
-    spacing = 2,
+    spacing = 1,
     container = gv
   )
 
@@ -634,7 +635,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   y_title_edt <- gedit(expand = TRUE, fill = TRUE, container = titles_group)
 
   # Group 2.
-  f1g2 <- ggroup(horizontal = TRUE, spacing = 2, container = f1)
+  f1g2 <- ggroup(horizontal = TRUE, spacing = 1, container = f1)
   glabel(text = strLblRange, container = f1g2)
   f1g2_low_lbl <- glabel(text = "", width = 6, container = f1g2)
   glabel(text = "-", container = f1g2)
@@ -728,7 +729,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   f5 <- gframe(
     text = strFrmSave,
     horizontal = TRUE,
-    spacing = 2,
+    spacing = 1,
     container = gv
   )
 
@@ -791,7 +792,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   e1f1 <- gframe(text = "", horizontal = FALSE, container = e1)
 
   # Group 2.
-  e1f1g2 <- ggroup(horizontal = TRUE, spacing = 2, container = e1f1)
+  e1f1g2 <- ggroup(horizontal = TRUE, spacing = 1, container = e1f1)
 
   e1f1_threshold_chk <- gcheckbox(
     text = strChkThreshold,
@@ -806,7 +807,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   )
 
   # Group 3.
-  e1f1g3 <- ggroup(horizontal = TRUE, spacing = 2, container = e1f1)
+  e1f1g3 <- ggroup(horizontal = TRUE, spacing = 1, container = e1f1)
 
   e1_linetypes <- c(
     strLblBlank, strLblSolid, strLblDashed,
@@ -833,7 +834,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   )
 
   # Group 4.
-  e1f1g4 <- ggroup(horizontal = TRUE, spacing = 2, container = e1f1)
+  e1f1g4 <- ggroup(horizontal = TRUE, spacing = 1, container = e1f1)
 
   e1f1_print_chk <- gcheckbox(
     text = strChkPrintT,
@@ -847,7 +848,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   e1f2 <- gframe(text = "", horizontal = FALSE, container = e1)
 
   # Group 1.
-  e1f2g1 <- ggroup(horizontal = TRUE, spacing = 2, container = e1f2)
+  e1f2g1 <- ggroup(horizontal = TRUE, spacing = 1, container = e1f2)
 
 
   glabel(text = strLblPredictionInterval, container = e1f2g1)
@@ -859,7 +860,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   )
 
   # Group 2.
-  e1f2g2 <- ggroup(horizontal = TRUE, spacing = 2, container = e1f2)
+  e1f2g2 <- ggroup(horizontal = TRUE, spacing = 1, container = e1f2)
 
   e1f2_print_interval_chk <- gcheckbox(
     text = strChkPrintTcons,
@@ -868,7 +869,7 @@ modelDropout_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE
   )
 
   # Group 3.
-  e1f2g3 <- ggroup(horizontal = TRUE, spacing = 2, container = e1f2)
+  e1f2g3 <- ggroup(horizontal = TRUE, spacing = 1, container = e1f2)
 
   e1f2_mark_interval_chk <- gcheckbox(
     text = strChkPredictionInterval,
