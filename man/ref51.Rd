@@ -12,6 +12,6 @@ data(ref51)
 }
 \description{
 A slimmed dataset containing the reference profile for the major
-component  in set5.
+component in set5.
 }
 \keyword{datasets}

@@ -1,10 +1,7 @@
-#' @title Process Control and Internal Validation of Forensic STR Kits
-#' @docType package
-#' @name strvalidator-package
-#' @author Oskar Hansson \email{oskhan@@ous-hf.no}
-#' @keywords package
-#' @description STR-validator is a free and open source R-package intended for
-#' process control and internal validation of forensic STR DNA typing kit.
+#' Process Control and Internal Validation of Forensic STR Kits
+#'
+#' STR-validator is a free and open source R package intended for
+#' process control and internal validation of forensic STR DNA typing kits.
 #' Its graphical user interface simplifies the analysis of data exported from e.g.
 #' GeneMapper software, without extensive knowledge about R. It provides
 #' functions to import, view, edit, and export data. After analysis the results,
@@ -12,7 +9,7 @@
 #' Currently, analysis modules for stutter, balance, dropout, mixture, concordance,
 #' typing result, precision, pull-up, and analytical thresholds are available.
 #' In addition there are functions to analyze the GeneMapper bins- and panels files.
-#' EPG like plots can be generate from data. STR-validator can greatly increase the speed of
+#' EPG-like plots can be generated from data. STR-validator can greatly increase the speed of
 #' validation by reducing the time and effort needed to analyze the validation
 #' data. It allows exploration of the characteristics of DNA typing kits according
 #' to ENFSI and SWGDAM recommendations. This facilitates the implementation of
@@ -32,13 +29,14 @@
 #' functions.\cr\cr
 #'
 #' Created and maintained by:\cr
-#' Oskar Hansson, Section for Forensic Biology (OUS, Norway)\cr\cr
+#' Oskar Hansson, Section for Forensic Biology (OUS, Norway)\cr
+#' \email{oskhan@ous-hf.no}\cr\cr
 #'
 #' More information can be found at:\cr
 #' \url{https://sites.google.com/site/forensicapps/strvalidator}\cr\cr
 #'
 #' Info and user community at Facebook:\cr
-#' \url{https://www.facebook.com/pages/STR-validator/240891279451450?ref=tn_tnmn}\cr\cr
+#' \url{https://www.facebook.com/pages/STR-validator/240891279451450?ref=tn_tnmn}\cr
 #' \url{https://www.facebook.com/groups/strvalidator/}\cr\cr
 #'
 #' The source code is hosted at GitHub:\cr
@@ -48,12 +46,16 @@
 #' \url{https://github.com/OskarHansson/strvalidator/issues}\cr\cr
 #'
 #' @references
-#' Recommended Minimum Criteria for the Validation of Various Aspects of the DNA Profiling Process
-#' \url{http://enfsi.eu/wp-content/uploads/2016/09/minimum_validation_guidelines_in_dna_profiling_-_v2010_0.pdf}
-#' Validation Guidelines for Forensic DNA Analysis Methods (2012)
+#' Recommended Minimum Criteria for the Validation of Various Aspects of the DNA Profiling Process:
+#' \url{http://enfsi.eu/wp-content/uploads/2016/09/minimum_validation_guidelines_in_dna_profiling_-_v2010_0.pdf}\cr
+#' Validation Guidelines for Forensic DNA Analysis Methods (2012):
 #' \url{http://media.wix.com/ugd/4344b0_cbc27d16dcb64fd88cb36ab2a2a25e4c.pdf}
 #'
-NULL
+#' @keywords internal
+"_PACKAGE"
+
+
+# ---- Datasets ---------------------------------------------------------------
 
 #' ESX17 Positive Control Profile
 #'
@@ -89,7 +91,6 @@ NULL
 #' @usage data(ref11)
 #' @format A data frame with 17 rows and 4 variables
 NULL
-
 
 #' Typing data in 'GeneMapper' format
 #'
@@ -179,7 +180,7 @@ NULL
 #' ESX17 example data for mixture analysis.
 #'
 #' A slimmed dataset containing the reference profile for the major
-#' component  in set5.
+#' component in set5.
 #'
 #' @docType data
 #' @keywords datasets
@@ -191,7 +192,7 @@ NULL
 #' ESX17 example data for mixture analysis.
 #'
 #' A slimmed dataset containing the reference profile for the minor
-#' component  in set5.
+#' component in set5.
 #'
 #' @docType data
 #' @keywords datasets

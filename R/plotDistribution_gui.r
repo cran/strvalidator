@@ -1,5 +1,6 @@
 ################################################################################
 # CHANGE LOG (last 20 changes)
+# 15.10.2025: Specified the package anchor in link.
 # 20.06.2023: Fixed Error in !is.null(val_data) && !is.na(val_data) in coercion to 'logical(1)
 # 10.09.2022: Compacted the gui. Fixed narrow dropdowns. Removed destroy workaround.
 # 19.04.2020: Added language support.
@@ -19,7 +20,6 @@
 # 19.09.2016: Fixed factor levels in group drop-down after change in calculatePeaks.
 # 27.06.2016: Fixed 'bins' not saved.
 # 16.06.2016: Implemented log option and number of bins.
-# 19.05.2016: Fixed update of drop-down and information when selecting a new dataset.
 
 #' @title Plot Distribution
 #'
@@ -50,7 +50,7 @@
 #'
 #' @return TRUE
 #'
-#' @seealso \code{\link{log}}, \code{\link{geom_density}}
+#' @seealso \code{\link{log}}, \code{\link[ggplot2:geom_density]{geom_density}}
 
 
 plotDistribution_gui <- function(env = parent.frame(), savegui = NULL, debug = FALSE, parent = NULL) {
